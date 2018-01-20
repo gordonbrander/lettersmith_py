@@ -21,7 +21,7 @@ Lettersmith comes bundled with a static site generator `lettersmith_site` that c
 `lettersmith_site` takes a single argument — a path to a yaml config file.
 
 ```bash
->>> lettersmith_site lettersmith.yaml
+lettersmith_site lettersmith.yaml
 ```
 
 ## lettersmith_scaffold
