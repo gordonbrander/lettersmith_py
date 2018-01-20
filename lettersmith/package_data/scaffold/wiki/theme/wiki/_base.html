@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>
+    {% block title %}
+      {{site.title}}
+    {% endblock %}
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary" />
+  {% if title %}
+    <meta name="twitter:title" content="{{ title }}"/>
+  {% endif %}
+  {% if summary %}
+    <meta name="twitter:description" content="{{ summary }}"/>
+  {% else %}
+    <meta name="twitter:description" content="{{ content | striptags | trim | truncate(100) }}"/>
+  {% endif %}
+  {% if site.twitter_name %}
+    <meta name="twitter:site" content="@{{ site.twitter_name }}"/>
+    <meta name="twitter:creator" content="@{{ site.twitter_name }}"/>
+  {% endif %}
+  {% block style %}
+    <link rel="stylesheet" type="text/css" href="{{base_url}}static/main.css">
+  {% endblock %}
+</head>
+<body>
+  {% block body %}{% endblock %}
+  {% block scripts %}{% endblock %}  
+</body>
+</html>

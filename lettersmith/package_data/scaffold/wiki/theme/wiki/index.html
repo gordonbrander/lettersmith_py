@@ -1,0 +1,27 @@
+{% extends "_layout.html" %}
+
+{% block main %}
+<div class="col-content">
+  <div class="mar-v">
+    <article class="article">
+      <h1 class="article-title">{{title}}</h1>
+      <div class="article-content content">
+        {{content}}
+      </div>
+    </article> 
+    <aside class="barlist width-constrain mar-v">
+      <h2 class="barlist-title">Recently</h2>
+      <ul class="barlist-ul">
+        {% for li in index.values() | remove_index | where("section", value=section) | sort_by("date", reverse=True) | islice(10) %}
+          <li class="li">
+            <a class="li-title" href="{{li.output_path | to_url(base_url)}}">{{li.title}}</a>
+            <time class="li-date" datetime="{{li.date.strftime("%Y-%m-%d")}}">
+              on {{li.date.strftime("%b %d")}}
+            </time>
+          </li>
+        {% endfor %}      
+      </ul>
+    </aside>
+  </div>
+</div>
+{% endblock %}

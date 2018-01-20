@@ -1,0 +1,56 @@
+# Site-wide metadata. Keys added will be available under `site` in templates.
+site:
+  title: "My Website"
+  description: "A description"
+
+  nav:
+  - title: About
+    slug: about
+  - title: Favorite pages
+    slug: favorite
+  - title: Contributing
+    slug: contributing
+
+  footer_text: |
+    Content available under a
+    <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA</a>
+    license.
+
+# The base url used to qualify links.
+# in templates.
+base_url: "/"
+
+# The directory containing your source files.
+input_path: "content"
+
+# The directory where Lettersmith should write built files.
+output_path: "public"
+
+# The path to the theme directory. This directory contains template files for
+# your site design.
+theme_path: "theme/wiki"
+
+# Static files and directories that should be copied to output_path.
+# (recursive for directories)
+static_paths:
+- "static"
+
+# Path to a directory containing additional YAML metadata to add to
+# the template.
+data_path: "data"
+
+# Should Lettersmith build drafts? Default is False.
+build_drafts: True
+
+# Headmatter fields that should be treated as taxonomies
+# taxonomies:
+# - tag
+
+# Settings for pagination
+# paging:
+#   # How many list items per page?
+#   per_page: 10
+#   # The template used to generate output paths for paging
+#   template: "page.html"
+#   # The template used to create an output_path.
+#   output_path_template: "page/{n}/index.html"
