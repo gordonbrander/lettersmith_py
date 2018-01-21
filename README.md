@@ -58,10 +58,10 @@ Becomes this:
     "date": "2018-01-17"
   }
   "content": "Some content",
-  "date": DateTime,
-  "modified": DateTime,
-  "file_created_time": DateTime,
-  "file_modified_time": DateTime,
+  "date": datetime,
+  "modified": datetime,
+  "file_created_time": datetime,
+  "file_modified_time": datetime,
   "input_path": "path/to/post.md",
   "output_path": "path/to/post/index.md",
   ...
