@@ -3,7 +3,7 @@ from lettersmith import util
 
 
 class test_put(unittest.TestCase):
-    def test_1(self):
+    def test_put(self):
         d = {"foo": 5, "bar": 10}
         d2 = util.put(d, "foo", 0)
         self.assertIsNot(d, d2)
@@ -11,15 +11,25 @@ class test_put(unittest.TestCase):
         self.assertEqual(d2["foo"], 0)
         self.assertEqual(d2["bar"], 10)
 
+    def test_delete(self):
+        d = {"foo": 5, "bar": 10}
+        d2 = util.put(d, "foo", None)
+        self.assertRaises(KeyError, lambda: d2["foo"])
+
 
 class test_merge(unittest.TestCase):
-    def test_1(self):
+    def test_merge_value(self):
         d = {"foo": 5, "bar": 10}
         d2 = util.merge(d, {"foo": 0})
         self.assertIsNot(d, d2)
         self.assertEqual(d["foo"], 5)
         self.assertEqual(d2["foo"], 0)
         self.assertEqual(d2["bar"], 10)
+
+    def test_merge_delete(self):
+        d = {"foo": 5, "bar": 10}
+        d2 = util.merge(d, {"foo": None})
+        self.assertRaises(KeyError, lambda: d2["foo"])
 
 
 class test_get(unittest.TestCase):
