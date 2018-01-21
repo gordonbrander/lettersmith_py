@@ -38,7 +38,8 @@ static_paths:
 data_path: "data"
 
 # Should Lettersmith build drafts? Default is False.
-build_drafts: True
+# A draft is any file prefixed with an underscore (_)
+build_drafts: False
 
 # Headmatter fields that should be treated as taxonomies
 # taxonomies:
