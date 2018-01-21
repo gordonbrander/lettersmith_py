@@ -6,10 +6,8 @@ site:
   nav:
   - title: About
     slug: about
-  - title: Favorite pages
-    slug: favorite
-  - title: Contributing
-    slug: contributing
+  - title: All pages
+    slug: all
 
   footer_text: |
     Content available under a

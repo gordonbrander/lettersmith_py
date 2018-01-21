@@ -1,0 +1,23 @@
+{% extends "_layout.html" %}
+
+{% block main %}
+<div class="col-content">
+  <div class="mar-v">
+    <article class="article">
+      <h1 class="article-title">{{title}}</h1>
+      <div class="article-content content">
+        {{content}}
+      </div>
+    </article> 
+    <aside class="barlist width-constrain mar-v">
+      <ul class="barlist-ul">
+        {% for li in index.values() | remove_index | where_not("simple_path", simple_path) | sort_by("title") %}
+          <li class="li">
+            <a class="li-title" href="{{li.output_path | to_url(base_url)}}">{{li.title}}</a>
+          </li>
+        {% endfor %}      
+      </ul>
+    </aside>
+  </div>
+</div>
+{% endblock %}
