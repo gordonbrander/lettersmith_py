@@ -4,6 +4,7 @@ Command line tool for scaffolding Lettersmith sites.
 from pathlib import Path, PurePath
 from os import makedirs
 import argparse
+import random
 
 from lettersmith import yamltools
 from lettersmith.file import copy
@@ -13,7 +14,7 @@ def main():
     cwd = Path.cwd()
     parser = argparse.ArgumentParser(
         description="""A tool for scaffolding Lettersmith sites""")
-    parser.add_argument("project-path",
+    parser.add_argument("project_path",
         type=Path,
         help="Path to your project directory")
     parser.add_argument("-t", "--type",
@@ -28,4 +29,11 @@ def main():
 
     copy(scaffold_path, project_path, contents=True)
 
-    print("Woo! All done!")
+    messages = (
+        "Hocus pocus — Your new site is ready!",
+        "Alakazam — Your new site is ready!",
+        "Tada — Your new site is ready!",
+        "A wild website appears!"
+    )
+
+    print(random.choice(messages))
