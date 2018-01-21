@@ -88,3 +88,7 @@ When you're done transforming things, you can pass the iterable to `Docs.write`,
 ```python
 Docs.write(docs, output_path=output_path)
 ```
+
+That's it!
+
+Lettersmith comes with a swiss army knife of helpful mapping/filtering tools, for things like Markdown, templates, drafts, tags, wikilinks, and more — and if you see something missing it's easy to write your own functions.
