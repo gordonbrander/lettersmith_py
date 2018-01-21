@@ -26,6 +26,7 @@ FILTERS = {
     "sort": util.sort,
     "sort_by": util.sort_by,
     "where": util.where,
+    "where_not": util.where_not,
     "where_key": util.where_key,
     "where_contains": util.where_contains,
     "remove_index": Docs.remove_index,

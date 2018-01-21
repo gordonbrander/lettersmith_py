@@ -158,6 +158,15 @@ def where(iterable_of_dicts, key, value):
     return (x for x in iterable_of_dicts if has(x, key, value))
 
 
+def where_not(iterable_of_dicts, key, value):
+    """
+    Query an iterable of dictionaries for keys NOT matching value.
+    This may mean the key does not exist, or the value does not match.
+    `key` may be an iterable of keys representing a key path.
+    """
+    return (x for x in iterable_of_dicts if not has(x, key, value))
+
+
 def where_key(iterable_of_dicts, key):
     """
     Query an iterable of dictionaries
