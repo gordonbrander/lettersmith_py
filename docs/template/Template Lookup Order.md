@@ -9,6 +9,12 @@ By default, templates are searched for in this order:
 
 Of course, you can modify or add to the templates list, using plugins.
 
+## What is a section?
+
+The section is read from the `doc["section"]` of the document (if any). By default, a doc's section is the top-level directory (relative) in its `simple_path`, but of course, you can change this using plugins.
+
+See [[docs]] page for more detail on document items.
+
 ## Specifying a template by hand
 
 If you specify a template for a doc with the `doc["meta"]["template"]` key, that template will be added to the front of the list (preferred above all).
