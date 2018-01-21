@@ -1,0 +1,67 @@
+import unittest
+from lettersmith import util
+
+
+class test_put(unittest.TestCase):
+    def test_1(self):
+        d = {"foo": 5, "bar": 10}
+        d2 = util.put(d, "foo", 0)
+        self.assertIsNot(d, d2)
+        self.assertEqual(d["foo"], 5)
+        self.assertEqual(d2["foo"], 0)
+        self.assertEqual(d2["bar"], 10)
+
+
+class test_merge(unittest.TestCase):
+    def test_1(self):
+        d = {"foo": 5, "bar": 10}
+        d2 = util.merge(d, {"foo": 0})
+        self.assertIsNot(d, d2)
+        self.assertEqual(d["foo"], 5)
+        self.assertEqual(d2["foo"], 0)
+        self.assertEqual(d2["bar"], 10)
+
+
+class test_get(unittest.TestCase):
+    data = {
+        "foo": {
+            "bar": {
+                "baz": 10
+            }
+        }
+    }
+
+    def test_1(self):
+        """
+        Can get via a string
+        """
+        v = util.get(self.data, "foo")
+        self.assertEqual(type(v), dict)
+
+
+    def test_2(self):
+        """
+        Can return a default for properties that don't exist.
+        """
+        v = util.get(self.data, "kablooey", default=True)
+        self.assertEqual(v, True)
+
+
+    def test_2(self):
+        """
+        The default default is None
+        """
+        v = util.get(self.data, "kablooey")
+        self.assertIsNone(v)
+
+
+    def test_4(self):
+        """
+        Can get deep properties
+        """
+        v = util.get(self.data, ("foo", "bar", "baz"))
+        self.assertEqual(v, 10)
+
+
+if __name__ == '__main__':
+    unittest.main()
