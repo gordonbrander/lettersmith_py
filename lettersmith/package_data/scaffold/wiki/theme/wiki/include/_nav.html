@@ -1,5 +1,5 @@
 <ul class="sitenav-links">
   {% for link in site.nav %}
-  <li><a href="{{base_url}}{{link.slug}}">{{link.title}}</a></li>
+  <li><a href="{{link.slug | to_url(base_url)}}">{{link.title}}</a></li>
   {% endfor %}
 </ul>
