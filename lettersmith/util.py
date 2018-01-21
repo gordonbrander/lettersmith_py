@@ -130,14 +130,6 @@ def pick(d, keys):
 _EMPTY_TUPLE = tuple()
 
 
-def has(x, key, value):
-    """
-    Check for a value in a deep object.
-    `key` is a key path (can be a single key or an iterable of keys).
-    """
-    return get(x, key) == value
-
-
 def contains(x, key, value):
     """
     Check for the inclusion of a value in an indexable in a deep object.
@@ -159,7 +151,7 @@ def where(iterable_of_dicts, key, value):
     Query an iterable of dictionaries for keys matching value.
     `key` may be an iterable of keys representing a key path.
     """
-    return (x for x in iterable_of_dicts if has(x, key, value))
+    return (x for x in iterable_of_dicts if get(x, key) == value)
 
 
 def where_not(iterable_of_dicts, key, value):
@@ -168,7 +160,7 @@ def where_not(iterable_of_dicts, key, value):
     This may mean the key does not exist, or the value does not match.
     `key` may be an iterable of keys representing a key path.
     """
-    return (x for x in iterable_of_dicts if not has(x, key, value))
+    return (x for x in iterable_of_dicts if get(x, key) != value)
 
 
 def where_key(iterable_of_dicts, key):

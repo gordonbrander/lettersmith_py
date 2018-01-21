@@ -73,5 +73,32 @@ class test_get(unittest.TestCase):
         self.assertEqual(v, 10)
 
 
+class test_has_key(unittest.TestCase):
+    data = {
+        "foo": {
+            "bar": {
+                "baz": 10
+            }
+        }
+    }
+
+    def test_1(self):
+        v = util.has_key(self.data, ("foo", "bar", "baz"))
+        self.assertEqual(v, True)
+
+
+class test_contains(unittest.TestCase):
+    data = {
+        "foo": {
+            "bar": {
+                "baz": (5, 10, 15, 20)
+            }
+        }
+    }
+
+    def test_1(self):
+        v = util.contains(self.data, ("foo", "bar", "baz"), 10)
+        self.assertEqual(v, True)
+
 if __name__ == '__main__':
     unittest.main()
