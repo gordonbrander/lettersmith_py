@@ -74,13 +74,17 @@ Plugins are just functions that transform a Python dictionary.
 
 To transform many files, you can load them into an iterable, then use list comprehensions, generator expressions, and map, filter, reduce:
 
-    # Get all markdown paths under source/
-    paths = Path("source").glob("*.md")
-    # Load them as Python dicts
-    docs = (Doc.load(path) for path in paths)
-    # Transform them with your function
-    docs = (my_plugin(doc) for doc in docs)
+```python
+# Get all markdown paths under source/
+paths = Path("source").glob("*.md")
+# Load them as Python dicts
+docs = (Doc.load(path) for path in paths)
+# Transform them with your function
+docs = (my_plugin(doc) for doc in docs)
+```
 
 When you're done transforming things, you can pass the iterable to `Docs.write`, which takes care of writing out the files to an output directory.
 
-    Docs.write(docs, output_path=output_path)
+```python
+Docs.write(docs, output_path=output_path)
+```
