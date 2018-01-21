@@ -2,6 +2,7 @@ import re
 
 
 def strip_html(html_str):
+    """Remove html tags from a string."""
     return re.sub('<[^<]+?>', '', html_str)
 
 

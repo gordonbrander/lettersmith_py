@@ -13,7 +13,9 @@ from lettersmith.util import put, merge
 
 def load(pathlike):
     """
-    Load doc from file path
+    Load doc from file path.
+
+    Returns a dictionary.
     """
     file_created_time, file_modified_time = read_file_times(pathlike)
     with open(pathlike) as f:
@@ -59,9 +61,9 @@ def rm_content(doc):
     """
     Remove the content field.
     Useful if you need to collect a lot of docs into memory and the content
-    field is huge.
+    field is huge. Pairs well with `reload_content`.
 
-    Pairs well with `reload_content`.
+    Returns a new doc.
     """
     return put(doc, "content", None)
 
@@ -69,6 +71,8 @@ def rm_content(doc):
 def reload_content(doc):
     """
     Reload the content field, if missing.
+
+    Returns a new doc.
     """
     if doc.get("content"):
         return doc
@@ -83,12 +87,19 @@ def reload_content(doc):
 
 
 def write(doc, output_dir):
-    """Write a doc to filepath"""
+    """
+    Write a doc to the filesystem.
+
+    Uses `doc["output_path"]` and `output_dir` to construct the output path.
+    """
     write_file_deep(path.join(output_dir, doc["output_path"]), doc["content"])
 
 
 def summary(doc, max_len=250, suffix="..."):
-    """Read or generate a summary for a doc"""
+    """
+    Read or generate a summary for a doc.
+    Returns a string.
+    """
     try:
         return doc["meta"]["summary"]
     except KeyError:
@@ -113,14 +124,14 @@ def to_li(doc):
 
 
 def change_ext(doc, ext):
-    """Change the extention on a doc's output_path, returning a new doc"""
+    """Change the extention on a doc's output_path, returning a new doc."""
     updated_path = PurePath(doc["output_path"]).with_suffix(ext)
     return put(doc, "output_path", updated_path)
 
 
 def with_path(glob):
     """
-    Check if a path matches glob pattern
+    Check if a path matches glob pattern.
     """
     def has_path(doc):
         return fnmatch(doc["simple_path"], glob)

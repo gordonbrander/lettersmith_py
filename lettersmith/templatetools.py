@@ -33,6 +33,9 @@ def read_affiliated_templates(pathlike):
 
 
 def add_templates(doc):
+    """
+    Add associated templates to doc.
+    """
     templates = []
     try:
         custom_template = doc["meta"]["template"]

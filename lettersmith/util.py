@@ -107,7 +107,11 @@ def map_match(predicate, f, iterable, *args, **kwargs):
     doesn't pass `predicate` test is untouched — it will still be
     yielded by the generator, but it won't be mapped.
     """
-    return (f(x, *args, **kwargs) for x in iterable if predicate(x))
+    for x in iterable:
+        if predicate(x):
+            yield f(x, *args, **kwargs)
+        else:
+            yield x
 
 
 def find(iterable, predicate, default=None):

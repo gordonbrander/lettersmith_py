@@ -24,7 +24,15 @@ def remove_index(docs):
     return (doc for doc in docs if not is_index(doc["simple_path"]))
 
 
-# TODO introduce siblings filter
+def filter_siblings(docs, simple_path):
+    """
+    Filter a list of dicts with `simple_path`, returning a generator
+    yielding only those dicts who's simple_path is a sibling to
+    `simple_path`.
+    """
+    return (
+        doc for doc in docs
+        if pathtools.is_sibling(simple_path, doc["simple_path"]))
 
 
 def reduce_li(docs):
@@ -33,7 +41,7 @@ def reduce_li(docs):
 
 def reduce_index(docs):
     """
-    Build list item index
+    Build li index. This is just a dict of summarized docs.
     """
     return {doc["simple_path"]: Doc.to_li(doc) for doc in docs}
 

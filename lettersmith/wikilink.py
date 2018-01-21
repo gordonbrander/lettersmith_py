@@ -74,6 +74,10 @@ def index_wikilinks(docs, base="/"):
 
 
 def index_backlinks(docs):
+    """
+    Index all backlinks in an iterable of docs. This assumes you have
+    already uplifted wikilinks from content with `uplift_wikilinks`.
+    """
     # Create an index of `slug: [slugs]`
     wikilink_index = {
         to_slug(doc["title"]): doc
@@ -97,6 +101,10 @@ def index_backlinks(docs):
 def map_wikilinks(docs,
     base="/", link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE,
     wikilink_index=None):
+    """
+    Return a generator that will yield docs with `[[wikilinks]]` rendered as
+    HTML links.
+    """
     for doc in docs:
         yield render_doc(doc,
             wikilink_index=wikilink_index, base=base,

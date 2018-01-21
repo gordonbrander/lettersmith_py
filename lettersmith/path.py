@@ -10,10 +10,12 @@ STRANGE_CHAR_PATTERN = "[{}]".format(re.escape(_STRANGE_CHARS))
 
 
 def space_to_dash(text):
+    """Replace spaces with dashes."""
     return re.sub("\s+", "-", text)
 
 
 def remove_strange_chars(text):
+    """Remove funky characters that don't belong in a URL."""
     return re.sub(STRANGE_CHAR_PATTERN, "", text)
 
 
@@ -55,6 +57,10 @@ def is_local_url(url):
 
 
 def qualify_url(pathlike, base="/"):
+    """
+    Qualify a URL with a basepath. Will leave URL if the URL is already
+    qualified.
+    """
     path_str = str(pathlike)
     if not path_str.startswith(base) and is_local_url(path_str):
         return base + path_str
@@ -63,7 +69,7 @@ def qualify_url(pathlike, base="/"):
 
 
 def remove_base_slash(any_path):
-    """Remove base slash from a path"""
+    """Remove base slash from a path."""
     return re.sub("^/", "", any_path)
 
 
@@ -118,37 +124,6 @@ def body(pathlike):
     return PurePath(*body_parts)
 
 
-def nice_name(a_path):
-    """
-    Get the "nice name" of a path... If the path ends with index.html,
-    return the directory name above instead.
-    """
-    dirname, basename = path.split(a_path)
-    if basename.endswith("index.html"):
-        basename = path.basename(dirname)
-    name, ext = path.splitext(basename)
-    return name
-
-
-def nice_dirname(nice_path):
-    """
-    Get the dirname of a "nice" path... If the path ends with index.html,
-    return the directory name above instead.
-    """
-    dirname, basename = path.split(nice_path)
-    if basename.endswith("index.html"):
-        dirname = path.dirname(dirname)
-    return dirname
-
-
-def change_basename(file_path, new_basename):
-    """
-    Change the basename of a path, leaving the rest untouched.
-    """
-    basename = path.basename(file_path)
-    return re.sub(basename + "$", new_basename, file_path, count=1)
-
-
 def is_draft(pathlike):
     return PurePath(pathlike).name.startswith("_")
 
@@ -194,28 +169,6 @@ def read_dir(some_path):
     return path.dirname(some_path) if is_file_like(some_path) else some_path
 
 
-def is_child_dir(path_a, path_b):
-    """
-    What is a child dir?
-
-        foo/bar/baz.html
-        foo/bar/bing/bla.html # is_child_dir
-    """
-    return path.dirname(read_dir(path_b)) == read_dir(path_a)
-
-
-def is_child_index(path_a, path_b):
-    """
-    What is a child index?
-
-        foo/bar/baz.html
-        foo/bar/bing/index.html # is_child_dir
-    """
-    return (
-        is_index(path_b) and
-        read_dir(path_a) == path.dirname(read_dir(path_b)))
-
-
 def is_sibling(path_a, path_b):
     """
     What is a sibling:
@@ -228,7 +181,7 @@ def is_sibling(path_a, path_b):
     foo/bar/boing/index.html
     """
     return (
-        path.dirname(path_a) == path.dirname(path_b)
+        PurePath(path_a).parent == PurePath(path_b).parent
         and not is_index(path_b))
 
 

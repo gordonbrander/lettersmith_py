@@ -52,5 +52,9 @@ def copy(input_path, output_path, recursive=True, contents=False):
 
 
 def copy_all(input_paths, output_path, recursive=True):
+    """
+    Copy an iterable of file and/or directory paths to `output_path`.
+    If `recursive` is True, will copy directory contents recursively.
+    """
     for input_path in input_paths:
         copy(input_path, output_path, recursive)

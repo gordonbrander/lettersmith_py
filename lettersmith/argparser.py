@@ -7,8 +7,12 @@ from pathlib import Path
 from .yamltools import load
 
 
-# A basic parser
 def lettersmith_argparser(description="Builds a site with Lettersmith"):
+    """
+    Creates a Lettersmith argparser. You supply the description. This
+    makes it easy to create your own static site generator, and have a
+    useful description text for it.
+    """
     parser = argparse.ArgumentParser(
         description=description,
     )

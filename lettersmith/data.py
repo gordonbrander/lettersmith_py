@@ -33,9 +33,11 @@ def _smart_read_data_file(file_path):
 def load_data_files(dir_path):
     """
     Create a data dictionary for the template. Each file in the list
-    Will be loaded (supported types include JSON, YAML). The structured
+    will be loaded (supported types include JSON, YAML). The structured
     data will be stored under a key corresponding to the filename
-    without its extension.
+    (without extension).
+
+    Returns a dictionary of structured Python data.
     """
     data = {}
     for file_path in glob_all(dir_path, ("*.yaml", "*.yml", "*.json")):

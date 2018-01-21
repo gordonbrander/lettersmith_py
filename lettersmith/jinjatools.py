@@ -30,6 +30,7 @@ FILTERS = {
     "where_key": util.where_key,
     "where_contains": util.where_contains,
     "remove_index": Docs.remove_index,
+    "filter_siblings": Docs.filter_siblings,
     "hash_digest": hash_digest
 }
 
@@ -54,6 +55,9 @@ def create_env(templates_path, filters={}, context={}):
 
 
 def should_template(doc):
+    """
+    Check if a doc should be templated. Returns a bool.
+    """
     try:
         return len(doc["templates"]) > 0
     except KeyError:
@@ -61,15 +65,21 @@ def should_template(doc):
 
 
 def renderer(env):
+    """
+    Create a render function with a bound environment.
+    Returns a render function.
+    """
     def render(doc):
+        """
+        Render a document with bound environment.
+        """
         jinja_template = env.select_template(doc["templates"])
         rendered = jinja_template.render(doc)
         return util.put(doc, "content", rendered)
     return render
 
 
-def map_jinja(docs,
-    context={}, filters={}, theme_path="theme"):
+def map_jinja(docs, context={}, filters={}, theme_path="theme"):
     """
     Render a list of docs through Jinja templates.
     Returns a generator of rendered docs.

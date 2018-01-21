@@ -7,15 +7,15 @@ A typical doc has these properties.
   # The content of the file (usually the stuff below headmatter)
   "content": "...",
   # A datetime representing last time file was modified
-  "modified_time": DateTime,
+  "modified_time": datetime,
   # A datetime representing when file was created
-  "created_time": DateTime,
+  "created_time": datetime,
   # A datetime representing date in headmatter.
   # Falls back to created_time.
-  "date": DateTime,
+  "date": datetime,
   # A datetime representing modified key in headmatter.
   # Falls back to modified_time.
-  "modified": DateTime,
+  "modified": datetime,
   # A tuple of templates associated with this content.
   # This will frontload doc["meta"]["template"], if it is present.
   # The first template that exists will be used.
