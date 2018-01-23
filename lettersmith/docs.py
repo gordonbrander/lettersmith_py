@@ -5,12 +5,16 @@ from lettersmith.path import is_draft, is_index, is_doc_file
 from lettersmith import doc as Doc
 
 
-def load(file_paths):
+def load(file_paths, relative_to=""):
     """
     Given an iterable of fle paths, create an iterable of loaded docs.
     Ignores special files.
     """
-    return (Doc.load(x) for x in file_paths if is_doc_file(x))
+    return (
+        Doc.load(x, relative_to=relative_to)
+        for x in file_paths
+        if is_doc_file(x)
+    )
 
 
 def remove_drafts(docs):

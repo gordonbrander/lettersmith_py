@@ -38,7 +38,7 @@ def main():
     data = load_data_files(data_path)
 
     md_paths = tuple(Path(input_path).glob("**/*.md"))
-    docs = Docs.load(md_paths)
+    docs = Docs.load(md_paths, relative_to=input_path)
     docs = docs if build_drafts else Docs.remove_drafts(docs)
 
     docs = templatetools.map_templates(docs)

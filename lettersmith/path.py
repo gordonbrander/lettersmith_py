@@ -115,15 +115,6 @@ def to_url(pathlike, base="/"):
     return qualified
 
 
-def body(pathlike):
-    """
-    Return the "body" of the path...
-    Everything except the top level directory.
-    """
-    body_parts = PurePath(pathlike).parts[1:]
-    return PurePath(*body_parts)
-
-
 def is_draft(pathlike):
     return PurePath(pathlike).name.startswith("_")
 

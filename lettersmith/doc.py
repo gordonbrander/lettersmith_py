@@ -11,7 +11,7 @@ from lettersmith import path as pathtools
 from lettersmith.util import put, merge
 
 
-def load(pathlike):
+def load(pathlike, relative_to=""):
     """
     Load doc from file path.
 
@@ -22,7 +22,7 @@ def load(pathlike):
         raw = f.read()
         meta, content = frontmatter.parse(raw)
         input_path = PurePath(pathlike)
-        simple_path = pathtools.body(input_path)
+        simple_path = input_path.relative_to(relative_to)
         output_path = pathtools.to_nice_path(simple_path)
         # Use either the meta title or the file name as the title.
         try:
