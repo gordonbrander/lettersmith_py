@@ -101,6 +101,20 @@ class test_contains(unittest.TestCase):
         self.assertEqual(v, True)
 
 
+class test_where(unittest.TestCase):
+    data = [
+        {"section": "foo"},
+        {"section": "bar"},
+        {"section": "bar"},
+        {"section": "foo"},
+    ]
+
+    def test_1(self):
+        res = util.where(self.data, "section", "foo")
+        tuple_res = tuple(res)
+        self.assertEqual(len(tuple_res), 2)
+
+
 class test_where_matches(unittest.TestCase):
     data = [
         {"simple_path": "foo/bar/baz/somefile.md"},
@@ -109,13 +123,13 @@ class test_where_matches(unittest.TestCase):
         {"simple_path": "foo/bling/somefile.txt"},
     ]
 
-    def test_1(self):
+    def test_basic_glob(self):
         res = util.where_matches(self.data, "simple_path", "*.md")
         tuple_res = tuple(res)
         self.assertEqual(len(tuple_res), 2)
         self.assertEqual(tuple_res[0]["simple_path"], "foo/bar/baz/somefile.md")
 
-    def test_2(self):
+    def test_prefixed_paths(self):
         res = util.where_matches(self.data, "simple_path", "foo/bar/*.txt")
         tuple_res = tuple(res)
         self.assertEqual(len(tuple_res), 1)
