@@ -3,6 +3,7 @@ Utility functions.
 Mostly tools for working with dictionaries and iterables.
 """
 from functools import reduce
+from fnmatch import fnmatch
 
 
 def compose2(f, e):
@@ -146,35 +147,49 @@ def has_key(x, key):
     return get(x, key) != None
 
 
-def where(iterable_of_dicts, key, value):
+def where(dicts, key, value):
     """
     Query an iterable of dictionaries for keys matching value.
     `key` may be an iterable of keys representing a key path.
     """
-    return (x for x in iterable_of_dicts if get(x, key) == value)
+    return (x for x in dicts if get(x, key) == value)
 
 
-def where_not(iterable_of_dicts, key, value):
+def where_not(dicts, key, value):
     """
     Query an iterable of dictionaries for keys NOT matching value.
     This may mean the key does not exist, or the value does not match.
     `key` may be an iterable of keys representing a key path.
     """
-    return (x for x in iterable_of_dicts if get(x, key) != value)
+    return (x for x in dicts if get(x, key) != value)
 
 
-def where_key(iterable_of_dicts, key):
+def where_key(dicts, key):
     """
     Query an iterable of dictionaries
     """
-    return (x for x in iterable_of_dicts if has_key(x, key))
+    return (x for x in dicts if has_key(x, key))
 
 
-def where_contains(iterable_of_dicts, key, value):
+def where_contains(dicts, key, value):
     """
-    Query an iterable of dictionaries (optionally sorted)
+    Query an iterable of dictionaries by determining if a `value` is in
+    a data structure at `key`. This would be for checking the presence of
+    a value within an list that exists at `key`, for example.
+
+    `key` may be an iterable of keys representing a key path.
     """
-    return (x for x in iterable_of_dicts if contains(x, key, value))
+    return (x for x in dicts if contains(x, key, value))
+
+
+def where_matches(dicts, key, glob):
+    """
+    Query an iterable of dictionaries, matching the value against a
+    Unix glob-style pattern.
+
+    Returns an iterable of matching dictionaries.
+    """
+    return (x for x in dicts if fnmatch(get(x, key), glob))
 
 
 def sort(iterable, key=None, reverse=None):

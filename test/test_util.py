@@ -100,5 +100,27 @@ class test_contains(unittest.TestCase):
         v = util.contains(self.data, ("foo", "bar", "baz"), 10)
         self.assertEqual(v, True)
 
+
+class test_where_matches(unittest.TestCase):
+    data = [
+        {"simple_path": "foo/bar/baz/somefile.md"},
+        {"simple_path": "foo/bar/baz/somefile.txt"},
+        {"simple_path": "foo/bar/baz/somefile.md"},
+        {"simple_path": "foo/bling/somefile.txt"},
+    ]
+
+    def test_1(self):
+        res = util.where_matches(self.data, "simple_path", "*.md")
+        tuple_res = tuple(res)
+        self.assertEqual(len(tuple_res), 2)
+        self.assertEqual(tuple_res[0]["simple_path"], "foo/bar/baz/somefile.md")
+
+    def test_2(self):
+        res = util.where_matches(self.data, "simple_path", "foo/bar/*.txt")
+        tuple_res = tuple(res)
+        self.assertEqual(len(tuple_res), 1)
+        self.assertEqual(tuple_res[0]["simple_path"], "foo/bar/baz/somefile.txt")
+
+
 if __name__ == '__main__':
     unittest.main()
