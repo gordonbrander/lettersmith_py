@@ -66,9 +66,9 @@ def main():
     # Bring back content field (in generator, so only one content is
     # in memory at a time).
     docs = (Doc.reload_content(doc) for doc in docs)
-    docs = markdowntools.map_markdown(docs)
     docs = wikilink.map_wikilinks(docs,
         wikilink_index=wikilink_index, base=base_url)
+    docs = markdowntools.map_markdown(docs)
 
     docs = chain(docs, paging_docs)
 
