@@ -10,6 +10,7 @@ from lettersmith import docs as Docs
 from lettersmith import doc as Doc
 from lettersmith import markdowntools
 from lettersmith import wikilink
+from lettersmith import absolutize
 from lettersmith.permalink import map_permalink
 from lettersmith import templatetools
 from lettersmith import paging
@@ -69,6 +70,7 @@ def main():
     docs = wikilink.map_wikilinks(docs,
         wikilink_index=wikilink_index, base=base_url)
     docs = markdowntools.map_markdown(docs)
+    docs = absolutize.map_absolutize(docs, base=base_url)
 
     docs = chain(docs, paging_docs)
 

@@ -1,4 +1,4 @@
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from pathlib import Path, PurePath
 from os import sep, listdir, path, walk
 import re
@@ -63,7 +63,7 @@ def qualify_url(pathlike, base="/"):
     """
     path_str = str(pathlike)
     if not path_str.startswith(base) and is_local_url(path_str):
-        return base + path_str
+        return urljoin(base, path_str)
     else:
         return path_str
 
