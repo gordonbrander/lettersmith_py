@@ -28,6 +28,7 @@ FILTERS = {
     "where": util.where,
     "where_not": util.where_not,
     "where_key": util.where_key,
+    "where_not_key": util.where_not_key,
     "where_contains": util.where_contains,
     "where_matches": util.where_matches,
     "remove_index": Docs.remove_index,
