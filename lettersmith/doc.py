@@ -136,24 +136,28 @@ def decorate_smart_items(doc):
     })
 
 
+# Whitelist of keys to keep for li objects
+_LI_KEYS = (
+    "title",
+    "date",
+    "modified",
+    "file_created_time",
+    "file_modified_time",
+    "simple_path",
+    "output_path",
+    "section",
+    "meta",
+    "summary"
+)
+
+
 def to_li(doc):
     """
     Return a "list item" version of the doc... a small dictionary
     with a handful of whitelisted fields. This is typically what is
     used for indexes.
     """
-    return pick(doc, (
-        "title",
-        "date",
-        "modified",
-        "file_created_time",
-        "file_modified_time",
-        "simple_path",
-        "output_path",
-        "section",
-        "meta",
-        "summary"
-    ))
+    return pick(doc, _LI_KEYS)
 
 
 def change_ext(doc, ext):
