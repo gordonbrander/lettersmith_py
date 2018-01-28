@@ -72,6 +72,7 @@ def main():
         wikilink_index=wikilink_index, base=base_url)
     docs = markdowntools.map_markdown(docs)
     docs = absolutize.map_absolutize(docs, base=base_url)
+    docs = (Doc.decorate_summary(doc) for doc in docs)
 
     docs = chain(docs, paging_docs)
 

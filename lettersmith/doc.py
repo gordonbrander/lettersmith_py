@@ -129,12 +129,17 @@ def decorate_smart_items(doc):
     """
     return merge(doc, {
         "title": read_title(doc),
-        "summary": read_summary(doc),
         "section": pathtools.tld(doc["simple_path"]),
         "date": read_date(doc),
         "modified": read_modified(doc)
     })
 
+
+def decorate_summary(doc):
+    """
+    Add a summary item to doc.
+    """
+    return put(doc, "summary", read_summary(doc))
 
 # Whitelist of keys to keep for li objects
 _LI_KEYS = (
