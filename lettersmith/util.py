@@ -37,29 +37,14 @@ def get(d, keys, default=None):
         return default
 
 
-def set(d, k, v):
-    """
-    Set or delete an attribute
-    """
-    if v != None:
-        d[k] = v
-    else:
-        try:
-            del d[k]
-        except KeyError:
-            pass
-    return d
-
-
 def merge(d, patch):
     """
     Merge 2 dictionaries, returning a new dictionary.
-    `None` values in `patch` are treated as "delete this key".
     """
-    out = d.copy()
-    for key, value in patch.items():
-        set(out, key, value)
-    return out
+    e = d.copy()
+    for k, v in patch.items():
+        e[k] = v
+    return e
 
 
 def put(d, k, v):
@@ -67,7 +52,9 @@ def put(d, k, v):
     Given a dict d, set value v at key k, returning new dict.
     New dict is a shallow copy of dict d.
     """
-    return set(d.copy(), k, v)
+    e = d.copy()
+    e[k] = v
+    return e
 
 
 def merge_deep(a, b):
@@ -122,10 +109,18 @@ def find(iterable, predicate, default=None):
 
 def pick(d, keys):
     """
-    Return a copy of the object, filtered to only have values for the
-    whitelisted array of valid keys.
+    Create a new dict with only only the items for keys in `keys`.
+    Basically, whitelist certain keys in the dict.
     """
     return {k: v for k, v in d.items() if k in keys}
+
+
+def unset(d, keys):
+    """
+    Remove specified keys from dict.
+    Basically, blacklist certain keys in the original dict.
+    """
+    return {k: v for k, v in d.items() if k not in keys}
 
 
 _EMPTY_TUPLE = tuple()
@@ -166,10 +161,18 @@ def where_not(dicts, key, value):
 
 def where_key(dicts, key):
     """
-    Query an iterable of dictionaries
+    Query an iterable of dictionaries that have `key`.
+    `key` may be an iterable of keys representing a key path.
     """
     return (x for x in dicts if has_key(x, key))
 
+
+def where_not_key(dicts, key):
+    """
+    Query an iterable of dictionaries that do NOT have `key`.
+    `key` may be an iterable of keys representing a key path.
+    """
+    return (x for x in dicts if not has_key(x, key))
 
 def where_contains(dicts, key, value):
     """

@@ -8,7 +8,7 @@ from lettersmith.date import (parse_iso_8601, read_file_times)
 from lettersmith.file import write_file_deep
 from lettersmith.stringtools import truncate, strip_html
 from lettersmith import path as pathtools
-from lettersmith.util import put, merge
+from lettersmith.util import put, merge, unset
 
 
 def load(pathlike, relative_to=""):
@@ -65,7 +65,7 @@ def rm_content(doc):
 
     Returns a new doc.
     """
-    return put(doc, "content", None)
+    return unset(doc, ("content",))
 
 
 def reload_content(doc):

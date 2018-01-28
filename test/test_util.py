@@ -11,11 +11,6 @@ class test_put(unittest.TestCase):
         self.assertEqual(d2["foo"], 0)
         self.assertEqual(d2["bar"], 10)
 
-    def test_delete(self):
-        d = {"foo": 5, "bar": 10}
-        d2 = util.put(d, "foo", None)
-        self.assertRaises(KeyError, lambda: d2["foo"])
-
 
 class test_merge(unittest.TestCase):
     def test_merge_value(self):
@@ -26,10 +21,14 @@ class test_merge(unittest.TestCase):
         self.assertEqual(d2["foo"], 0)
         self.assertEqual(d2["bar"], 10)
 
-    def test_merge_delete(self):
-        d = {"foo": 5, "bar": 10}
-        d2 = util.merge(d, {"foo": None})
+
+class test_unset(unittest.TestCase):
+    def test_delete(self):
+        d = {"foo": 5, "bar": 10, "baz": 20}
+        d2 = util.unset(d, ("foo", "bar"))
         self.assertRaises(KeyError, lambda: d2["foo"])
+        self.assertRaises(KeyError, lambda: d2["bar"])
+        self.assertEqual(d2["baz"], 20)
 
 
 class test_get(unittest.TestCase):
