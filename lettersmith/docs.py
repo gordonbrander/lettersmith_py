@@ -39,10 +39,6 @@ def filter_siblings(docs, simple_path):
         if pathtools.is_sibling(simple_path, doc["simple_path"]))
 
 
-def reduce_li(docs):
-    return tuple(Doc.to_li(doc) for doc in docs)
-
-
 def reduce_index(docs):
     """
     Build li index. This is just a dict of summarized docs.
