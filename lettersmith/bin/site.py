@@ -42,6 +42,7 @@ def main():
     docs = Docs.load(md_paths, relative_to=input_path)
     docs = docs if build_drafts else Docs.remove_drafts(docs)
 
+    docs = (Doc.decorate_smart_items(doc) for doc in docs)
     docs = templatetools.map_templates(docs)
     docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
     docs = map_permalink(docs, permalink_templates)
