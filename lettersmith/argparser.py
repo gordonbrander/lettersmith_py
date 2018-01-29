@@ -6,6 +6,8 @@ import argparse
 from pathlib import Path
 from .yamltools import load
 
+from lettersmith import paging
+
 
 def lettersmith_argparser(description="Builds a site with Lettersmith"):
     """
@@ -23,3 +25,23 @@ def lettersmith_argparser(description="Builds a site with Lettersmith"):
         default={}
     )
     return parser
+
+
+def read_config(config):
+    """
+    Reads config object, providing sensible defaults for properties
+    that aren't defined.
+    """
+    return {
+        "input_path": config.get("input_path", "content"),
+        "output_path": config.get("output_path", "public"),
+        "theme_path": config.get("theme_path", "theme"),
+        "data_path": config.get("data_path", "data"),
+        "static_paths": config.get("static_paths", []),
+        "base_url": config.get("base_url", "/"),
+        "build_drafts": config.get("build_drafts", False),
+        "permalink_templates": config.get("permalink_templates", {}),
+        "taxonomies": config.get("taxonomies", []),
+        "paging": paging.read_config(config),
+        "site": config.get("site", {})
+    }

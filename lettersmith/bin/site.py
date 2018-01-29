@@ -4,7 +4,7 @@ from pathlib import PurePath, Path
 from itertools import chain
 from subprocess import CalledProcessError
 
-from lettersmith.argparser import lettersmith_argparser
+from lettersmith.argparser import lettersmith_argparser, read_config
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
 from lettersmith import doc as Doc
@@ -20,32 +20,27 @@ from lettersmith.data import load_data_files
 from lettersmith.file import copy, copy_all
 
 
+
 def main():
     parser = lettersmith_argparser(
         description="""Generates a blog-aware site with Lettersmith""")
     args = parser.parse_args()
-    config = args.config
-    theme_path = config.get("theme_path", "theme")
-    input_path = config.get("input_path", "content")
-    output_path = config.get("output_path", "public")
-    data_path = config.get("data_path", "data")
-    static_paths = config.get("static_paths", [])
-    base_url = config.get("base_url", "/")
-    build_drafts = config.get("build_drafts", False)
-    permalink_templates = config.get("permalink_templates", {})
-    taxonomies = config.get("taxonomies")
-    site = config.get("site", {})
+    config = read_config(args.config)
+    input_path = config["input_path"]
+    output_path = config["output_path"]
+    theme_path = config["theme_path"]
+    base_url = config["base_url"]
 
-    data = load_data_files(data_path)
+    data = load_data_files(config["data_path"])
 
     md_paths = tuple(Path(input_path).glob("**/*.md"))
     docs = Docs.load(md_paths, relative_to=input_path)
-    docs = docs if build_drafts else Docs.remove_drafts(docs)
+    docs = docs if config["build_drafts"] else Docs.remove_drafts(docs)
 
     docs = (Doc.decorate_smart_items(doc) for doc in docs)
     docs = templatetools.map_templates(docs)
     docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
-    docs = map_permalink(docs, permalink_templates)
+    docs = map_permalink(docs, config["permalink_templates"])
 
     # Remove content field...
     docs = (Doc.rm_content(doc) for doc in docs)
@@ -61,9 +56,10 @@ def main():
 
     # Create doc index dict for template
     index = Docs.reduce_index(docs)
-    taxonomy_index = taxonomy.index_by_taxonomy(docs, taxonomies=taxonomies)
+    taxonomy_index = taxonomy.index_by_taxonomy(docs,
+        taxonomies=config["taxonomies"])
 
-    paging_docs = paging.gen_paging(docs, **paging.read_config(config))
+    paging_docs = paging.gen_paging(docs, **config["paging"])
 
     # Bring back content field (in generator, so only one content is
     # in memory at a time).
@@ -81,7 +77,7 @@ def main():
         "index": index,
         "taxonomy_index": taxonomy_index,
         "backlink_index": backlink_index,
-        "site": site,
+        "site": config["site"],
         "data": data,
         "base_url": base_url,
         "now": datetime.now()
@@ -91,7 +87,7 @@ def main():
 
     # Copy static files from project dir (if any)
     try:
-        copy_all(static_paths, output_path)
+        copy_all(config["static_paths"], output_path)
     except CalledProcessError:
         pass
 
