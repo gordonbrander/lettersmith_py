@@ -35,6 +35,7 @@ def read_config(config):
     return {
         "input_path": config.get("input_path", "content"),
         "output_path": config.get("output_path", "public"),
+        "cache_path": config.get("cache_path", ".lettersmith_cache"),
         "theme_path": config.get("theme_path", "theme"),
         "data_path": config.get("data_path", "data"),
         "static_paths": config.get("static_paths", []),
