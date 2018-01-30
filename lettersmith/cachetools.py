@@ -1,4 +1,6 @@
 import shelve
+from os import makedirs
+from pathlib import PurePath
 
 
 def _get_simple_path(doc):
@@ -11,6 +13,10 @@ def write_cache(file_path, iterable, key=_get_simple_path):
     Eacy value is indexed using the `key` function. By default
     this is configured to index doc objects.
     """
+    try:
+        makedirs(PurePath(file_path).parent)
+    except:
+        pass
     with shelve.open(str(file_path)) as db:
         for value in iterable:
             db[key(value)] = value
