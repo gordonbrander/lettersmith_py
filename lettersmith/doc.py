@@ -1,6 +1,5 @@
 from os import path
 from pathlib import PurePath
-from datetime import date as Date
 
 import frontmatter
 
