@@ -16,6 +16,7 @@ from lettersmith import templatetools
 from lettersmith import paging
 from lettersmith import taxonomy
 from lettersmith import jinjatools
+from lettersmith import cachetools
 from lettersmith.data import load_data_files
 from lettersmith.file import copy, copy_all
 
@@ -28,6 +29,7 @@ def main():
     config = read_config(args.config)
     input_path = config["input_path"]
     output_path = config["output_path"]
+    cache_path = config["cache_path"]
     theme_path = config["theme_path"]
     base_url = config["base_url"]
 
@@ -42,28 +44,18 @@ def main():
     docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
     docs = map_permalink(docs, config["permalink_templates"])
 
-    # Remove content field...
-    docs = (Doc.rm_content(doc) for doc in docs)
-    # ...then collect docs into memory.
-    # Now we do all our cross-referencing.
-    # Doing this little dance increases the upper limit on the number
-    # of files that can be processed — particularly for sites with
-    # extremely large numbers of large docs.
-    docs = tuple(docs)
+    doc_cache_path = PurePath(cache_path, "docs")
+    cachetools.write_cache(doc_cache_path, docs)
 
-    wikilink_index = wikilink.index_wikilinks(docs, base=base_url)
-    backlink_index = wikilink.index_backlinks(docs)
+    stub_docs = cachetools.read_cache(doc_cache_path)
+    stub_docs = tuple(Doc.rm_content(doc) for doc in stub_docs)
+    wikilink_index = wikilink.index_wikilinks(stub_docs, base=base_url)
+    backlink_index = wikilink.index_backlinks(stub_docs)
+    index = Docs.reduce_index(stub_docs)
+    taxonomy_index = taxonomy.index_by_taxonomy(stub_docs, config["taxonomies"])
+    paging_docs = paging.gen_paging(stub_docs, **config["paging"])
 
-    # Create doc index dict for template
-    index = Docs.reduce_index(docs)
-    taxonomy_index = taxonomy.index_by_taxonomy(docs,
-        taxonomies=config["taxonomies"])
-
-    paging_docs = paging.gen_paging(docs, **config["paging"])
-
-    # Bring back content field (in generator, so only one content is
-    # in memory at a time).
-    docs = (Doc.reload_content(doc) for doc in docs)
+    docs = cachetools.read_cache(doc_cache_path)
     docs = wikilink.map_wikilinks(docs,
         wikilink_index=wikilink_index, base=base_url)
     docs = markdowntools.map_markdown(docs)
