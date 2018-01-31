@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import tempfile
 from datetime import datetime
 from pathlib import PurePath, Path
 from itertools import chain
@@ -16,10 +17,9 @@ from lettersmith import templatetools
 from lettersmith import paging
 from lettersmith import taxonomy
 from lettersmith import jinjatools
-from lettersmith import cachetools
+from lettersmith import jsontools
 from lettersmith.data import load_data_files
 from lettersmith.file import copy, copy_all
-
 
 
 def main():
@@ -29,7 +29,6 @@ def main():
     config = read_config(args.config)
     input_path = config["input_path"]
     output_path = config["output_path"]
-    cache_path = config["cache_path"]
     theme_path = config["theme_path"]
     base_url = config["base_url"]
 
@@ -43,39 +42,41 @@ def main():
     docs = templatetools.map_templates(docs)
     docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
     docs = map_permalink(docs, config["permalink_templates"])
-
-    doc_cache_path = PurePath(cache_path, "docs")
-    cachetools.write_cache(doc_cache_path, docs)
-
-    stub_docs = cachetools.read_cache(doc_cache_path)
-    stub_docs = tuple(Doc.rm_content(doc) for doc in stub_docs)
-    wikilink_index = wikilink.index_wikilinks(stub_docs, base=base_url)
-    backlink_index = wikilink.index_backlinks(stub_docs)
-    index = Docs.reduce_index(stub_docs)
-    taxonomy_index = taxonomy.index_by_taxonomy(stub_docs, config["taxonomies"])
-    paging_docs = paging.gen_paging(stub_docs, **config["paging"])
-
-    docs = cachetools.read_cache(doc_cache_path)
-    docs = wikilink.map_wikilinks(docs,
-        wikilink_index=wikilink_index, base=base_url)
     docs = markdowntools.map_markdown(docs)
     docs = absolutize.map_absolutize(docs, base=base_url)
     docs = (Doc.decorate_summary(doc) for doc in docs)
 
-    docs = chain(docs, paging_docs)
+    with tempfile.TemporaryDirectory(suffix="_lettersmith") as cache_path:
+        doc_cache_path = PurePath(cache_path, "docs.txt")
+        jsontools.write_chunks(doc_cache_path, docs)
 
-    # Set up template globals
-    context = {
-        "index": index,
-        "taxonomy_index": taxonomy_index,
-        "backlink_index": backlink_index,
-        "site": config["site"],
-        "data": data,
-        "base_url": base_url,
-        "now": datetime.now()
-    }
+        stub_docs = jsontools.load_chunks(doc_cache_path)
+        stub_docs = tuple(Doc.rm_content(doc) for doc in stub_docs)
+        wikilink_index = wikilink.index_wikilinks(stub_docs, base=base_url)
+        backlink_index = wikilink.index_backlinks(stub_docs)
+        index = Docs.reduce_index(stub_docs)
+        taxonomy_index = taxonomy.index_by_taxonomy(stub_docs,
+            config["taxonomies"])
+        paging_docs = paging.gen_paging(stub_docs, **config["paging"])
 
-    docs = jinjatools.map_jinja(docs, context=context, theme_path=theme_path)
+        docs = jsontools.load_chunks(doc_cache_path)
+        docs = wikilink.map_wikilinks(docs, wikilink_index)
+
+        docs = chain(docs, paging_docs)
+
+        # Set up template globals
+        context = {
+            "index": index,
+            "taxonomy_index": taxonomy_index,
+            "backlink_index": backlink_index,
+            "site": config["site"],
+            "data": data,
+            "base_url": base_url,
+            "now": datetime.now()
+        }
+
+        docs = jinjatools.map_jinja(docs, context=context, theme_path=theme_path)
+        stats = Docs.write(docs, output_path=output_path)
 
     # Copy static files from project dir (if any)
     try:
@@ -88,8 +89,6 @@ def main():
         copy(PurePath(theme_path, "static"), output_path)
     except CalledProcessError:
         pass
-
-    stats = Docs.write(docs, output_path=output_path)
 
     print('Done! Generated {sum} files in "{output_path}"'.format(
         output_path=output_path,
