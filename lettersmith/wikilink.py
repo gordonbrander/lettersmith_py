@@ -29,12 +29,9 @@ def parse_inner(tag_inner):
     return tag_inner.strip()
 
 
-def render_doc(doc,
-    wikilink_index, base="/",
+def render_doc(doc, wikilink_index,
     link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE):
     """Render wikilinks in doc content field."""
-    dirname = PurePath(doc["output_path"]).parent.parent
-
     def render_inner_match(match):
         inner = match.group(1)
         text = parse_inner(inner)
@@ -98,14 +95,11 @@ def index_backlinks(docs):
     return backlink_index
 
 
-def map_wikilinks(docs,
-    base="/", link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE,
-    wikilink_index=None):
+def map_wikilinks(docs, wikilink_index,
+    link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE):
     """
     Return a generator that will yield docs with `[[wikilinks]]` rendered as
     HTML links.
     """
     for doc in docs:
-        yield render_doc(doc,
-            wikilink_index=wikilink_index, base=base,
-            link_template=link_template, nolink_template=nolink_template)
+        yield render_doc(doc, wikilink_index, link_template, nolink_template)
