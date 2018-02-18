@@ -37,12 +37,6 @@ def main():
     with tempfile.TemporaryDirectory(suffix="_lettersmith") as cache_path:
         data = load_data_files(config["data_path"])
 
-        md_paths = (
-            x for x in input_path.glob("**/*.md")
-            if pathtools.should_pub(x, build_drafts))
-
-        md_docs = Docs.load(md_paths, relative_to=input_path)
-
         json_paths = (
             x for x in input_path.glob("**/*.json")
             if pathtools.should_pub(x, build_drafts))
@@ -55,15 +49,21 @@ def main():
 
         yaml_docs = Docs.load_yaml(yaml_paths, relative_to=input_path)
 
+        md_paths = (
+            x for x in input_path.glob("**/*.md")
+            if pathtools.should_pub(x, build_drafts))
+
+        md_docs = Docs.load(md_paths, relative_to=input_path)
+        md_docs = (wikilink.uplift_wikilinks(doc) for doc in md_docs)
+        md_docs = markdowntools.map_markdown(md_docs)
+        md_docs = absolutize.map_absolutize(md_docs, base=base_url)
+
         docs = chain(md_docs, json_docs, yaml_docs)
 
         docs = (Doc.change_ext(doc, ".html") for doc in docs)
         docs = (Doc.decorate_smart_items(doc) for doc in docs)
         docs = templatetools.map_templates(docs)
-        docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
         docs = map_permalink(docs, config["permalink_templates"])
-        docs = markdowntools.map_markdown(docs)
-        docs = absolutize.map_absolutize(docs, base=base_url)
 
         doc_cache_path = PurePath(cache_path, "docs.txt")
         # Store current state of docs to disk.
