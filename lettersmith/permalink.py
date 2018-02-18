@@ -6,14 +6,14 @@ def read_doc_permalink(doc):
     """
     Read doc, producing a flat dictionary of permalink template token values.
     """
-    simple_path = PurePath(doc["simple_path"])
+    id_path = PurePath(doc["id_path"])
     return {
         "section": doc["section"],
-        "name": simple_path.name,
-        "stem": simple_path.stem,
-        "suffix": simple_path.suffix,
-        "parents": str(simple_path.parent),
-        "parent": simple_path.parent.stem,
+        "name": id_path.name,
+        "stem": id_path.stem,
+        "suffix": id_path.suffix,
+        "parents": str(id_path.parent),
+        "parent": id_path.parent.stem,
         "yy": doc["date"].strftime("%y"),
         "yyyy": doc["date"].strftime("%Y"),
         "mm": doc["date"].strftime("%m"),

@@ -24,8 +24,8 @@ class test_bare_doc(unittest.TestCase):
         """
         self.assertEqual(type(self.doc["meta"]), dict)
 
-    def test_simple_path(self):
-        self.assertEqual(str(self.doc["simple_path"]), "Bare doc.md")
+    def test_id_path(self):
+        self.assertEqual(str(self.doc["id_path"]), "Bare doc.md")
 
 
 class test_doc_with_meta(unittest.TestCase):

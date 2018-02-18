@@ -16,7 +16,7 @@ def is_markdown_doc(doc):
     """
     Check if a document is a markdown document. Returns a bool.
     """
-    return has_ext(doc["simple_path"], MD_EXTENSIONS)
+    return has_ext(doc["id_path"], MD_EXTENSIONS)
 
 
 def render_doc(doc, extensions=MD_LANG_EXTENSIONS):

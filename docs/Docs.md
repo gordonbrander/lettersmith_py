@@ -27,11 +27,11 @@ A typical doc has these properties.
   # as the input path. For generated docs, this is whatever makes
   # sense. Used to infer information about the doc, such as what
   # directory it belongs to.
-  "simple_path": "x/y/z.md",
+  "id_path": "x/y/z.md",
   # The path this doc will be written to. Often transformed via permalink
   # plugin.
   "output_path": "x/y/z/index.html",
-  # Typically, the tld of simple_path. Useful for having different
+  # Typically, the tld of id_path. Useful for having different
   # templates for different sections of your website.
   "section": "",
   # Contains the parsed values of everything in the headmatter.

@@ -67,7 +67,7 @@ def gen_paging(docs,
         page_list = tuple(Doc.to_li(doc) for doc in docs)
         yield {
             "templates": templates,
-            "simple_path": output_path,
+            "id_path": output_path,
             "output_path": output_path,
             "content": "",
             "page_n": n,

@@ -42,32 +42,32 @@ def load_yaml(file_paths, relative_to=""):
 
 
 def remove_drafts(docs):
-    return (doc for doc in docs if not is_draft(doc["simple_path"]))
+    return (doc for doc in docs if not is_draft(doc["id_path"]))
 
 
 def remove_index(docs):
     """
     Filter index from docs
     """
-    return (doc for doc in docs if not is_index(doc["simple_path"]))
+    return (doc for doc in docs if not is_index(doc["id_path"]))
 
 
-def filter_siblings(docs, simple_path):
+def filter_siblings(docs, id_path):
     """
-    Filter a list of dicts with `simple_path`, returning a generator
-    yielding only those dicts who's simple_path is a sibling to
-    `simple_path`.
+    Filter a list of dicts with `id_path`, returning a generator
+    yielding only those dicts who's id_path is a sibling to
+    `id_path`.
     """
     return (
         doc for doc in docs
-        if pathtools.is_sibling(simple_path, doc["simple_path"]))
+        if pathtools.is_sibling(id_path, doc["id_path"]))
 
 
 def reduce_index(docs):
     """
     Build li index. This is just a dict of summarized docs.
     """
-    return {doc["simple_path"]: Doc.to_li(doc) for doc in docs}
+    return {doc["id_path"]: Doc.to_li(doc) for doc in docs}
 
 
 def write(docs, output_path="public"):

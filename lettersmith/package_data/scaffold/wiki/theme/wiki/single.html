@@ -8,11 +8,11 @@
       {{content}}
     </div>
   </article>
-  {% if backlink_index[simple_path] | len %}
+  {% if backlink_index[id_path] | len %}
   <aside class="barlist width-constrain mar-v">
     <h2 class="barlist-title">Who links here?</h2>
     <ul class="barlist-ul">
-    {% for li in backlink_index[simple_path] | islice(100) %}
+    {% for li in backlink_index[id_path] | islice(100) %}
       <li class="li">
         <a class="li-title" class="wikilink" href="{{ li.output_path | to_url(base_url) }}">{{li.title}}</a>
       </li>

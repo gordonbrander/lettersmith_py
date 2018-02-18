@@ -45,7 +45,7 @@ def add_templates(doc):
 
     # Add some "affiliated" implicit templates... these are templates that
     # are associated with doc attributes.
-    affiliated_templates = read_affiliated_templates(doc["simple_path"])
+    affiliated_templates = read_affiliated_templates(doc["id_path"])
     templates.extend(affiliated_templates)
 
     # Carry over any existing templates

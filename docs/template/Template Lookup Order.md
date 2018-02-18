@@ -11,7 +11,7 @@ Of course, you can modify or add to the templates list, using plugins.
 
 ## What is a section?
 
-The section is read from the `doc["section"]` of the document (if any). By default, a doc's section is the top-level directory (relative) in its `simple_path`, but of course, you can change this using plugins.
+The section is read from the `doc["section"]` of the document (if any). By default, a doc's section is the top-level directory (relative) in its `id_path`, but of course, you can change this using plugins.
 
 See [[docs]] page for more detail on document items.
 

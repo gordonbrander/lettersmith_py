@@ -85,7 +85,7 @@ def index_backlinks(docs):
     for doc in wikilink_index.values():
         for slug in doc["wikilinks"]:
             try:
-                to_path = wikilink_index[slug]["simple_path"]
+                to_path = wikilink_index[slug]["id_path"]
                 if to_path not in backlink_index:
                     backlink_index[to_path] = []
                 li = Doc.to_li(doc)

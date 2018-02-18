@@ -24,14 +24,14 @@ def load_raw(pathlike, relative_to=""):
     with open(pathlike) as f:
         content = f.read()
         input_path = PurePath(pathlike)
-        simple_path = input_path.relative_to(relative_to)
-        output_path = pathtools.to_nice_path(simple_path)
+        id_path = input_path.relative_to(relative_to)
+        output_path = pathtools.to_nice_path(id_path)
 
         return {
             "file_created_time": file_created_time,
             "file_modified_time": file_modified_time,
             "input_path": str(input_path),
-            "simple_path": str(simple_path),
+            "id_path": str(id_path),
             "output_path": str(output_path),
             "content": content
         }
@@ -197,7 +197,7 @@ def decorate_smart_items(doc):
     """
     return merge(doc, {
         "title": read_title(doc),
-        "section": pathtools.tld(doc["simple_path"]),
+        "section": pathtools.tld(doc["id_path"]),
         "date": read_date(doc),
         "modified": read_modified(doc)
     })
@@ -216,7 +216,7 @@ _LI_KEYS = (
     "modified",
     "file_created_time",
     "file_modified_time",
-    "simple_path",
+    "id_path",
     "output_path",
     "section",
     "meta",
@@ -244,5 +244,5 @@ def with_path(glob):
     Check if a path matches glob pattern.
     """
     def has_path(doc):
-        return fnmatch(doc["simple_path"], glob)
+        return fnmatch(doc["id_path"], glob)
     return has_path
