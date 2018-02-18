@@ -119,6 +119,14 @@ def is_draft(pathlike):
     return PurePath(pathlike).name.startswith("_")
 
 
+def should_pub(pathlike, build_drafts=False):
+    """
+    Should you publish this? This function is just an ergonomic shortcut
+    for filtering out drafts based on build_drafts setting.
+    """
+    return build_drafts or not is_draft(pathlike)
+
+
 def is_dotfile(pathlike):
     return PurePath(pathlike).name.startswith(".")
 

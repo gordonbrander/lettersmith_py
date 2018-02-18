@@ -7,11 +7,35 @@ from lettersmith import doc as Doc
 
 def load(file_paths, relative_to=""):
     """
-    Given an iterable of fle paths, create an iterable of loaded docs.
+    Given an iterable of file paths, create an iterable of loaded docs.
     Ignores special files.
     """
     return (
         Doc.load(x, relative_to=relative_to)
+        for x in file_paths
+        if is_doc_file(x)
+    )
+
+
+def load_json(file_paths, relative_to=""):
+    """
+    Given an iterable of file paths, create an iterable of loaded docs.
+    Ignores special files.
+    """
+    return (
+        Doc.load_json(x, relative_to=relative_to)
+        for x in file_paths
+        if is_doc_file(x)
+    )
+
+
+def load_yaml(file_paths, relative_to=""):
+    """
+    Given an iterable of file paths, create an iterable of loaded docs.
+    Ignores special files.
+    """
+    return (
+        Doc.load_yaml(x, relative_to=relative_to)
         for x in file_paths
         if is_doc_file(x)
     )

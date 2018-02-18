@@ -1,27 +1,28 @@
 from os import path
 from pathlib import PurePath
+import json
 
 import frontmatter
 
 from lettersmith.date import parse_iso_8601, read_file_times, EPOCH
 from lettersmith.file import write_file_deep
+from lettersmith import yamltools
 from lettersmith.stringtools import truncate, strip_html
 from lettersmith import path as pathtools
 from lettersmith.util import put, merge, unset, pick
 
 
-def load(pathlike, relative_to=""):
+def load_raw(pathlike, relative_to=""):
     """
     Loads a basic doc dictionary from a file path. This dictionary
-    contains content string, the meta (headmatter) of the doc and some
-    basic information about the file.
+    contains content string, and some basic information about the file.
+    Typically, you decorate the doc later with meta and other fields.
 
     Returns a dictionary.
     """
     file_created_time, file_modified_time = read_file_times(pathlike)
     with open(pathlike) as f:
-        raw = f.read()
-        meta, content = frontmatter.parse(raw)
+        content = f.read()
         input_path = PurePath(pathlike)
         simple_path = input_path.relative_to(relative_to)
         output_path = pathtools.to_nice_path(simple_path)
@@ -32,9 +33,77 @@ def load(pathlike, relative_to=""):
             "input_path": str(input_path),
             "simple_path": str(simple_path),
             "output_path": str(output_path),
-            "meta": meta,
             "content": content
         }
+
+
+def load(pathlike, relative_to=""):
+    """
+    Loads a doc dictionary with optional headmatter from a file path.
+    This dictionary contains content string, meta from the headmatter,
+    and some basic information about the file.
+
+    Returns a dictionary.
+    """
+    return parse_doc_frontmatter(load_raw(pathlike, relative_to))
+
+
+def load_yaml(pathlike, relative_to=""):
+    """
+    Loads a doc dictionary from a YAML file.
+    This dictionary contains an empty content string, meta from the file,
+    and some basic information about the file.
+
+    Returns a dictionary.
+    """
+    return parse_doc_yaml(load_raw(pathlike, relative_to))
+
+
+def load_json(pathlike, relative_to=""):
+    """
+    Loads a doc dictionary from a JSON file.
+    This dictionary contains an empty content string, meta from the file,
+    and some basic information about the file.
+
+    Returns a dictionary.
+    """
+    return parse_doc_json(load_raw(pathlike, relative_to))
+
+
+def parse_doc_frontmatter(doc):
+    """
+    Split headmatter from doc content. Sets headmatter meta as doc meta.
+    Sets content as content.
+
+    If no meta is present, sets an empty dict as meta.
+    """
+    meta, content = frontmatter.parse(doc["content"])
+    return merge(doc, {
+        "meta": meta,
+        "content": content
+    })
+
+
+def parse_doc_yaml(doc):
+    """
+    Load doc content as YAML data
+    """
+    meta = yamltools.loads(doc["content"])
+    return merge(doc, {
+        "meta": meta,
+        "content": ""
+    })
+
+
+def parse_doc_json(doc):
+    """
+    Load doc content as JSON data
+    """
+    meta = json.loads(doc["content"])
+    return merge(doc, {
+        "meta": meta,
+        "content": ""
+    })
 
 
 def rm_content(doc):

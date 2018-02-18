@@ -99,7 +99,7 @@ def load_chunks(file_path, object_hook=decode_object_hook):
             yield json.loads(chunk, object_hook=object_hook)
 
 
-def write_chunks(file_path, iterable, default=encode_default):
+def write_chunks(iterable, file_path, default=encode_default):
     """
     Dump an iterable of JSON blobs into a file, line-by-line.
 

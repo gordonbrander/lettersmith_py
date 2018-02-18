@@ -16,9 +16,6 @@ def _smart_read_data_file(file_path):
 
     * .json
     * .yaml
-    * .lson: Line-delimeted json. Each line is a discrete JSON blob.
-      This function will also attempt to read .txt as line-delimeted JSON.
-      See https://en.wikipedia.org/wiki/JSON_Streaming#Line_delimited_JSON.
     """
     ext = Path(file_path).suffix
     with open(file_path, "r") as f:
