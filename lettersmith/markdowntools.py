@@ -12,6 +12,14 @@ MD_LANG_EXTENSIONS=(GithubFlavoredMarkdownExtension(),)
 MD_EXTENSIONS = (".md", ".markdown", ".mdown", ".txt")
 
 
+def house_markdown(s):
+    """
+    Just a wrapper for our house flavor of markdown.
+    We use Github-flavored markdown as a base.
+    """
+    return markdown(s, extensions=MD_LANG_EXTENSIONS)
+
+
 def is_markdown_doc(doc):
     """
     Check if a document is a markdown document. Returns a bool.

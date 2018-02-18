@@ -9,10 +9,12 @@ from lettersmith import doc as Doc
 from lettersmith import templatetools
 from lettersmith import path as pathtools
 from lettersmith.hash import hash_digest
+from lettersmith.markdowntools import house_markdown
 
 
 # The dict of filter functions to be available by default in the template.
 FILTERS = {
+    "markdown": house_markdown,
     "sum": sum,
     "len": len,
     "filter": filter,
