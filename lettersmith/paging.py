@@ -51,20 +51,20 @@ def read_config(config):
     }
 
 
-def gen_paging(entries,
+def gen_paging(stubs,
     templates=TEMPLATES,
     output_path_template=OUTPUT_PATH_TEMPLATE,
     per_page=10):
     """
     From an index of lis, produce a generator factory of paging docs.
     """
-    paged = tuple(chunk(entries, per_page))
+    paged = tuple(chunk(stubs, per_page))
     page_count = len(paged)
     n = 0
-    for entries in paged:
+    for stubs in paged:
         n = n + 1
         output_path = output_path_template.format(n=n)
-        page_list = tuple(entry for entry in entries)
+        page_list = tuple(stub for stub in stubs)
         meta = {
             "page_n": n,
             "per_page": per_page,

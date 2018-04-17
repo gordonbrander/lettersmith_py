@@ -9,7 +9,7 @@ from lettersmith.argparser import lettersmith_argparser, read_config
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
 from lettersmith import doc as Doc
-from lettersmith import entry as Entry
+from lettersmith import stub as Stub
 from lettersmith import markdowntools
 from lettersmith import wikilink
 from lettersmith import absolutize
@@ -43,15 +43,15 @@ def main():
     docs = Docs.load(paths, relative_to=input_path)
 
     docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
-    # Render markdown in docs so that entry will correctly strip
+    # Render markdown in docs so that stub will correctly strip
     # HTML for summaries.
     docs = markdowntools.map_markdown(docs)
 
-    entries = (Doc.to_entry(doc) for doc in docs)
+    stubs = (Doc.to_stub(doc) for doc in docs)
 
-    # Collect entries into index. We'll use this for cross-referencing
-    # entries, and also as an index accessible in templates.
-    index = {entry["id_path"]: entry for entry in entries}
+    # Collect stubs into index. We'll use this for cross-referencing
+    # stubs, and also as an index accessible in templates.
+    index = {stub["id_path"]: stub for stub in stubs}
 
     wikilink_index = wikilink.index_wikilinks(index.values(), base=base_url)
     backlink_index = wikilink.index_backlinks(index.values())
@@ -63,8 +63,8 @@ def main():
 
     # Reload docs
     docs = (
-        Entry.load_doc(entry, relative_to=input_path)
-        for entry in index.values()
+        Stub.load_doc(stub, relative_to=input_path)
+        for stub in index.values()
     )
 
     docs = markdowntools.map_markdown(docs)

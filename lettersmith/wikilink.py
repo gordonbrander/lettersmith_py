@@ -70,25 +70,25 @@ def index_wikilinks(docs, base="/"):
     }
 
 
-def index_backlinks(entries):
+def index_backlinks(stubs):
     """
     Index all backlinks in an iterable of docs. This assumes you have
     already uplifted wikilinks from content with `uplift_wikilinks`.
     """
     # Create an index of `slug: [slugs]`
     wikilink_index = {
-        to_slug(entry["title"]): entry
-        for entry in entries
-        if "wikilinks" in entry["meta"]
+        to_slug(stub["title"]): stub
+        for stub in stubs
+        if "wikilinks" in stub["meta"]
     }
     backlink_index = {}
-    for entry in wikilink_index.values():
-        for slug in frozenset(entry["meta"]["wikilinks"]):
+    for stub in wikilink_index.values():
+        for slug in frozenset(stub["meta"]["wikilinks"]):
             try:
                 to_path = wikilink_index[slug]["id_path"]
                 if to_path not in backlink_index:
                     backlink_index[to_path] = []
-                backlink_index[to_path].append(entry)
+                backlink_index[to_path].append(stub)
             except KeyError:
                 pass
     return backlink_index

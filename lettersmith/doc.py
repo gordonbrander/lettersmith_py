@@ -11,7 +11,7 @@ from lettersmith import yamltools
 from lettersmith.stringtools import truncate, strip_html
 from lettersmith import path as pathtools
 from lettersmith.util import put, merge, pick
-from lettersmith import entry as Entry
+from lettersmith import stub as Stub
 
 
 _EMPTY_TUPLE = tuple()
@@ -28,7 +28,7 @@ def doc(id_path, output_path,
     collecting docs into memory... we usually operate over generators that yield
     docs one-at-a-time.
 
-    For cross-referencing things in-memory, we use Entries. Entries are meant to
+    For cross-referencing things in-memory, we use Stubs. Stubs are meant to
     be stub docs. They contain just meta information about the doc.
     """
     return {
@@ -77,13 +77,13 @@ def load(pathlike, relative_to=""):
         )
 
 
-def to_entry(doc, max_len=250, suffix="..."):
+def to_stub(doc, max_len=250, suffix="..."):
     try:
         summary = doc["meta"]["summary"]
     except KeyError:
         summary = truncate(strip_html(doc["contents"]), max_len, suffix)
 
-    return Entry.entry(
+    return Stub.stub(
         id_path=doc["id_path"],
         output_path=doc["output_path"],
         input_path=doc["input_path"],
