@@ -1,5 +1,5 @@
 """
-Tools for making relative URLs absolute in doc contents.
+Tools for making relative URLs absolute in doc content.
 """
 import re
 from lettersmith.util import put
@@ -28,10 +28,10 @@ def absolutize_doc_urls(doc, base="/"):
     content = re.sub(
         URL_ATTR,
         render_inner_match,
-        doc["contents"]
+        doc["content"]
     )
 
-    return put(doc, "contents", content)
+    return put(doc, "content", content)
 
 
 def map_absolutize(docs, base="/"):

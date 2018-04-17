@@ -36,7 +36,7 @@ def stub(id_path, output_path,
 def to_doc(stub):
     """
     Create a doc dictionary from an stub dictionary.
-    This doc dictionary will have an empty "contents" field.
+    This doc dictionary will have an empty "content" field.
 
     If you want to load a doc from a file stub with an `input_path`,
     use `load_doc` instead.
@@ -60,7 +60,7 @@ def load_doc(stub, relative_to=""):
     Returns a dictionary.
     """
     with open(stub["input_path"]) as f:
-        _, contents = frontmatter.parse(f.read())
+        _, content = frontmatter.parse(f.read())
         return Doc.doc(
             id_path=stub["id_path"],
             output_path=stub["output_path"],
@@ -70,5 +70,5 @@ def load_doc(stub, relative_to=""):
             title=stub["title"],
             section=stub["section"],
             meta=stub["meta"],
-            contents=contents
+            content=content
         )

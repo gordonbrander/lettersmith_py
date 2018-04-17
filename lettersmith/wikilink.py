@@ -44,17 +44,17 @@ def render_doc(doc, wikilink_index,
     content = re.sub(
         WIKILINK,
         render_inner_match,
-        doc["contents"]
+        doc["content"]
     )
 
-    return put(doc, "contents", content)
+    return put(doc, "content", content)
 
 
 def uplift_wikilinks(doc):
     """
     Find all wikilinks in doc and assign them to a wikilinks property of doc.
     """
-    matches = re.finditer(WIKILINK, doc["contents"])
+    matches = re.finditer(WIKILINK, doc["content"])
     wikilinks = (match.group(1) for match in matches)
     slugs = tuple(to_slug(wikilink) for wikilink in wikilinks)
     return Doc.put_meta(doc, "wikilinks", slugs)

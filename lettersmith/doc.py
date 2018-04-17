@@ -19,11 +19,11 @@ _EMPTY_TUPLE = tuple()
 
 def doc(id_path, output_path,
     input_path=None, created_time=None, modified_time=None,
-    title="", contents="", section="", meta=None, templates=None):
+    title="", content="", section="", meta=None, templates=None):
     """
     Create a doc dict, populating it with sensible defaults
 
-    Doc dictionaries contain a contents string — typically the contents of the
+    Doc dictionaries contain a content string — typically the content of the
     file. Since this can take up quite a bit of memory, it's typical to avoid
     collecting docs into memory... we usually operate over generators that yield
     docs one-at-a-time.
@@ -40,7 +40,7 @@ def doc(id_path, output_path,
         "modified_time":
             modified_time if type(modified_time) is datetime else datetime.now(),
         "title": str(title),
-        "contents": str(contents),
+        "content": str(content),
         "section": str(section),
         "meta": meta if type(meta) is dict else {},
         "templates": templates if type(templates) is tuple else _EMPTY_TUPLE
@@ -58,7 +58,7 @@ def load(pathlike, relative_to=""):
     """
     created_time, modified_time = read_file_times(pathlike)
     with open(pathlike) as f:
-        meta, contents = frontmatter.parse(f.read())
+        meta, content = frontmatter.parse(f.read())
         input_path = PurePath(pathlike)
         id_path = input_path.relative_to(relative_to)
         output_path = pathtools.to_nice_path(id_path)
@@ -73,7 +73,7 @@ def load(pathlike, relative_to=""):
             title=title,
             section=section,
             meta=meta,
-            contents=contents
+            content=content
         )
 
 
@@ -81,7 +81,7 @@ def to_stub(doc, max_len=250, suffix="..."):
     try:
         summary = doc["meta"]["summary"]
     except KeyError:
-        summary = truncate(strip_html(doc["contents"]), max_len, suffix)
+        summary = truncate(strip_html(doc["content"]), max_len, suffix)
 
     return Stub.stub(
         id_path=doc["id_path"],
