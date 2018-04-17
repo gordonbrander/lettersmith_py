@@ -28,10 +28,10 @@ def absolutize_doc_urls(doc, base="/"):
     content = re.sub(
         URL_ATTR,
         render_inner_match,
-        doc["content"]
+        doc["contents"]
     )
 
-    return put(doc, "content", content)
+    return put(doc, "contents", content)
 
 
 def map_absolutize(docs, base="/"):

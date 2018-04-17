@@ -9,6 +9,7 @@ from lettersmith.argparser import lettersmith_argparser, read_config
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
 from lettersmith import doc as Doc
+from lettersmith import entry as Entry
 from lettersmith import markdowntools
 from lettersmith import wikilink
 from lettersmith import absolutize
@@ -18,10 +19,8 @@ from lettersmith import paging
 from lettersmith import taxonomy
 from lettersmith import jinjatools
 from lettersmith import jsontools
-from lettersmith import iterstore
 from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
-
 
 def main():
     parser = lettersmith_argparser(
@@ -34,73 +33,63 @@ def main():
     base_url = config["base_url"]
     build_drafts = config["build_drafts"]
 
-    with tempfile.TemporaryDirectory(suffix="_lettersmith") as cache_path:
-        data = load_data_files(config["data_path"])
+    data = load_data_files(config["data_path"])
 
-        json_paths = (
-            x for x in input_path.glob("**/*.json")
-            if pathtools.should_pub(x, build_drafts))
+    paths = (
+        x for x in input_path.glob("**/*.md")
+        if pathtools.should_pub(x, build_drafts)
+    )
 
-        json_docs = Docs.load_json(json_paths, relative_to=input_path)
+    docs = Docs.load(paths, relative_to=input_path)
 
-        yaml_paths = (
-            x for x in input_path.glob("**/*.yaml")
-            if pathtools.should_pub(x, build_drafts))
+    docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
+    # Render markdown in docs so that entry will correctly strip
+    # HTML for summaries.
+    docs = markdowntools.map_markdown(docs)
 
-        yaml_docs = Docs.load_yaml(yaml_paths, relative_to=input_path)
+    entries = (Doc.to_entry(doc) for doc in docs)
 
-        md_paths = (
-            x for x in input_path.glob("**/*.md")
-            if pathtools.should_pub(x, build_drafts))
+    # Collect entries into index. We'll use this for cross-referencing
+    # entries, and also as an index accessible in templates.
+    index = {entry["id_path"]: entry for entry in entries}
 
-        md_docs = Docs.load(md_paths, relative_to=input_path)
-        md_docs = (wikilink.uplift_wikilinks(doc) for doc in md_docs)
-        md_docs = markdowntools.map_markdown(md_docs)
-        md_docs = absolutize.map_absolutize(md_docs, base=base_url)
+    wikilink_index = wikilink.index_wikilinks(index.values(), base=base_url)
+    backlink_index = wikilink.index_backlinks(index.values())
+    taxonomy_index = taxonomy.index_by_taxonomy(
+        index.values(),
+        config["taxonomies"]
+    )
+    paging_docs = paging.gen_paging(index.values(), **config["paging"])
 
-        docs = chain(md_docs, json_docs, yaml_docs)
+    # Reload docs
+    docs = (
+        Entry.load_doc(entry, relative_to=input_path)
+        for entry in index.values()
+    )
 
-        docs = (Doc.change_ext(doc, ".html") for doc in docs)
-        docs = (Doc.decorate_smart_items(doc) for doc in docs)
-        docs = templatetools.map_templates(docs)
-        docs = map_permalink(docs, config["permalink_templates"])
+    docs = markdowntools.map_markdown(docs)
+    docs = absolutize.map_absolutize(docs, base=base_url)
+    docs = (Doc.change_ext(doc, ".html") for doc in docs)
+    docs = templatetools.map_templates(docs)
+    docs = map_permalink(docs, config["permalink_templates"])
+    docs = wikilink.map_wikilinks(docs, wikilink_index)
+    docs = chain(docs, paging_docs)
 
-        doc_cache_path = PurePath(cache_path, "docs.txt")
-        # Store current state of docs to disk.
-        # Class instance is an iterable that will read them back out from disk.
-        # This allows you to consume the iterator more than once.
-        docs_store = iterstore.store(docs, doc_cache_path)
+    # Set up template globals
+    context = {
+        "index": index,
+        "taxonomy_index": taxonomy_index,
+        "backlink_index": backlink_index,
+        "wikilink_index": wikilink_index,
+        "site": config["site"],
+        "data": data,
+        "base_url": base_url,
+        "now": datetime.now()
+    }
 
-        stub_docs = tuple(Doc.rm_content(doc) for doc in docs_store)
+    docs = jinjatools.map_jinja(docs, context=context, theme_path=theme_path)
 
-        index = Docs.reduce_index(stub_docs)
-        wikilink_index = wikilink.index_wikilinks(stub_docs, base=base_url)
-        backlink_index = wikilink.index_backlinks(stub_docs)
-        taxonomy_index = taxonomy.index_by_taxonomy(
-            stub_docs, config["taxonomies"])
-
-        paging_docs = paging.gen_paging(stub_docs, **config["paging"])
-
-        docs = wikilink.map_wikilinks(docs_store, wikilink_index)
-        docs = (Doc.decorate_summary(doc) for doc in docs)
-
-        docs = chain(docs, paging_docs)
-
-        # Set up template globals
-        context = {
-            "index": index,
-            "taxonomy_index": taxonomy_index,
-            "backlink_index": backlink_index,
-            "wikilink_index": wikilink_index,
-            "site": config["site"],
-            "data": data,
-            "base_url": base_url,
-            "now": datetime.now()
-        }
-
-        docs = jinjatools.map_jinja(
-            docs, context=context, theme_path=theme_path)
-        stats = Docs.write(docs, output_path=output_path)
+    stats = Docs.write(docs, output_path=output_path)
 
     try:
         static_paths = config.get("static_paths", [])

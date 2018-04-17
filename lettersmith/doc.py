@@ -1,6 +1,7 @@
 from os import path
 from pathlib import PurePath
 import json
+from datetime import datetime
 
 import frontmatter
 
@@ -9,130 +10,90 @@ from lettersmith.file import write_file_deep
 from lettersmith import yamltools
 from lettersmith.stringtools import truncate, strip_html
 from lettersmith import path as pathtools
-from lettersmith.util import put, merge, unset, pick
+from lettersmith.util import put, merge, pick
+from lettersmith import entry as Entry
 
 
-def load_raw(pathlike, relative_to=""):
+_EMPTY_TUPLE = tuple()
+
+
+def doc(id_path, output_path,
+    input_path=None, created_time=None, modified_time=None,
+    title="", contents="", section="", meta=None, templates=None):
     """
-    Loads a basic doc dictionary from a file path. This dictionary
-    contains content string, and some basic information about the file.
-    Typically, you decorate the doc later with meta and other fields.
+    Create a doc dict, populating it with sensible defaults
 
-    Returns a dictionary.
+    Doc dictionaries contain a contents string — typically the contents of the
+    file. Since this can take up quite a bit of memory, it's typical to avoid
+    collecting docs into memory... we usually operate over generators that yield
+    docs one-at-a-time.
+
+    For cross-referencing things in-memory, we use Entries. Entries are meant to
+    be stub docs. They contain just meta information about the doc.
     """
-    file_created_time, file_modified_time = read_file_times(pathlike)
-    with open(pathlike) as f:
-        content = f.read()
-        input_path = PurePath(pathlike)
-        id_path = input_path.relative_to(relative_to)
-        output_path = pathtools.to_nice_path(id_path)
-
-        return {
-            "file_created_time": file_created_time,
-            "file_modified_time": file_modified_time,
-            "input_path": str(input_path),
-            "id_path": str(id_path),
-            "output_path": str(output_path),
-            "content": content
-        }
+    return {
+        "id_path": str(id_path),
+        "output_path": str(output_path),
+        "input_path": str(input_path) if input_path else None,
+        "created_time":
+            created_time if type(created_time) is datetime else datetime.now(),
+        "modified_time":
+            modified_time if type(modified_time) is datetime else datetime.now(),
+        "title": str(title),
+        "contents": str(contents),
+        "section": str(section),
+        "meta": meta if type(meta) is dict else {},
+        "templates": templates if type(templates) is tuple else _EMPTY_TUPLE
+    }
 
 
 def load(pathlike, relative_to=""):
     """
-    Loads a doc dictionary with optional headmatter from a file path.
-    This dictionary contains content string, meta from the headmatter,
-    and some basic information about the file.
+    Loads a basic doc dictionary from a file path. This dictionary
+    contains content string, and some basic information about the file.
+    Typically, you decorate the doc later with meta and other fields.
+    Create a doc dict, populating it with sensible defaults
 
     Returns a dictionary.
     """
-    return parse_doc_frontmatter(load_raw(pathlike, relative_to))
+    created_time, modified_time = read_file_times(pathlike)
+    with open(pathlike) as f:
+        meta, contents = frontmatter.parse(f.read())
+        input_path = PurePath(pathlike)
+        id_path = input_path.relative_to(relative_to)
+        output_path = pathtools.to_nice_path(id_path)
+        section = pathtools.tld(id_path)
+        title = meta.get("title", pathtools.to_title(input_path))
+        return doc(
+            id_path=id_path,
+            output_path=output_path,
+            input_path=input_path,
+            created_time=created_time,
+            modified_time=modified_time,
+            title=title,
+            section=section,
+            meta=meta,
+            contents=contents
+        )
 
 
-def load_yaml(pathlike, relative_to=""):
-    """
-    Loads a doc dictionary from a YAML file.
-    This dictionary contains an empty content string, meta from the file,
-    and some basic information about the file.
+def to_entry(doc, max_len=250, suffix="..."):
+    try:
+        summary = doc["meta"]["summary"]
+    except KeyError:
+        summary = truncate(strip_html(doc["contents"]), max_len, suffix)
 
-    Returns a dictionary.
-    """
-    return parse_doc_yaml(load_raw(pathlike, relative_to))
-
-
-def load_json(pathlike, relative_to=""):
-    """
-    Loads a doc dictionary from a JSON file.
-    This dictionary contains an empty content string, meta from the file,
-    and some basic information about the file.
-
-    Returns a dictionary.
-    """
-    return parse_doc_json(load_raw(pathlike, relative_to))
-
-
-def parse_doc_frontmatter(doc):
-    """
-    Split headmatter from doc content. Sets headmatter meta as doc meta.
-    Sets content as content.
-
-    If no meta is present, sets an empty dict as meta.
-    """
-    meta, content = frontmatter.parse(doc["content"])
-    return merge(doc, {
-        "meta": meta,
-        "content": content
-    })
-
-
-def parse_doc_yaml(doc):
-    """
-    Load doc content as YAML data
-    """
-    meta = yamltools.loads(doc["content"])
-    return merge(doc, {
-        "meta": meta,
-        "content": ""
-    })
-
-
-def parse_doc_json(doc):
-    """
-    Load doc content as JSON data
-    """
-    meta = json.loads(doc["content"])
-    return merge(doc, {
-        "meta": meta,
-        "content": ""
-    })
-
-
-def rm_content(doc):
-    """
-    Remove the content field.
-    Useful if you need to collect a lot of docs into memory and the content
-    field is huge. Pairs well with `reload_content`.
-
-    Returns a new doc.
-    """
-    return unset(doc, ("content",))
-
-
-def reload_content(doc):
-    """
-    Reload the content field, if missing.
-
-    Returns a new doc.
-    """
-    if doc.get("content"):
-        return doc
-    else:
-        try:
-            with open(doc["input_path"]) as f:
-                raw = f.read()
-                meta, content = frontmatter.parse(raw)
-                return put(doc, "content", content)
-        except KeyError:
-            return put(doc, "content", "")
+    return Entry.entry(
+        id_path=doc["id_path"],
+        output_path=doc["output_path"],
+        input_path=doc["input_path"],
+        created_time=doc["created_time"],
+        modified_time=doc["modified_time"],
+        title=doc["title"],
+        summary=summary,
+        section=doc["section"],
+        meta=doc["meta"]
+    )
 
 
 def write(doc, output_dir):
@@ -144,99 +105,18 @@ def write(doc, output_dir):
     write_file_deep(path.join(output_dir, doc["output_path"]), doc["content"])
 
 
-def read_summary(doc, max_len=250, suffix="..."):
+def put_meta(doc, key, value):
     """
-    Read or generate a summary for a doc.
-    Returns a string.
+    Put a value into a doc's meta dictionary.
+    Returns a new doc.
     """
-    try:
-        return doc["meta"]["summary"]
-    except KeyError:
-        return truncate(strip_html(doc.get("content", "")), max_len, suffix)
-
-
-def read_title(doc):
-    """
-    Generate a title for the doc. Use either doc.meta.title, or
-    derive a title from the filename.
-    """
-    try:
-        return doc["meta"]["title"]
-    except KeyError:
-        return pathtools.to_title(doc["input_path"])
-
-
-def read_date(doc):
-    """
-    Parse date from headmatter, or use file created time.
-    """
-    try:
-        return parse_iso_8601(doc["meta"]["date"])
-    except (ValueError, TypeError, KeyError):
-        return doc.get("file_created_time", EPOCH)
-
-
-def read_modified(doc):
-    """
-    Parse modified date from headmatter, or use file created time.
-    """
-    try:
-        return parse_iso_8601(doc["meta"]["modified"])
-    except (ValueError, TypeError, KeyError):
-        return doc.get("file_modified_time", EPOCH)
-
-
-def decorate_smart_items(doc):
-    """
-    Decorate doc with a variety of derived items, like automatic
-    title, summary, etc.
-
-    These are mostly computed properties that rely on logic or more than
-    one value of the doc. Useful to have around in the template, where
-    it's awkward to derive values with functions.
-    """
-    return merge(doc, {
-        "title": read_title(doc),
-        "section": pathtools.tld(doc["id_path"]),
-        "date": read_date(doc),
-        "modified": read_modified(doc)
-    })
-
-
-def decorate_summary(doc):
-    """
-    Add a summary item to doc.
-    """
-    return put(doc, "summary", read_summary(doc))
-
-# Whitelist of keys to keep for li objects
-_LI_KEYS = (
-    "title",
-    "date",
-    "modified",
-    "file_created_time",
-    "file_modified_time",
-    "id_path",
-    "output_path",
-    "section",
-    "meta",
-    "summary"
-)
-
-
-def to_li(doc):
-    """
-    Return a "list item" version of the doc... a small dictionary
-    with a handful of whitelisted fields. This is typically what is
-    used for indexes.
-    """
-    return pick(doc, _LI_KEYS)
+    return put(doc, "meta", put(doc["meta"], key, value))
 
 
 def change_ext(doc, ext):
     """Change the extention on a doc's output_path, returning a new doc."""
     updated_path = PurePath(doc["output_path"]).with_suffix(ext)
-    return put(doc, "output_path", updated_path)
+    return put(doc, "output_path", str(updated_path))
 
 
 def with_path(glob):

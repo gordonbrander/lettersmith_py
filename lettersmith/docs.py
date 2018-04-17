@@ -17,28 +17,15 @@ def load(file_paths, relative_to=""):
     )
 
 
-def load_json(file_paths, relative_to=""):
+def write(docs, output_path="public"):
     """
-    Given an iterable of file paths, create an iterable of loaded docs.
-    Ignores special files.
+    Consume an iterable of docs, writing them as files.
     """
-    return (
-        Doc.load_json(x, relative_to=relative_to)
-        for x in file_paths
-        if is_doc_file(x)
-    )
-
-
-def load_yaml(file_paths, relative_to=""):
-    """
-    Given an iterable of file paths, create an iterable of loaded docs.
-    Ignores special files.
-    """
-    return (
-        Doc.load_yaml(x, relative_to=relative_to)
-        for x in file_paths
-        if is_doc_file(x)
-    )
+    written = 0
+    for doc in docs:
+        written = written + 1
+        Doc.write(doc, output_path)
+    return {"written": written}
 
 
 def remove_drafts(docs):
@@ -61,21 +48,3 @@ def filter_siblings(docs, id_path):
     return (
         doc for doc in docs
         if pathtools.is_sibling(id_path, doc["id_path"]))
-
-
-def reduce_index(docs):
-    """
-    Build li index. This is just a dict of summarized docs.
-    """
-    return {doc["id_path"]: Doc.to_li(doc) for doc in docs}
-
-
-def write(docs, output_path="public"):
-    """
-    Consume an iterable of docs, writing them as files.
-    """
-    written = 0
-    for doc in docs:
-        written = written + 1
-        Doc.write(doc, output_path)
-    return {"written": written}

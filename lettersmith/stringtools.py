@@ -7,7 +7,10 @@ def strip_html(html_str):
 
 
 def truncate(text, max_len=250, suffix="..."):
-    """Truncate a text string to a certain number of words"""
+    """
+    Truncate a text string to a certain number of characters,
+    trimming to the nearest word boundary.
+    """
     trimmed = text.strip()
     if len(trimmed) < max_len:
         return trimmed

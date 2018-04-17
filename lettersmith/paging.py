@@ -51,30 +51,29 @@ def read_config(config):
     }
 
 
-def gen_paging(docs, 
+def gen_paging(entries,
     templates=TEMPLATES,
     output_path_template=OUTPUT_PATH_TEMPLATE,
     per_page=10):
     """
     From an index of lis, produce a generator factory of paging docs.
     """
-    paged = tuple(chunk(docs, per_page))
+    paged = tuple(chunk(entries, per_page))
     page_count = len(paged)
     n = 0
-    for docs in paged:
+    for entries in paged:
         n = n + 1
         output_path = output_path_template.format(n=n)
-        page_list = tuple(Doc.to_li(doc) for doc in docs)
-        yield {
-            "templates": templates,
-            "id_path": output_path,
-            "output_path": output_path,
-            "content": "",
+        page_list = tuple(entry for entry in entries)
+        meta = {
             "page_n": n,
             "per_page": per_page,
             "page_count": page_count,
-            # Decide if we should keep list handy,
-            # or simply provide an index and a pagination function
-            # to use with the master list.
             "page_list": page_list
         }
+        yield Doc.doc(
+            id_path=output_path,
+            output_path=output_path,
+            title="Page {}".format(n),
+            meta=meta
+        )

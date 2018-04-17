@@ -9,7 +9,7 @@ def items_with_keys(d, keys):
     return ((key, value) for key, value in d.items() if key in keys)
 
 
-def index_by_taxonomy(docs, taxonomies=None):
+def index_by_taxonomy(entries, taxonomies=None):
     """
     Create a new index by taxonomy.
     `taxonomies` is an indexable whitelist of meta keys that should
@@ -26,12 +26,12 @@ def index_by_taxonomy(docs, taxonomies=None):
     """
     taxonomies = taxonomies or DEFAULT_TAXONOMIES
     tax_index = {}
-    for doc in docs:
-        for tax, terms in items_with_keys(doc["meta"], taxonomies):
+    for entry in entries:
+        for tax, terms in items_with_keys(entry["meta"], taxonomies):
             if not tax_index.get(tax):
                 tax_index[tax] = {}
             for term in terms:
                 if not tax_index[tax].get(term):
                     tax_index[tax][term] = []
-                tax_index[tax][term].append(doc)
+                tax_index[tax][term].append(entry)
     return tax_index

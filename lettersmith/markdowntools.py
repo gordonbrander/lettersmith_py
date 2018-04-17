@@ -29,14 +29,14 @@ def is_markdown_doc(doc):
 
 def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     """
-    Render markdown in content field of doc dictionary.
+    Render markdown in contents field of doc dictionary.
     Updates the output path to .html.
     Returns a new doc.
     """
-    content = markdown(doc.get("content", ""), extensions=extensions)
+    contents = markdown(doc["contents"], extensions=extensions)
     output_path = PurePath(doc["output_path"]).with_suffix(".html")
     return merge(doc, {
-        "content": content,
+        "contents": contents,
         "output_path": str(output_path)
     })
 

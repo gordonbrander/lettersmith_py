@@ -44,20 +44,20 @@ def render_doc(doc, wikilink_index,
     content = re.sub(
         WIKILINK,
         render_inner_match,
-        doc["content"]
+        doc["contents"]
     )
 
-    return put(doc, "content", content)
+    return put(doc, "contents", content)
 
 
 def uplift_wikilinks(doc):
     """
     Find all wikilinks in doc and assign them to a wikilinks property of doc.
     """
-    matches = re.finditer(WIKILINK, doc["content"])
+    matches = re.finditer(WIKILINK, doc["contents"])
     wikilinks = (match.group(1) for match in matches)
-    slugs = (to_slug(wikilink) for wikilink in wikilinks)
-    return put(doc, "wikilinks", frozenset(slugs))
+    slugs = tuple(to_slug(wikilink) for wikilink in wikilinks)
+    return Doc.put_meta(doc, "wikilinks", slugs)
 
 
 def index_wikilinks(docs, base="/"):
@@ -70,26 +70,25 @@ def index_wikilinks(docs, base="/"):
     }
 
 
-def index_backlinks(docs):
+def index_backlinks(entries):
     """
     Index all backlinks in an iterable of docs. This assumes you have
     already uplifted wikilinks from content with `uplift_wikilinks`.
     """
     # Create an index of `slug: [slugs]`
     wikilink_index = {
-        to_slug(doc["title"]): doc
-        for doc in docs
-        if "wikilinks" in doc
+        to_slug(entry["title"]): entry
+        for entry in entries
+        if "wikilinks" in entry["meta"]
     }
     backlink_index = {}
-    for doc in wikilink_index.values():
-        for slug in doc["wikilinks"]:
+    for entry in wikilink_index.values():
+        for slug in frozenset(entry["meta"]["wikilinks"]):
             try:
                 to_path = wikilink_index[slug]["id_path"]
                 if to_path not in backlink_index:
                     backlink_index[to_path] = []
-                li = Doc.to_li(doc)
-                backlink_index[to_path].append(li)
+                backlink_index[to_path].append(entry)
             except KeyError:
                 pass
     return backlink_index
