@@ -29,14 +29,14 @@ def write(docs, output_path="public"):
 
 
 def remove_drafts(docs):
-    return (doc for doc in docs if not is_draft(doc["id_path"]))
+    return (doc for doc in docs if not is_draft(doc.id_path))
 
 
 def remove_index(docs):
     """
     Filter index from docs
     """
-    return (doc for doc in docs if not is_index(doc["id_path"]))
+    return (doc for doc in docs if not is_index(doc.id_path))
 
 
 def filter_siblings(docs, id_path):
@@ -47,4 +47,4 @@ def filter_siblings(docs, id_path):
     """
     return (
         doc for doc in docs
-        if pathtools.is_sibling(id_path, doc["id_path"]))
+        if pathtools.is_sibling(id_path, doc.id_path))

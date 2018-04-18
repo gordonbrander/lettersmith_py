@@ -36,21 +36,6 @@ def next_i(i, length):
     return min(i + 1, length - 1)
 
 
-def read_config(config):
-    """
-    Read a config object and return properties related to paging.
-    Defaults to sensible values.
-    """
-    return {
-        "templates": get(config, ("paging", "templates"), TEMPLATES),
-        "output_path_template": get(
-            config,
-            ("paging", "output_path_template"),
-            OUTPUT_PATH_TEMPLATE),
-        "per_page": get(config, ("paging", "per_page"), 10)
-    }
-
-
 def gen_paging(stubs,
     templates=TEMPLATES,
     output_path_template=OUTPUT_PATH_TEMPLATE,

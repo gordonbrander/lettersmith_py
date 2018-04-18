@@ -13,7 +13,7 @@ from pathlib import PurePath
 from os import path
 from lettersmith import doc as Doc
 from lettersmith.path import to_slug, to_url
-from lettersmith.util import put
+from lettersmith.util import replace
 
 
 WIKILINK = r'\[\[([^\]]+)\]\]'
@@ -44,20 +44,20 @@ def render_doc(doc, wikilink_index,
     content = re.sub(
         WIKILINK,
         render_inner_match,
-        doc["content"]
+        doc.content
     )
 
-    return put(doc, "content", content)
+    return replace(doc, content=content)
 
 
 def uplift_wikilinks(doc):
     """
     Find all wikilinks in doc and assign them to a wikilinks property of doc.
     """
-    matches = re.finditer(WIKILINK, doc["content"])
+    matches = re.finditer(WIKILINK, doc.content)
     wikilinks = (match.group(1) for match in matches)
     slugs = tuple(to_slug(wikilink) for wikilink in wikilinks)
-    return Doc.put_meta(doc, "wikilinks", slugs)
+    return Doc.replace_meta(doc, wikilinks=slugs)
 
 
 def index_wikilinks(docs, base="/"):
@@ -65,7 +65,7 @@ def index_wikilinks(docs, base="/"):
     Reduce an iterator of docs to a slug-to-url index.
     """
     return {
-        to_slug(doc["title"]): to_url(doc["output_path"], base=base)
+        to_slug(doc.title): to_url(doc.output_path, base=base)
         for doc in docs
     }
 
@@ -77,15 +77,15 @@ def index_backlinks(stubs):
     """
     # Create an index of `slug: [slugs]`
     wikilink_index = {
-        to_slug(stub["title"]): stub
+        to_slug(stub.title): stub
         for stub in stubs
-        if "wikilinks" in stub["meta"]
+        if "wikilinks" in stub.meta
     }
     backlink_index = {}
     for stub in wikilink_index.values():
-        for slug in frozenset(stub["meta"]["wikilinks"]):
+        for slug in frozenset(stub.meta["wikilinks"]):
             try:
-                to_path = wikilink_index[slug]["id_path"]
+                to_path = wikilink_index[slug].id_path
                 if to_path not in backlink_index:
                     backlink_index[to_path] = []
                 backlink_index[to_path].append(stub)

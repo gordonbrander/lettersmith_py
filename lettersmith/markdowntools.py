@@ -2,7 +2,7 @@ from pathlib import PurePath
 from markdown import markdown
 from mdx_gfm import GithubFlavoredMarkdownExtension
 
-from lettersmith.util import merge, map_match
+from lettersmith.util import replace, map_match
 from lettersmith.path import has_ext
 
 
@@ -24,7 +24,7 @@ def is_markdown_doc(doc):
     """
     Check if a document is a markdown document. Returns a bool.
     """
-    return has_ext(doc["id_path"], MD_EXTENSIONS)
+    return has_ext(doc.id_path, MD_EXTENSIONS)
 
 
 def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
@@ -33,12 +33,9 @@ def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     Updates the output path to .html.
     Returns a new doc.
     """
-    content = markdown(doc["content"], extensions=extensions)
-    output_path = PurePath(doc["output_path"]).with_suffix(".html")
-    return merge(doc, {
-        "content": content,
-        "output_path": str(output_path)
-    })
+    content = markdown(doc.content, extensions=extensions)
+    output_path = PurePath(doc.output_path).with_suffix(".html")
+    return replace(doc, content=content, output_path=str(output_path))
 
 
 def map_markdown(docs, extensions=MD_LANG_EXTENSIONS):

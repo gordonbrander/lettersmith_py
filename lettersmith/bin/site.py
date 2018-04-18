@@ -18,7 +18,6 @@ from lettersmith import templatetools
 from lettersmith import paging
 from lettersmith import taxonomy
 from lettersmith import jinjatools
-from lettersmith import jsontools
 from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
 
@@ -40,31 +39,34 @@ def main():
         if pathtools.should_pub(x, build_drafts)
     )
 
-    docs = Docs.load(paths, relative_to=input_path)
+    # Filter out special files
+    paths = (x for x in paths if pathtools.is_doc_file(x))
+
+    docs = (Doc.load(path, relative_to=input_path) for path in paths)
 
     docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
     # Render markdown in docs so that stub will correctly strip
     # HTML for summaries.
     docs = markdowntools.map_markdown(docs)
 
-    stubs = (Doc.to_stub(doc) for doc in docs)
+    stubs = tuple(Doc.to_stub(doc) for doc in docs)
 
     # Collect stubs into index. We'll use this for cross-referencing
     # stubs, and also as an index accessible in templates.
-    index = {stub["id_path"]: stub for stub in stubs}
+    index = {stub.id_path: stub for stub in stubs}
 
-    wikilink_index = wikilink.index_wikilinks(index.values(), base=base_url)
-    backlink_index = wikilink.index_backlinks(index.values())
+    wikilink_index = wikilink.index_wikilinks(stubs, base=base_url)
+    backlink_index = wikilink.index_backlinks(stubs)
     taxonomy_index = taxonomy.index_by_taxonomy(
-        index.values(),
+        stubs,
         config["taxonomies"]
     )
-    paging_docs = paging.gen_paging(index.values(), **config["paging"])
+    paging_docs = paging.gen_paging(stubs, **config["paging"])
 
     # Reload docs
     docs = (
         Stub.load_doc(stub, relative_to=input_path)
-        for stub in index.values()
+        for stub in stubs
     )
 
     docs = markdowntools.map_markdown(docs)

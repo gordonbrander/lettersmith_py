@@ -1,7 +1,7 @@
 from pathlib import PurePath
 
 from lettersmith import path as pathtools
-from lettersmith.util import put
+from lettersmith.util import replace
 
 
 SECTION_TEMPLATE = "section/{section}/{basename}"
@@ -38,22 +38,22 @@ def add_templates(doc):
     """
     templates = []
     try:
-        custom_template = doc["meta"]["template"]
+        custom_template = doc.meta["template"]
         templates.insert(0, custom_template)
     except KeyError:
         pass
 
     # Add some "affiliated" implicit templates... these are templates that
     # are associated with doc attributes.
-    affiliated_templates = read_affiliated_templates(doc["id_path"])
+    affiliated_templates = read_affiliated_templates(doc.id_path)
     templates.extend(affiliated_templates)
 
     # Carry over any existing templates
     try:
-        templates.extend(doc["templates"])
+        templates.extend(doc.templates)
     except KeyError:
         pass
-    return put(doc, "templates", tuple(templates))
+    return replace(doc, templates=tuple(templates))
 
 
 def map_templates(docs):

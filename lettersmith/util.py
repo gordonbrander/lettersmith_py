@@ -2,7 +2,7 @@
 Utility functions.
 Mostly tools for working with dictionaries and iterables.
 """
-from functools import reduce
+from functools import reduce, singledispatch
 from fnmatch import fnmatch
 
 
@@ -16,11 +16,23 @@ def compose(fn, *fns):
     return reduce(compose2, fns, fn)
 
 
-def _get_key(d, key):
-    return d[key]
+@singledispatch
+def get(d, key, default=None):
+    """
+    A singledispatch getter function.
+    """
+    return getattr(d, key, default)
 
 
-def get(d, keys, default=None):
+@get.register(dict)
+def get_dict(d, key, default=None):
+    """
+    Getter for dictionaries. Does a get on dictionary items.
+    """
+    return d.get(key, default)
+
+
+def get_deep(d, keys, default=None):
     """
     Get a value in a dictionary, or get a deep value in
     nested dictionaries.
@@ -29,49 +41,43 @@ def get(d, keys, default=None):
     If `keys` is an iterable of strings, will attempt to do a deep get.
     If the get fails, will return `default` value.
     """
-    if type(keys) == str:
-        return d.get(keys, default)
-    try:
-        return reduce(_get_key, keys, d)
-    except (KeyError, TypeError):
-        return default
+    if type(keys) is str:
+        return get(d, keys)
+    for key in keys:
+        d = get(d, key)
+        if d == None:
+            return default
+    return d
 
 
-def merge(d, patch):
+@singledispatch
+def replace(x, **kwargs):
     """
-    Merge 2 dictionaries, returning a new dictionary.
+    Replace values by keyword argument on some datastructure.
+    This is a singledispatch function that can be extended to multiple
+    types. Default implementation is provided for dict.
+    """
+    raise TypeError("Cannot replace entries on unknown type {}".format(x))
+
+
+@replace.register(dict)
+def replace_dict(d, **kwargs):
+    """
+    Replace values by keyword on a dict, returning a new dict.
     """
     e = d.copy()
-    for k, v in patch.items():
-        e[k] = v
+    e.update(kwargs)
     return e
 
 
-def put(d, k, v):
+def merge(a, b):
     """
-    Given a dict d, set value v at key k, returning new dict.
-    New dict is a shallow copy of dict d.
+    Replace values by keyword on a dict, returning a new dict.
     """
-    e = d.copy()
-    e[k] = v
-    return e
-
-
-def merge_deep(a, b):
-    """
-    Merge 2 dictionaries recursively, returning a new dictionary.
-    Any dict field will be merged recursively. For all other fields, the
-    right-hand field wins.
-    """
-    target = {}
-    for d in (a, b):
-        for k, v in d.items():
-            if (isinstance(v, dict) and
-                isinstance(target.get(k, None), dict)):
-                target[k] = merge_deep(target[k], v)
-            else:
-                set(target, k, v)
-    return target
+    d = {}
+    d.update(a)
+    d.update(b)
+    return d
 
 
 def chunk(iterable, n):
@@ -102,27 +108,6 @@ def map_match(predicate, f, iterable, *args, **kwargs):
             yield x
 
 
-def find(iterable, predicate, default=None):
-    """Find first match to predicate, or return default"""
-    return next((x for x in iterable if predicate(x)), default)
-
-
-def pick(d, keys):
-    """
-    Create a new dict with only only the items for keys in `keys`.
-    Basically, whitelist certain keys in the dict.
-    """
-    return {k: v for k, v in d.items() if k in keys}
-
-
-def unset(d, keys):
-    """
-    Remove specified keys from dict.
-    Basically, blacklist certain keys in the original dict.
-    """
-    return {k: v for k, v in d.items() if k not in keys}
-
-
 _EMPTY_TUPLE = tuple()
 
 
@@ -131,7 +116,7 @@ def contains(x, key, value):
     Check for the inclusion of a value in an indexable in a deep object.
     `key` is a key path (can be a single key or an iterable of keys).
     """
-    return value in get(x, key, _EMPTY_TUPLE)
+    return value in get_deep(x, key, _EMPTY_TUPLE)
 
 
 def has_key(x, key):
@@ -139,24 +124,15 @@ def has_key(x, key):
     Check for the presence of a key in a deep object.
     `key` is a key path (can be a single key or an iterable of keys).
     """
-    return get(x, key) != None
+    return get_deep(x, key) != None
 
 
-def where(dicts, key, value):
+def where(dicts, key, value, is_match=True):
     """
     Query an iterable of dictionaries for keys matching value.
     `key` may be an iterable of keys representing a key path.
     """
-    return (x for x in dicts if get(x, key) == value)
-
-
-def where_not(dicts, key, value):
-    """
-    Query an iterable of dictionaries for keys NOT matching value.
-    This may mean the key does not exist, or the value does not match.
-    `key` may be an iterable of keys representing a key path.
-    """
-    return (x for x in dicts if get(x, key) != value)
+    return (x for x in dicts if (get_deep(x, key) == value) == is_match)
 
 
 def where_key(dicts, key):
@@ -173,6 +149,7 @@ def where_not_key(dicts, key):
     `key` may be an iterable of keys representing a key path.
     """
     return (x for x in dicts if not has_key(x, key))
+
 
 def where_contains(dicts, key, value):
     """
@@ -192,7 +169,7 @@ def where_matches(dicts, key, glob):
 
     Returns an iterable of matching dictionaries.
     """
-    return (x for x in dicts if fnmatch(get(x, key), glob))
+    return (x for x in dicts if fnmatch(get_deep(x, key), glob))
 
 
 def sort(iterable, key=None, reverse=None):

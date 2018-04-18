@@ -28,7 +28,6 @@ FILTERS = {
     "sort": util.sort,
     "sort_by": util.sort_by,
     "where": util.where,
-    "where_not": util.where_not,
     "where_key": util.where_key,
     "where_not_key": util.where_not_key,
     "where_contains": util.where_contains,
@@ -63,7 +62,7 @@ def should_template(doc):
     Check if a doc should be templated. Returns a bool.
     """
     try:
-        return len(doc["templates"]) > 0
+        return len(doc.templates) > 0
     except KeyError:
         return False
 
@@ -77,9 +76,9 @@ def renderer(env):
         """
         Render a document with bound environment.
         """
-        jinja_template = env.select_template(doc["templates"])
-        rendered = jinja_template.render(doc)
-        return util.put(doc, "content", rendered)
+        jinja_template = env.select_template(doc.templates)
+        rendered = jinja_template.render({"doc": doc})
+        return util.replace(doc, content=rendered)
     return render
 
 

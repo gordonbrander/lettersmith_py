@@ -27,7 +27,7 @@ def index_by_taxonomy(stubs, taxonomies=None):
     taxonomies = taxonomies or DEFAULT_TAXONOMIES
     tax_index = {}
     for stub in stubs:
-        for tax, terms in items_with_keys(stub["meta"], taxonomies):
+        for tax, terms in items_with_keys(stub.meta, taxonomies):
             if not tax_index.get(tax):
                 tax_index[tax] = {}
             for term in terms:

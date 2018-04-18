@@ -6,7 +6,8 @@ import argparse
 from pathlib import Path
 from .yamltools import load
 
-from lettersmith import paging
+from lettersmith.util import get_deep
+from lettersmith.paging import OUTPUT_PATH_TEMPLATE, TEMPLATES
 
 
 def lettersmith_argparser(description="Builds a site with Lettersmith"):
@@ -27,6 +28,22 @@ def lettersmith_argparser(description="Builds a site with Lettersmith"):
     return parser
 
 
+def _read_paging_config(config):
+    """
+    Read a config object and return properties related to paging.
+    Defaults to sensible values.
+    """
+    return {
+        "templates": get_deep(config, ("paging", "templates"), TEMPLATES),
+        "output_path_template": get_deep(
+            config,
+            ("paging", "output_path_template"),
+            OUTPUT_PATH_TEMPLATE
+        ),
+        "per_page": get_deep(config, ("paging", "per_page"), 10)
+    }
+
+
 def read_config(config):
     """
     Reads config object, providing sensible defaults for properties
@@ -42,6 +59,6 @@ def read_config(config):
         "build_drafts": config.get("build_drafts", False),
         "permalink_templates": config.get("permalink_templates", {}),
         "taxonomies": config.get("taxonomies", []),
-        "paging": paging.read_config(config),
+        "paging": _read_paging_config(config),
         "site": config.get("site", {})
     }
