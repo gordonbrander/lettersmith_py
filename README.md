@@ -38,7 +38,7 @@ This will plop a yaml config file and a theme directory you can customize into y
 
 Lettersmith comes bundled with a static site generator, but it's really just a library of tools for transforming text. You can use these tools to create your own custom static site generators, build tools, project scaffolders, ebook generators, or wikis — whatever you like.
 
-Lettersmith loads text files as Python dictionaries, so a markdown file like this:
+Lettersmith loads text files as Python namedtuples, so a markdown file like this:
 
 ```markdown
 ---
@@ -52,23 +52,26 @@ Some content
 Becomes this:
 
 ```python
-{
-  "meta": {
+Doc(
+  id_path='path/to/post.md',
+  output_path='path/to/post/index.html',
+  input_path='content/path/to/post.md',
+  created=datetime.datetime(2018, 12, 31, 16, 0),
+  modified=datetime.datetime(2018, 12, 31, 16, 0),
+  title='My post',
+  content='Some content',
+  section='path',
+  meta={
     "title": "My post",
     "date": "2018-01-17"
-  }
-  "content": "Some content",
-  "file_created_time": datetime,
-  "file_modified_time": datetime,
-  "input_path": "path/to/post.md",
-  "output_path": "path/to/post/index.md",
-  ...
-}
+  },
+  templates=()
+)
 ```
 
 ## Plugins
 
-Plugins are just functions that transform a Python dictionary.
+Plugins are just functions that transform namedtuples.
 
 To transform many files, you can load them into an iterable, then use list comprehensions, generator expressions, and map, filter, reduce:
 
