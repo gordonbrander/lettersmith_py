@@ -20,6 +20,7 @@ from lettersmith import paging
 from lettersmith import taxonomy
 from lettersmith import jinjatools
 from lettersmith import rss
+from lettersmith import sitemap
 from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
 
@@ -88,6 +89,8 @@ def main():
         author=site_author
     )
 
+    sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
+
     # Reload docs
     docs = (
         Stub.load_doc(stub, relative_to=input_path)
@@ -100,7 +103,7 @@ def main():
     docs = templatetools.map_templates(docs)
     docs = map_permalink(docs, config["permalink_templates"])
     docs = wikilink.map_wikilinks(docs, wikilink_index)
-    docs = chain(docs, paging_docs, (rss_doc,))
+    docs = chain(docs, paging_docs, (rss_doc, sitemap_doc))
 
     # Set up template globals
     context = {

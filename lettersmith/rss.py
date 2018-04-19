@@ -1,7 +1,6 @@
 from pathlib import Path
 from itertools import islice
 from datetime import datetime
-from jinja2 import Environment, PackageLoader
 from lettersmith.util import sort_by
 from lettersmith.jinjatools import create_env
 from lettersmith.path import to_url
