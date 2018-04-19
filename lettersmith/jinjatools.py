@@ -61,10 +61,7 @@ def should_template(doc):
     """
     Check if a doc should be templated. Returns a bool.
     """
-    try:
-        return len(doc.templates) > 0
-    except KeyError:
-        return False
+    return len(doc.templates) > 0
 
 
 def renderer(env):
@@ -91,4 +88,4 @@ def map_jinja(docs, context={}, filters={}, theme_path="theme"):
     all_filters = util.merge(FILTERS, filters)
     env = create_env(theme_path, filters=all_filters, context=all_context)
     render = renderer(env)
-    return (render(doc) for doc in docs if should_template(doc))
+    return util.map_match(should_template, render, docs)

@@ -37,8 +37,8 @@ def next_i(i, length):
 
 
 def gen_paging(stubs,
-    templates=TEMPLATES,
-    output_path_template=OUTPUT_PATH_TEMPLATE,
+    templates=None,
+    output_path_template=None,
     per_page=10):
     """
     From an index of lis, produce a generator factory of paging docs.
@@ -48,7 +48,7 @@ def gen_paging(stubs,
     n = 0
     for stubs in paged:
         n = n + 1
-        output_path = output_path_template.format(n=n)
+        output_path = (output_path_template or OUTPUT_PATH_TEMPLATE).format(n=n)
         page_list = tuple(stub for stub in stubs)
         meta = {
             "page_n": n,
@@ -60,5 +60,6 @@ def gen_paging(stubs,
             id_path=output_path,
             output_path=output_path,
             title="Page {}".format(n),
-            meta=meta
+            meta=meta,
+            templates=templates if templates is not None else TEMPLATES
         )

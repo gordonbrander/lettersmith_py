@@ -5,6 +5,7 @@ from pathlib import PurePath, Path
 from itertools import chain
 from subprocess import CalledProcessError
 
+from lettersmith.util import get_deep
 from lettersmith.argparser import lettersmith_argparser, read_config
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
@@ -18,6 +19,7 @@ from lettersmith import templatetools
 from lettersmith import paging
 from lettersmith import taxonomy
 from lettersmith import jinjatools
+from lettersmith import rss
 from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
 
@@ -31,6 +33,10 @@ def main():
     theme_path = config["theme_path"]
     base_url = config["base_url"]
     build_drafts = config["build_drafts"]
+    site_title = get_deep(config, ("site", "title"), "Untitled")
+    site_desc = get_deep(config, ("site", "description"), "")
+    site_author = get_deep(config, ("site", "author"), site_title)
+    now = datetime.now()
 
     data = load_data_files(config["data_path"])
 
@@ -61,7 +67,26 @@ def main():
         stubs,
         config["taxonomies"]
     )
-    paging_docs = paging.gen_paging(stubs, **config["paging"])
+
+    paging_docs = paging.gen_paging(
+        stubs,
+        templates=get_deep(config, ("paging", "templates")),
+        output_path_template=get_deep(config, ("paging", "output_path_template")),
+        per_page=get_deep(config, ("paging", "per_page"))
+    )
+
+    most_recent_stubs = rss.most_recent_n(
+        stubs,
+        nitems=get_deep(config, ("rss", "nitems"), 24)
+    )
+
+    rss_doc = rss.gen_rss(most_recent_stubs, "rss.xml",
+        base_url=base_url,
+        last_build_date=now,
+        title=site_title,
+        description=site_desc,
+        author=site_author
+    )
 
     # Reload docs
     docs = (
@@ -75,7 +100,7 @@ def main():
     docs = templatetools.map_templates(docs)
     docs = map_permalink(docs, config["permalink_templates"])
     docs = wikilink.map_wikilinks(docs, wikilink_index)
-    docs = chain(docs, paging_docs)
+    docs = chain(docs, paging_docs, (rss_doc,))
 
     # Set up template globals
     context = {
@@ -86,7 +111,7 @@ def main():
         "site": config["site"],
         "data": data,
         "base_url": base_url,
-        "now": datetime.now()
+        "now": now
     }
 
     docs = jinjatools.map_jinja(docs, context=context, theme_path=theme_path)
