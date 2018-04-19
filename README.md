@@ -63,7 +63,7 @@ Doc(
   section='path',
   meta={
     "title": "My post",
-    "date": "2018-01-17"
+    "date": "2018-12-31"
   },
   templates=()
 )
