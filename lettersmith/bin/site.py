@@ -108,6 +108,7 @@ def main():
 
     # Set up template globals
     context = {
+        "rss_docs": (rss_doc,),
         "index": index,
         "taxonomy_index": taxonomy_index,
         "backlink_index": backlink_index,

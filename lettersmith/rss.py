@@ -18,7 +18,7 @@ READ_MORE = "Read more&hellip;"
 
 def render_rss(stubs,
   base_url="/", last_build_date=None,
-  title="Feed", description="", author="", read_more=None):
+  title="RSS Feed", description="", author="", read_more=None):
   context = {
     "generator": "Lettersmith",
     "base_url": base_url,
@@ -42,7 +42,7 @@ def most_recent_n(stubs, nitems=24):
 
 def gen_rss(stubs, output_path,
   base_url="/", last_build_date=None,
-  title="Feed", description="", author="", read_more=None):
+  title="RSS Feed", description="", author="", read_more=None):
   """
   Yields an RSS doc
   """
@@ -61,5 +61,6 @@ def gen_rss(stubs, output_path,
     output_path=output_path,
     created=now,
     modified=now,
+    title=title,
     content=content
   )
