@@ -60,12 +60,12 @@ def uplift_wikilinks(doc):
     return Doc.replace_meta(doc, wikilinks=slugs)
 
 
-def index_wikilinks(docs, base="/"):
+def index_wikilinks(docs, base_url="/"):
     """
     Reduce an iterator of docs to a slug-to-url index.
     """
     return {
-        to_slug(doc.title): to_url(doc.output_path, base=base)
+        to_slug(doc.title): to_url(doc.output_path, base=base_url)
         for doc in docs
     }
 

@@ -34,8 +34,8 @@ def absolutize_doc_urls(doc, base="/"):
     return replace(doc, content=content)
 
 
-def map_absolutize(docs, base="/"):
+def map_absolutize(docs, base_url="/"):
     # Early return if base URL is just "/"
-    if str(base) == "/":
+    if str(base_url) == "/":
         return docs
-    return (absolutize_doc_urls(doc, base) for doc in docs)
+    return (absolutize_doc_urls(doc, base_url) for doc in docs)

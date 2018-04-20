@@ -66,7 +66,7 @@ def main():
     # stubs, and also as an index accessible in templates.
     index = {stub.id_path: stub for stub in stubs}
 
-    wikilink_index = wikilink.index_wikilinks(stubs, base=base_url)
+    wikilink_index = wikilink.index_wikilinks(stubs, base_url=base_url)
     backlink_index = wikilink.index_backlinks(stubs)
     taxonomy_index = taxonomy.index_by_taxonomy(stubs, taxonomies)
 
@@ -100,7 +100,7 @@ def main():
     )
 
     docs = markdowntools.map_markdown(docs)
-    docs = absolutize.map_absolutize(docs, base=base_url)
+    docs = absolutize.map_absolutize(docs, base_url=base_url)
     docs = (Doc.change_ext(doc, ".html") for doc in docs)
     docs = templatetools.map_templates(docs)
     docs = map_permalink(docs, permalink_templates)
