@@ -5,7 +5,7 @@ from pathlib import PurePath, Path
 from itertools import chain
 from subprocess import CalledProcessError
 
-from lettersmith.util import get_deep
+from lettersmith.util import get_deep, where_matches
 from lettersmith.argparser import lettersmith_argparser
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
@@ -77,19 +77,15 @@ def main():
         per_page=get_deep(config, ("paging", "per_page"))
     )
 
-    most_recent_stubs = rss.most_recent_n(
+    rss_docs = tuple(rss.gen_rss_feeds(
         stubs,
-        nitems=get_deep(config, ("rss", "nitems"), 24)
-    )
-
-    rss_doc = rss.gen_rss(most_recent_stubs, "rss.xml",
+        get_deep(config, ("rss", "feeds"), {site_title: "*"}),
         base_url=base_url,
         last_build_date=now,
-        title=site_title,
-        description=site_description,
-        author=site_author,
-        read_more=get_deep(config, "rss", "read_more")
-    )
+        description=site_description, author=site_author,
+        read_more=get_deep(config, ("rss", "read_more")),
+        nitems=get_deep(config, ("rss", "nitems"), 48)
+    ))
 
     sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
 
@@ -105,11 +101,11 @@ def main():
     docs = templatetools.map_templates(docs)
     docs = map_permalink(docs, permalink_templates)
     docs = wikilink.map_wikilinks(docs, wikilink_index)
-    docs = chain(docs, paging_docs, (rss_doc, sitemap_doc))
+    docs = chain(docs, paging_docs, rss_docs, (sitemap_doc,))
 
     # Set up template globals
     context = {
-        "rss_docs": (rss_doc,),
+        "rss_docs": rss_docs,
         "index": index,
         "taxonomy_index": taxonomy_index,
         "backlink_index": backlink_index,

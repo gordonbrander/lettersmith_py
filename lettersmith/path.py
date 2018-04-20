@@ -2,7 +2,6 @@ from urllib.parse import urlparse, urljoin
 from pathlib import Path, PurePath
 from os import sep, listdir, path, walk
 import re
-from fnmatch import fnmatch
 
 
 _STRANGE_CHARS = "[](){}<>:^&%$#@!'\"|*~`,"
