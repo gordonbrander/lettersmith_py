@@ -6,7 +6,7 @@ from itertools import chain
 from subprocess import CalledProcessError
 
 from lettersmith.util import get_deep
-from lettersmith.argparser import lettersmith_argparser, read_config
+from lettersmith.argparser import lettersmith_argparser
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
 from lettersmith import doc as Doc
@@ -28,18 +28,22 @@ def main():
     parser = lettersmith_argparser(
         description="""Generates a blog-aware site with Lettersmith""")
     args = parser.parse_args()
-    config = read_config(args.config)
-    input_path = Path(config["input_path"])
-    output_path = config["output_path"]
-    theme_path = config["theme_path"]
-    base_url = config["base_url"]
-    build_drafts = config["build_drafts"]
+    config = args.config
+    input_path = Path(config.get("input_path", "content"))
+    output_path = config.get("output_path", "public")
+    theme_path = config.get("theme_path", "theme")
+    base_url = config.get("base_url", "/")
+    build_drafts = config.get("build_drafts", False)
+    data_path = config.get("data_path", "data")
+    static_paths = config.get("static_paths", [])
+    permalink_templates = config.get("permalink_templates", {})
+    taxonomies = config.get("taxonomies", [])
     site_title = get_deep(config, ("site", "title"), "Untitled")
-    site_desc = get_deep(config, ("site", "description"), "")
-    site_author = get_deep(config, ("site", "author"), site_title)
+    site_description = get_deep(config, ("site", "description"), "")
+    site_author = get_deep(config, ("site", "author"), "")
     now = datetime.now()
 
-    data = load_data_files(config["data_path"])
+    data = load_data_files(data_path)
 
     paths = (
         x for x in input_path.glob("**/*.md")
@@ -64,10 +68,7 @@ def main():
 
     wikilink_index = wikilink.index_wikilinks(stubs, base=base_url)
     backlink_index = wikilink.index_backlinks(stubs)
-    taxonomy_index = taxonomy.index_by_taxonomy(
-        stubs,
-        config["taxonomies"]
-    )
+    taxonomy_index = taxonomy.index_by_taxonomy(stubs, taxonomies)
 
     paging_docs = paging.gen_paging(
         stubs,
@@ -85,7 +86,7 @@ def main():
         base_url=base_url,
         last_build_date=now,
         title=site_title,
-        description=site_desc,
+        description=site_description,
         author=site_author,
         read_more=get_deep(config, "rss", "read_more")
     )
@@ -102,7 +103,7 @@ def main():
     docs = absolutize.map_absolutize(docs, base=base_url)
     docs = (Doc.change_ext(doc, ".html") for doc in docs)
     docs = templatetools.map_templates(docs)
-    docs = map_permalink(docs, config["permalink_templates"])
+    docs = map_permalink(docs, permalink_templates)
     docs = wikilink.map_wikilinks(docs, wikilink_index)
     docs = chain(docs, paging_docs, (rss_doc, sitemap_doc))
 
@@ -113,7 +114,7 @@ def main():
         "taxonomy_index": taxonomy_index,
         "backlink_index": backlink_index,
         "wikilink_index": wikilink_index,
-        "site": config["site"],
+        "site": config.get("site", {}),
         "data": data,
         "base_url": base_url,
         "now": now
