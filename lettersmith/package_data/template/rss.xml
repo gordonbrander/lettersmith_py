@@ -17,7 +17,7 @@
     <content:encoded><![CDATA[
       {{stub.summary}}
       <p>
-        <a href="{{stub.output_path | to_url(base_url) }}">Read more&hellip;</a>
+        <a href="{{stub.output_path | to_url(base_url) }}">{{read_more}}</a>
       </p>
     ]]></content:encoded>
     {% endif %}

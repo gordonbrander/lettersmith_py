@@ -86,7 +86,8 @@ def main():
         last_build_date=now,
         title=site_title,
         description=site_desc,
-        author=site_author
+        author=site_author,
+        read_more=get_deep(config, "rss", "read_more")
     )
 
     sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)

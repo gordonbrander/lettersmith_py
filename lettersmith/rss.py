@@ -13,10 +13,12 @@ FILTERS = {
   "to_url": to_url
 }
 
+READ_MORE = "Read more&hellip;"
+
 
 def render_rss(stubs,
   base_url="/", last_build_date=None,
-  title="Feed", description="", author=""):
+  title="Feed", description="", author="", read_more=None):
   context = {
     "generator": "Lettersmith",
     "base_url": base_url,
@@ -24,7 +26,8 @@ def render_rss(stubs,
     "description": description,
     "author": author,
     "last_build_date":
-      last_build_date if last_build_date is not None else datetime.now()
+      last_build_date if last_build_date is not None else datetime.now(),
+    "read_more": read_more if read_more is not None else READ_MORE
   }
   env = create_env(str(TEMPLATE_PATH), context=context, filters=FILTERS)
   rss_template = env.get_template("rss.xml")
@@ -39,7 +42,7 @@ def most_recent_n(stubs, nitems=24):
 
 def gen_rss(stubs, output_path,
   base_url="/", last_build_date=None,
-  title="Feed", description="", author=""):
+  title="Feed", description="", author="", read_more=None):
   """
   Yields an RSS doc
   """
@@ -50,7 +53,8 @@ def gen_rss(stubs, output_path,
     last_build_date=last_build_date,
     title=title,
     description=description,
-    author=author
+    author=author,
+    read_more=read_more
   )
   return Doc.doc(
     id_path=output_path,
