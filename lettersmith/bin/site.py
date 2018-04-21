@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import tempfile
 from datetime import datetime
 from pathlib import PurePath, Path
 from itertools import chain
@@ -23,6 +22,7 @@ from lettersmith import rss
 from lettersmith import sitemap
 from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
+
 
 def main():
     parser = lettersmith_argparser(
