@@ -9,7 +9,6 @@ import frontmatter
 from lettersmith.date import parse_iso_8601, read_file_times, EPOCH
 from lettersmith.file import write_file_deep
 from lettersmith import yamltools
-from lettersmith.stringtools import truncate, strip_html
 from lettersmith import path as pathtools
 from lettersmith.util import replace, get
 
@@ -81,7 +80,7 @@ def load(pathlike, relative_to=""):
     Returns a dictionary.
     """
     created, modified = read_file_times(pathlike)
-    with open(pathlike) as f:
+    with open(str(pathlike)) as f:
         meta, content = frontmatter.parse(f.read())
         input_path = PurePath(pathlike)
         id_path = input_path.relative_to(relative_to)

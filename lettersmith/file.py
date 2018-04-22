@@ -6,8 +6,9 @@ import subprocess
 from pathlib import Path
 
 
-def write_file_deep(file_path, content):
+def write_file_deep(pathlike, content):
     """Write a file to filepath, creating directory if necessary"""
+    file_path = str(pathlike)
     try:
         dirname = path.dirname(file_path)
         makedirs(dirname)
@@ -28,7 +29,7 @@ def _copy_dir(input_path, output_path, recursive=True, content=True):
         cmd = ("rsync", "-r", input_path_str, str(output_path))
     else:
         cmd = ("rsync", input_path_str, str(output_path))
-    return subprocess.run(cmd, check=True)
+    return subprocess.check_call(cmd)
 
 
 def copy(input_path, output_path, recursive=True, content=False):
@@ -48,7 +49,7 @@ def copy(input_path, output_path, recursive=True, content=False):
             recursive=recursive, content=content)
     else:
         cmd = ("cp", str(input_path), str(output_path))
-        return subprocess.run(cmd, check=True)
+        return subprocess.check_call(cmd)
 
 
 def copy_all(input_paths, output_path, recursive=True):

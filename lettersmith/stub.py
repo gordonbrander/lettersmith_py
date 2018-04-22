@@ -5,7 +5,7 @@ import frontmatter
 from lettersmith.util import replace, get
 from lettersmith import path as pathtools
 from lettersmith.date import EPOCH
-
+from lettersmith.stringtools import truncate, strip_html
 
 Stub = namedtuple("Stub", (
     "id_path", "output_path", "input_path",

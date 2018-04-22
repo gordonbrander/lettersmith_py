@@ -9,9 +9,10 @@ def read_file_times(pathlike):
 
     If no value can be found, will return unix epoch for both.
     """
+    path_str = str(pathlike)
     try:
-        modified_time = datetime.fromtimestamp(path.getmtime(pathlike))
-        created_time = datetime.fromtimestamp(path.getctime(pathlike))
+        modified_time = datetime.fromtimestamp(path.getmtime(path_str))
+        created_time = datetime.fromtimestamp(path.getctime(path_str))
         return created_time, modified_time
     except OSError:
         return EPOCH, EPOCH
