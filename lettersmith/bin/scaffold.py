@@ -27,7 +27,7 @@ def main():
     scaffold_path = Path(
         module_path, "..", "package_data", "scaffold", args.type)
 
-    copy(scaffold_path, project_path, contents=True)
+    copy(scaffold_path, project_path, content=True)
 
     messages = (
         "Hocus pocus — Your new site is ready!",
