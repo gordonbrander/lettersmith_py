@@ -23,7 +23,6 @@ from lettersmith import sitemap
 from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
 
-
 def main():
     parser = lettersmith_argparser(
         description="""Generates a blog-aware site with Lettersmith""")
@@ -60,7 +59,7 @@ def main():
     # HTML for summaries.
     docs = markdowntools.map_markdown(docs)
 
-    stubs = tuple(Doc.to_stub(doc) for doc in docs)
+    stubs = tuple(Stub.from_doc(doc) for doc in docs)
 
     # Collect stubs into index. We'll use this for cross-referencing
     # stubs, and also as an index accessible in templates.
@@ -91,7 +90,7 @@ def main():
 
     # Reload docs
     docs = (
-        Stub.load_doc(stub, relative_to=input_path)
+        Doc.load_stub(stub, relative_to=input_path)
         for stub in stubs
     )
 

@@ -2,7 +2,7 @@ from os import path
 from pathlib import PurePath
 import json
 from datetime import datetime
-from typing import NamedTuple, Union
+from collections import namedtuple
 
 import frontmatter
 
@@ -12,36 +12,27 @@ from lettersmith import yamltools
 from lettersmith.stringtools import truncate, strip_html
 from lettersmith import path as pathtools
 from lettersmith.util import replace, get
-from lettersmith import stub as Stub
 
 
 _EMPTY_TUPLE = tuple()
 
+Doc = namedtuple("Doc", (
+    "id_path", "output_path", "input_path", "created", "modified",
+    "title", "content", "section", "meta", "templates"
+))
+Doc.__docstring__ = """
+Docs are namedtuples that represent a document to be transformed,
+and eventually written to disk.
 
-class Doc(NamedTuple):
-    """
-    Docs are namedtuples that represent a document to be transformed,
-    and eventually written to disk.
+Docs contain a content field — usually the whole contents of a
+file. Since this can take up quite a bit of memory, it's typical to avoid
+collecting all docs into memory. We usually load and transform them in
+generator functions so that only one is in memory at a time.
 
-    Docs contain a content field — usually the whole contents of a
-    file. Since this can take up quite a bit of memory, it's typical to avoid
-    collecting all docs into memory. We usually load and transform them in
-    generator functions so that only one is in memory at a time.
-
-    For collecting many in memory, and cross-referencing, we use Stubs.
-    Stubs are meant to be stub docs. They contain just meta information
-    about the doc. You can turn a doc into a stub with `to_stub(doc)`.
-    """
-    id_path: str
-    output_path: str
-    input_path: Union[str, None]
-    created: datetime
-    modified: datetime
-    title: str
-    content: str
-    section: str
-    meta: dict
-    templates: tuple
+For collecting many in memory, and cross-referencing, we use Stubs.
+Stubs are meant to be stub docs. They contain just meta information
+about the doc. You can turn a doc into a stub with `to_stub(doc)`.
+"""
 
 
 def doc(id_path, output_path,
@@ -110,23 +101,44 @@ def load(pathlike, relative_to=""):
         )
 
 
-def to_stub(doc, max_len=250, suffix="..."):
-    try:
-        summary = doc.meta["summary"]
-    except KeyError:
-        summary = truncate(strip_html(doc.content), max_len, suffix)
+def from_stub(stub):
+    """
+    Create a doc dictionary from an stub dictionary.
+    This doc dictionary will have an empty "content" field.
 
-    return Stub.stub(
-        id_path=doc.id_path,
-        output_path=doc.output_path,
-        input_path=doc.input_path,
-        created=doc.created,
-        modified=doc.modified,
-        title=doc.title,
-        summary=summary,
-        section=doc.section,
-        meta=doc.meta
+    If you want to load a doc from a file stub with an `input_path`,
+    use `load_doc` instead.
+    """
+    return doc(
+        id_path=stub.id_path,
+        output_path=stub.output_path,
+        input_path=stub.input_path,
+        created=stub.created,
+        modified=stub.modified,
+        title=stub.title,
+        section=stub.section,
+        meta=stub.meta
     )
+
+
+def load_stub(stub, relative_to=""):
+    """
+    Loads a doc from a stub.
+    Returns a doc.
+    """
+    with open(stub.input_path) as f:
+        _, content = frontmatter.parse(f.read())
+        return doc(
+            id_path=stub.id_path,
+            output_path=stub.output_path,
+            input_path=stub.input_path,
+            created=stub.created,
+            modified=stub.modified,
+            title=stub.title,
+            section=stub.section,
+            content=content,
+            meta=stub.meta
+        )
 
 
 def write(doc, output_dir):
