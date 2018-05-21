@@ -69,22 +69,38 @@ def main():
     backlink_index = wikilink.index_backlinks(stubs)
     taxonomy_index = taxonomy.index_by_taxonomy(stubs, taxonomies)
 
-    paging_docs = paging.gen_paging(
-        stubs,
-        templates=get_deep(config, ("paging", "templates")),
-        output_path_template=get_deep(config, ("paging", "output_path_template")),
-        per_page=get_deep(config, ("paging", "per_page"))
+    paging_docs = chain.from_iterable(
+        paging.gen_paging(
+            stubs,
+            match=match,
+            templates=options.get("templates"),
+            output_path_template=options.get("output_path_template"),
+            per_page=options.get("per_page", 10)
+        )
+        for match, options in config.get("paging", {}).items()
     )
 
-    rss_docs = tuple(rss.gen_rss_feeds(
-        stubs,
-        get_deep(config, ("rss", "feeds"), {site_title: "*"}),
-        base_url=base_url,
-        last_build_date=now,
-        description=site_description, author=site_author,
-        read_more=get_deep(config, ("rss", "read_more")),
-        nitems=get_deep(config, ("rss", "nitems"), 48)
-    ))
+    RSS_DEFAULT = {
+        "*": {
+            "output_path": "feed.rss"
+        }
+    }
+
+    rss_docs = tuple(
+        rss.gen_rss_feed(
+            stubs,
+            match=match,
+            output_path=options["output_path"],
+            base_url=base_url,
+            last_build_date=now,
+            title=options.get("title", site_title),
+            description=options.get("description", site_description),
+            author=options.get("author", site_author),
+            read_more=options.get("read_more"),
+            nitems=options.get("nitems", 48)
+        )
+        for match, options in config.get("rss", RSS_DEFAULT).items()
+    )
 
     sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
 

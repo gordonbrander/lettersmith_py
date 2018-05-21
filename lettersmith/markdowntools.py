@@ -2,7 +2,7 @@ from pathlib import PurePath
 from markdown import markdown
 from mdx_gfm import GithubFlavoredMarkdownExtension
 
-from lettersmith.util import replace, map_match
+from lettersmith.util import replace, match_mapper
 from lettersmith.path import has_ext
 
 
@@ -38,10 +38,12 @@ def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     return replace(doc, content=content, output_path=str(output_path))
 
 
-def map_markdown(docs, extensions=MD_LANG_EXTENSIONS):
+@match_mapper(is_markdown_doc)
+def map_markdown(doc, extensions=MD_LANG_EXTENSIONS):
     """
     Given an iterable of docs, return a generator that will yield
     markdown docs rendered to HTML. Things that aren't markdown docs
-    will be yielded untouched. 
+    will be yielded untouched.
     """
-    return map_match(is_markdown_doc, render_doc, docs, extensions=extensions)
+    return render_doc(doc, extensions)
+

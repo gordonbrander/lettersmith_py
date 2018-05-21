@@ -6,6 +6,13 @@ from functools import reduce, singledispatch
 from fnmatch import fnmatch
 
 
+def id(x):
+    """
+    The id function.
+    """
+    return x
+
+
 def compose2(f, e):
     """Compose 2 functions"""
     return lambda x: f(e(x))
@@ -106,6 +113,52 @@ def map_match(predicate, f, iterable, *args, **kwargs):
             yield f(x, *args, **kwargs)
         else:
             yield x
+
+
+def match_mapper(predicate):
+    """
+    This decorator lifts a fuction which operates on a single item
+    to one that operates over an iterable of items.
+
+    Items that match `predicate` are mapped with `f`. Items which
+    do not are still yielded, but not touched.
+
+    The resulting function returns a generator for results.
+    """
+    def decorate(f):
+        def map_match(iterable, *args, **kwargs):
+            for x in iterable:
+                if predicate(x):
+                    yield f(x, *args, **kwargs)
+                else:
+                    yield x
+        return map_match
+    return decorate
+
+
+def id_path_matches(x, match):
+    """
+    Predicate function that tests whether the id_path of a thing
+    (as determined by `get`) matches a glob pattern.
+    """
+    # We fast-path for "everything" matches.
+    return fnmatch(get(x, "id_path"), match) if match != "*" else True
+
+
+def match_kwarg(f):
+    """
+    Decorates a function `f` with an additional `match` keyword argument.
+    This argument is a Unix-style glob string that will be used to Unix-style
+    glob string that will be used to filter matches.
+
+    This is meant to be used to decorate functions that take an iterable
+    and return an iterable.
+    """
+    def filtermap_by_match_kwarg(iterable, match="*", *args, **kwargs):
+        # Only fnmatch if we actually have a glob string
+        matches = (x for x in iterable if id_path_matches(x, match))
+        return (f(x, *args, **kwargs) for x in matches)
+    return filtermap_by_match_kwarg
 
 
 _EMPTY_TUPLE = tuple()
