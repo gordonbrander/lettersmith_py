@@ -44,7 +44,7 @@ def gen_rss_feed(stubs, output_path,
   base_url="/", last_build_date=None,
   title="RSS Feed", description="", author="", read_more=None):
   """
-  Yields an RSS doc
+  Creates an RSS doc
   """
   now = datetime.now()
   content = render_rss(
