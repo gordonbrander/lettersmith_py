@@ -158,6 +158,7 @@ def decode_json(d):
     )
 
 
+# TODO determine if we should use JSONEncode subclass instead.
 def encode_json(doc):
     """
     Serialize a doc as JSON-serializable data

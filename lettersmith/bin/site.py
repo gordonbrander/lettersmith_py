@@ -69,9 +69,9 @@ def main():
 
         # Dump rendered docs to cache as JSON
         Docs.dump_json(docs, doc_cache_path)
+
         # Load docs as iterator
         docs = Docs.load_json(doc_cache_path.glob("**/*.json"))
-
         # Convert to stubs in memory
         stubs = tuple(Stub.from_doc(doc) for doc in docs)
 
@@ -98,24 +98,29 @@ def main():
             author=site_author
         )
 
-        rss_docs = gen_rss_feeds(stubs, config.get("rss", {
+        # Gen rss feed docs. Collect into a tuple, because we'll be going
+        # over this iterator more than once.
+        rss_docs = tuple(gen_rss_feeds(stubs, config.get("rss", {
             "*": {
                 "output_path": "feed.rss"
             }
-        }))
+        })))
 
         sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
 
-        # Collect stubs into index. We'll use this for cross-referencing
-        # stubs, and also as an index accessible in templates.
-        index = {stub.id_path: stub for stub in stubs}
         wikilink_index = wikilink.index_wikilinks(stubs, base_url=base_url)
         backlink_index = wikilink.index_backlinks(stubs)
         taxonomy_index = taxonomy.index_by_taxonomy(stubs, taxonomies)
+        # Create dict index for ad-hoc stub access in templates.
+        index = {stub.id_path: stub for stub in stubs}
 
-        # Load docs cache a second time
+        # The previous doc generator has been exhausted, so load docs from
+        # cache again.
         docs = Docs.load_json(doc_cache_path.glob("**/*.json"))
+        # Map wikilinks, but only those that exist in wikilink_index.
         docs = wikilink.map_wikilinks(docs, wikilink_index)
+
+        # Chain together all doc iterators
         docs = chain(docs, paging_docs, rss_docs, (sitemap_doc,))
 
         # Set up template globals

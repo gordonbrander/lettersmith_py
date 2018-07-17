@@ -163,9 +163,12 @@ def decorate_match_by_group(f, *args, **default_kwargs):
     This is meant to be used to decorate functions that take an iterable
     and return an iterable.
     """
-    def f_wrap(docs, groups):
+    def f_wrap(stubs, groups):
+        # Collect iter into tuple, because we'll be going over it
+        # more than once.
+        stubs = tuple(stubs)
         for glob, group_kwargs in groups.items():
-            matches = match_by_id_path(docs, glob)
+            matches = match_by_id_path(stubs, glob)
             # Allow group_kwargs to overshadow default_kwargs.
             kwargs = merge(default_kwargs, group_kwargs)
             yield f(matches, *args, **kwargs)
