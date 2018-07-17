@@ -4,7 +4,7 @@ Tools for building pagination.
 
 from math import ceil
 from itertools import islice, chain
-from lettersmith.util import chunk, match_kwarg
+from lettersmith.util import chunk
 from lettersmith import doc as Doc
 
 
@@ -36,9 +36,8 @@ def next_i(i, length):
     return min(i + 1, length - 1)
 
 
-@match_kwarg
 def gen_paging(stubs,
-    templates=None,
+    template=None,
     output_path_template=None,
     per_page=10):
     """
@@ -46,6 +45,7 @@ def gen_paging(stubs,
     """
     paged = tuple(chunk(stubs, per_page))
     page_count = len(paged)
+    templates = (template,) + TEMPLATES if template is not None else TEMPLATES
     n = 0
     for stubs in paged:
         n = n + 1
@@ -62,5 +62,5 @@ def gen_paging(stubs,
             output_path=output_path,
             title="Page {}".format(n),
             meta=meta,
-            templates=templates if templates is not None else TEMPLATES
+            templates=templates
         )

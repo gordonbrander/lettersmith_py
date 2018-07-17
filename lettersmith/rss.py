@@ -1,7 +1,7 @@
 from pathlib import Path
 from itertools import islice
 from datetime import datetime
-from lettersmith.util import sort_by, match_kwarg
+from lettersmith.util import sort_by
 from lettersmith.jinjatools import create_env
 from lettersmith.path import to_url, to_slug
 from lettersmith import doc as Doc
@@ -36,21 +36,21 @@ def render_rss(stubs,
   })
 
 
-def most_recent_n(stubs, nitems=24):
+def most_recent(stubs, nitems=24):
   return islice(sort_by(stubs, "created", reverse=True), nitems)  
 
 
-@match_kwarg
 def gen_rss_feed(stubs, output_path,
   base_url="/", last_build_date=None,
-  title="RSS Feed", description="", author="", read_more=None):
+  title="RSS Feed", description="", author="", read_more=None, nitems=24):
   """
   Given an iterable of stubs and some details, returns an
   RSS doc.
   """
   now = datetime.now()
+  recent_stubs = most_recent(stubs, nitems)
   content = render_rss(
-    stubs,
+    recent_stubs,
     base_url=base_url,
     last_build_date=last_build_date,
     title=title,
