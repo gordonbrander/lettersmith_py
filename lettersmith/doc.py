@@ -1,12 +1,11 @@
-from os import path
+from datetime import datetime
 from pathlib import PurePath
 import json
-from datetime import datetime
 from collections import namedtuple
 
 import frontmatter
 
-from lettersmith.date import parse_iso_8601, read_file_times, EPOCH
+from lettersmith.date import read_file_times, EPOCH
 from lettersmith.file import write_file_deep
 from lettersmith import yamltools
 from lettersmith import path as pathtools
@@ -140,13 +139,68 @@ def load_stub(stub, relative_to=""):
         )
 
 
+def decode_json(d):
+    """
+    Create a Doc record from a parsed JSON object.
+    Expects fields to have same structure as values returned from
+    `encode_json` function.
+    """
+    return doc(
+        id_path=d["id_path"],
+        output_path=d["output_path"],
+        input_path=d.get("input_path"),
+        created=datetime.fromtimestamp(d["created"]),
+        modified=datetime.fromtimestamp(d["modified"]),
+        title=d["title"],
+        section=d["section"],
+        content=d["content"],
+        meta=d["meta"]
+    )
+
+
+def encode_json(doc):
+    """
+    Serialize a doc as JSON-serializable data
+    """
+    return {
+        "@type": "doc",
+        "id_path": doc.id_path,
+        "output_path": doc.output_path,
+        "input_path": doc.input_path,
+        "created": doc.created.timestamp(),
+        "modified": doc.modified.timestamp(),
+        "title": doc.title,
+        "section": doc.section,
+        "content": doc.content,
+        # TODO manually serialize meta?
+        "meta": doc.meta
+    }
+
+
+def load_json(pathlike):
+    """
+    Load a doc from a JSON file. Uses from_json to deserialize doc.
+    """
+    with open(str(pathlike)) as f:
+        return decode_json(json.load(f))
+
+
+def dump_json(doc, dir="."):
+    """
+    Dump doc to JSON file
+    """
+    doc_path = PurePath(dir).joinpath(doc.id_path).with_suffix(".json")
+    json_str = json.dumps(encode_json(doc))
+    write_file_deep(doc_path, json_str)
+
+
 def write(doc, output_dir):
     """
     Write a doc to the filesystem.
 
     Uses `doc.output_path` and `output_dir` to construct the output path.
     """
-    write_file_deep(path.join(output_dir, doc.output_path), doc.content)
+    write_file_deep(PurePath(output_dir).joinpath(doc.output_path), doc.content)
 
 
 def change_ext(doc, ext):

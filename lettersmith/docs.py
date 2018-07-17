@@ -10,11 +10,19 @@ def load(file_paths, relative_to=""):
     Given an iterable of file paths, create an iterable of loaded docs.
     Ignores special files.
     """
-    return (
-        Doc.load(x, relative_to=relative_to)
-        for x in file_paths
-        if is_doc_file(x)
-    )
+    for path in file_paths:
+        if is_doc_file(path):
+            yield Doc.load(path, relative_to=relative_to)
+
+
+def load_json(file_paths):
+    for path in file_paths:
+        yield Doc.load_json(path)
+
+
+def dump_json(docs, dir=""):
+    for doc in docs:
+        Doc.dump_json(doc, dir)
 
 
 def write(docs, output_path="public"):
