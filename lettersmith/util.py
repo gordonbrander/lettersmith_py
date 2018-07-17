@@ -145,20 +145,31 @@ def id_path_matches(x, match):
     return fnmatch(get(x, "id_path"), match) if match != "*" else True
 
 
-def match_kwarg(f):
+def match_by_id_path(docs, match):
+    """
+    Filter docs by matching their id_path against a glob pattern.
+    """
+    for doc in docs:
+        if id_path_matches(doc, match):
+            yield doc
+
+
+def decorate_match_by_group(f, *args, **default_kwargs):
     """
     Decorates a function `f` with an additional `match` keyword argument.
-    This argument is a Unix-style glob string that will be used to Unix-style
-    glob string that will be used to filter matches.
+    This argument is a Unix-style glob string that will be used to
+    filter matches.
 
     This is meant to be used to decorate functions that take an iterable
     and return an iterable.
     """
-    def filtermap_by_match_kwarg(iterable, match="*", *args, **kwargs):
-        # Only fnmatch if we actually have a glob string
-        matches = (x for x in iterable if id_path_matches(x, match))
-        return (f(x, *args, **kwargs) for x in matches)
-    return filtermap_by_match_kwarg
+    def f_wrap(docs, groups):
+        for glob, group_kwargs in groups.items():
+            matches = match_by_id_path(docs, glob)
+            # Allow group_kwargs to overshadow default_kwargs.
+            kwargs = merge(default_kwargs, group_kwargs)
+            yield f(matches, *args, **kwargs)
+    return f_wrap
 
 
 _EMPTY_TUPLE = tuple()
