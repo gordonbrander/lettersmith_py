@@ -46,20 +46,21 @@ def main():
 
     data = load_data_files(data_path)
 
-    paths = (
-        x for x in input_path.glob("**/*.md")
-        if pathtools.should_pub(x, build_drafts)
-    )
-
+    # Grab all markdown files
+    paths = input_path.glob("**/*.md")
+    # Filter out drafts
+    paths = (x for x in paths if pathtools.should_pub(x, build_drafts))
     # Filter out special files
     paths = (x for x in paths if pathtools.is_doc_file(x))
 
+    # Load doc datastructures
     docs = (Doc.load(path, relative_to=input_path) for path in paths)
 
     # Create a temporary directory for cache.
     with tempfile.TemporaryDirectory(prefix="lettersmith_") as tmp_dir_path:
         doc_cache_path = Path(tmp_dir_path).joinpath("docs")
 
+        # Process docs one-by-one... render content, etc.
         docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
         docs = markdowntools.map_markdown(docs)
         docs = absolutize.map_absolutize(docs, base_url=base_url)
@@ -67,7 +68,7 @@ def main():
         docs = templatetools.map_templates(docs)
         docs = map_permalink(docs, permalink_templates)
 
-        # Dump rendered docs to cache as JSON
+        # Dump processed docs to cache, as JSON
         Docs.dump_json(docs, doc_cache_path)
 
         # Load docs as iterator
