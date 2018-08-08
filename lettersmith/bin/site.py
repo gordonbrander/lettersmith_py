@@ -23,6 +23,14 @@ from lettersmith import rss
 from lettersmith import sitemap
 from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
+from lettersmith import pickletools
+
+
+def output_path_reader(ext=None):
+    def read_doc(doc):
+        output_path = PurePath(doc.output_path)
+        return output_path.with_suffix(ext) if ext != None else output_path
+    return read_doc
 
 
 def main():
@@ -38,7 +46,15 @@ def main():
     data_path = config.get("data_path", "data")
     static_paths = config.get("static_paths", [])
     permalink_templates = config.get("permalink_templates", {})
-    taxonomies = config.get("taxonomies", [])
+    rss_groups = config.get("rss", {
+        "*": {
+            "output_path": "feed.rss"
+        }
+    })
+    paging_groups = config.get("paging", {})
+    taxonomies = get_deep(config, ("taxonomies", "keys"), tuple())
+    taxonomy_output_path_template = get_deep(config,
+        ("taxonomy", "output_path_template"))
     site_title = get_deep(config, ("site", "title"), "Untitled")
     site_description = get_deep(config, ("site", "description"), "")
     site_author = get_deep(config, ("site", "author"), "")
@@ -68,11 +84,10 @@ def main():
         docs = templatetools.map_templates(docs)
         docs = map_permalink(docs, permalink_templates)
 
-        # Dump processed docs to cache, as JSON
-        Docs.dump_json(docs, doc_cache_path)
+        # Pickle processed docs in cache
+        docs = pickletools.tee_pickles(docs, output_path_reader(".pkl"),
+            dir_path=doc_cache_path)
 
-        # Load docs as iterator
-        docs = Docs.load_json(doc_cache_path.glob("**/*.json"))
         # Convert to stubs in memory
         stubs = tuple(Stub.from_doc(doc) for doc in docs)
 
@@ -83,11 +98,16 @@ def main():
         )
 
         # Gen paging groups and then flatten iterable of iterables.
-        paging_docs = chain.from_iterable(gen_paging_groups(
+        paging_docs = tuple(chain.from_iterable(gen_paging_groups(
             stubs,
-            config.get("paging", {})
-        ))
+            paging_groups
+        )))
 
+        tax_archive_docs = tuple(taxonomy.gen_taxonomy_archives(
+            stubs,
+            taxonomies=taxonomies,
+            output_path_template=taxonomy_output_path_template
+        ))
 
         # Decorate gen_rss_feed, making it a "match by group" function
         gen_rss_feeds = decorate_match_by_group(
@@ -101,13 +121,15 @@ def main():
 
         # Gen rss feed docs. Collect into a tuple, because we'll be going
         # over this iterator more than once.
-        rss_docs = tuple(gen_rss_feeds(stubs, config.get("rss", {
-            "*": {
-                "output_path": "feed.rss"
-            }
-        })))
-
+        rss_docs = tuple(gen_rss_feeds(stubs, rss_groups))
         sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
+
+        # Add generated docs to stubs
+        gen_docs = paging_docs + tax_archive_docs + rss_docs + (sitemap_doc,)
+        gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
+
+        # Add generated stubs to list of stubs
+        stubs = stubs + gen_stubs
 
         wikilink_index = wikilink.index_wikilinks(stubs, base_url=base_url)
         backlink_index = wikilink.index_backlinks(stubs)
@@ -117,12 +139,12 @@ def main():
 
         # The previous doc generator has been exhausted, so load docs from
         # cache again.
-        docs = Docs.load_json(doc_cache_path.glob("**/*.json"))
+        docs = pickletools.load_pickles(doc_cache_path.glob("**/*.pkl"))
         # Map wikilinks, but only those that exist in wikilink_index.
         docs = wikilink.map_wikilinks(docs, wikilink_index)
 
         # Chain together all doc iterators
-        docs = chain(docs, paging_docs, rss_docs, (sitemap_doc,))
+        docs = chain(docs, gen_docs)
 
         # Set up template globals
         context = {
