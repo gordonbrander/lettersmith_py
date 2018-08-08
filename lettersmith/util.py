@@ -178,6 +178,17 @@ def decorate_match_by_group(f, *args, **default_kwargs):
 _EMPTY_TUPLE = tuple()
 
 
+def any_in(collection, values):
+    """
+    Check if any of a collection of values is in `collection`.
+    Returns boolean.
+    """
+    for value in values:
+        if value in collection:
+            return True
+    return False
+
+
 def contains(x, key, value):
     """
     Check for the inclusion of a value in an indexable in a deep object.
