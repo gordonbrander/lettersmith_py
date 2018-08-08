@@ -78,6 +78,7 @@ def load(pathlike, relative_to=""):
 
     Returns a dictionary.
     """
+    # TODO need to grab date from meta
     created, modified = read_file_times(pathlike)
     with open(str(pathlike)) as f:
         meta, content = frontmatter.parse(f.read())
@@ -139,27 +140,7 @@ def load_stub(stub, relative_to=""):
         )
 
 
-def decode_json(d):
-    """
-    Create a Doc record from a parsed JSON object.
-    Expects fields to have same structure as values returned from
-    `encode_json` function.
-    """
-    return doc(
-        id_path=d["id_path"],
-        output_path=d["output_path"],
-        input_path=d.get("input_path"),
-        created=datetime.fromtimestamp(d["created"]),
-        modified=datetime.fromtimestamp(d["modified"]),
-        title=d["title"],
-        section=d["section"],
-        content=d["content"],
-        meta=d["meta"]
-    )
-
-
-# TODO determine if we should use JSONEncode subclass instead.
-def encode_json(doc):
+def to_json(doc):
     """
     Serialize a doc as JSON-serializable data
     """
@@ -174,25 +155,9 @@ def encode_json(doc):
         "section": doc.section,
         "content": doc.content,
         # TODO manually serialize meta?
-        "meta": doc.meta
+        "meta": doc.meta,
+        "templates": doc.templates
     }
-
-
-def load_json(pathlike):
-    """
-    Load a doc from a JSON file. Uses from_json to deserialize doc.
-    """
-    with open(str(pathlike)) as f:
-        return decode_json(json.load(f))
-
-
-def dump_json(doc, dir="."):
-    """
-    Dump doc to JSON file
-    """
-    doc_path = PurePath(dir).joinpath(doc.id_path).with_suffix(".json")
-    json_str = json.dumps(encode_json(doc))
-    write_file_deep(doc_path, json_str)
 
 
 def write(doc, output_dir):
