@@ -10,6 +10,36 @@ from lettersmith import templatetools
 from lettersmith import path as pathtools
 from lettersmith.hash import hash_digest
 from lettersmith.markdowntools import house_markdown
+from lettersmith import taxonomy
+
+
+def _choice(iterable):
+    return random.choice(tuple(iterable))
+
+
+def _shuffle(iterable):
+    """
+    Shuffles the elements in an iterable, returning a new list.
+
+    Will collect any iterable before sampling.
+    This prevents annoying in-template errors, where collecting
+    an iterator into a tuple can be non-trivial.
+    """
+    t = tuple(iterable)
+    return random.sample(t, k=len(t))
+
+
+def _sample(iterable, k):
+    """
+    Will collect any iterable before sampling.
+    This prevents annoying in-template errors, where collecting
+    an iterator into a tuple can be non-trivial.
+    """
+    l = list(iterable)
+    try:
+        return random.sample(l, k)
+    except ValueError:
+        return l
 
 
 # The dict of filter functions to be available by default in the template.
@@ -20,9 +50,9 @@ FILTERS = {
     "filter": filter,
     "filterfalse": itertools.filterfalse,
     "islice": itertools.islice,
-    "choice": random.choice,
-    "sample": random.sample,
-    "shuffle": random.shuffle,
+    "choice": _choice,
+    "sample": _sample,
+    "shuffle": _shuffle,
     "to_url": pathtools.to_url,
     "get": util.get,
     "sort": util.sort,
@@ -32,7 +62,9 @@ FILTERS = {
     "where_not_key": util.where_not_key,
     "where_contains": util.where_contains,
     "where_matches": util.where_matches,
+    "where_taxonomy_contains_any": taxonomy.where_taxonomy_contains_any,
     "remove_index": Docs.remove_index,
+    "remove_id_path": Docs.remove_id_path,
     "filter_siblings": Docs.filter_siblings,
     "hash_digest": hash_digest
 }
