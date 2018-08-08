@@ -9,11 +9,8 @@ from pathlib import Path
 def write_file_deep(pathlike, content):
     """Write a file to filepath, creating directory if necessary"""
     file_path = str(pathlike)
-    try:
-        dirname = path.dirname(file_path)
-        makedirs(dirname)
-    except:
-        pass
+    dirname = path.dirname(file_path)
+    makedirs(dirname, exist_ok=True)
 
     with open(file_path, "w") as f:
         f.write(content)
