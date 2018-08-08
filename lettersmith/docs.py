@@ -15,16 +15,6 @@ def load(file_paths, relative_to=""):
             yield Doc.load(path, relative_to=relative_to)
 
 
-def load_json(file_paths):
-    for path in file_paths:
-        yield Doc.load_json(path)
-
-
-def dump_json(docs, dir=""):
-    for doc in docs:
-        Doc.dump_json(doc, dir)
-
-
 def write(docs, output_path="public"):
     """
     Consume an iterable of docs, writing them as files.
@@ -38,6 +28,13 @@ def write(docs, output_path="public"):
 
 def remove_drafts(docs):
     return (doc for doc in docs if not is_draft(doc.id_path))
+
+
+def remove_id_path(docs, id_path):
+    """
+    Remove docs with a given id_path.
+    """
+    return (doc for doc in docs if doc.id_path != id_path)
 
 
 def remove_index(docs):
