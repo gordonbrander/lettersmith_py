@@ -1,11 +1,10 @@
-from datetime import datetime
 from pathlib import PurePath
 import json
 from collections import namedtuple
 
 import frontmatter
 
-from lettersmith.date import read_file_times, EPOCH
+from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import yamltools
 from lettersmith import path as pathtools
@@ -43,8 +42,8 @@ def doc(id_path, output_path,
         id_path=str(id_path),
         output_path=str(output_path),
         input_path=str(input_path) if input_path is not None else None,
-        created=created,
-        modified=modified,
+        created=to_datetime(created),
+        modified=to_datetime(modified),
         title=str(title),
         content=str(content),
         section=str(section),
@@ -69,6 +68,7 @@ def replace_meta(doc, **kwargs):
     return replace(doc, meta=replace(doc.meta, **kwargs))
 
 
+
 def load(pathlike, relative_to=""):
     """
     Loads a basic doc dictionary from a file path. This dictionary
@@ -79,7 +79,7 @@ def load(pathlike, relative_to=""):
     Returns a dictionary.
     """
     # TODO need to grab date from meta
-    created, modified = read_file_times(pathlike)
+    file_created, file_modified = read_file_times(pathlike)
     with open(str(pathlike)) as f:
         meta, content = frontmatter.parse(f.read())
         input_path = PurePath(pathlike)
@@ -87,6 +87,9 @@ def load(pathlike, relative_to=""):
         output_path = pathtools.to_nice_path(id_path)
         section = pathtools.tld(id_path)
         title = meta.get("title", pathtools.to_title(input_path))
+        created = meta.get("created", file_created)
+        modified = meta.get("modified", file_modified)
+
         return doc(
             id_path=id_path,
             output_path=output_path,
