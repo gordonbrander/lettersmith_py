@@ -35,6 +35,9 @@ def datetime_to_datetime(dt):
 
 @to_datetime.register(date)
 def date_to_datetime(d):
+    """
+    Convert a date to a datetime.
+    """
     return datetime(d.year, d.month, d.day)
 
 

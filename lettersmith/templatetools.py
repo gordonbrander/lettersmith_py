@@ -34,7 +34,11 @@ def read_affiliated_templates(pathlike):
 
 def add_templates(doc):
     """
-    Add associated templates to doc.
+    Read potential templates for doc
+
+    - Grabs any custom template from headmatter
+    - Allows you to add additional templates via `templates` kwarg.
+    - Reads affiliated "smart" templates based on doc info
     """
     templates = []
     try:
@@ -54,14 +58,3 @@ def add_templates(doc):
     except KeyError:
         pass
     return replace(doc, templates=tuple(templates))
-
-
-def map_templates(docs):
-    """
-    Read potential templates for doc
-
-    - Grabs any custom template from headmatter
-    - Allows you to add additional templates via `templates` kwarg.
-    - Reads affiliated "smart" templates based on doc info
-    """
-    return (add_templates(doc) for doc in docs)

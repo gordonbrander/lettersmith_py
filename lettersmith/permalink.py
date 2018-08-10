@@ -1,6 +1,8 @@
 from pathlib import PurePath
 
 from lettersmith.util import replace
+from lettersmith.cursor import extra_reader
+
 
 def read_doc_permalink(doc):
     """
@@ -21,13 +23,17 @@ def read_doc_permalink(doc):
     }
 
 
-def update_output_path(doc, path_template_map):
+def update_output_path(doc, permalink_templates):
     """
     Given a doc dict and a permalink template, render
     the output_path field of the doc.
+
+    `permalink_templates` is a dictionary of section/template pairs, where
+    any doc with a given section will be mapped with the associated
+    permalink template.
     """
     try:
-        path_template = path_template_map[doc.section]
+        path_template = permalink_templates[doc.section]
         output_path = path_template.format(**read_doc_permalink(doc))
         output_path = str(PurePath(output_path))
         return replace(doc, output_path=output_path)
@@ -35,13 +41,11 @@ def update_output_path(doc, path_template_map):
         return doc
 
 
-def map_permalink(docs, path_template_map):
-    """
-    Map doc permalinks, returning a generator that will yield docs with
-    permalinks adhering to the templates given in `path_template_map`.
+@extra_reader
+def read_permalink_config(config):
+    return {
+        "permalink_templates": config.get("permalink_templates", {})
+    }
 
-    `path_template_map` is a dictionary of section/template pairs, where
-    any doc with a given section will be mapped with the associated
-    permalink template.
-    """
-    return (update_output_path(doc, path_template_map) for doc in docs)
+
+map_permalink_plugin = read_permalink_config(update_output_path)

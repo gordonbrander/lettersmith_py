@@ -4,25 +4,27 @@ Tools for making relative URLs absolute in doc content.
 import re
 from lettersmith.util import replace
 from lettersmith import path as pathtools
+from lettersmith.cursor import extra_reader
+
 
 URL_ATTR = r"""(src|href)=["'](.*?)["']"""
 
 
-def absolutize_doc_urls(doc, base="/"):
+def absolutize_doc_urls(doc, base_url="/"):
     """
     Absolutize URLs in content. Replaces any relative URLs in content
-    that start with `/` and instead starts them with `base`.
+    that start with `/` and instead starts them with `base_url`.
 
     URLS are found by matching against `href=` and `src=`.
     """
     # Early return if base URL is just "/"
-    if str(base) == "/":
+    if str(base_url) == "/":
         return doc
 
     def render_inner_match(match):
         attr = match.group(1)
         value = match.group(2)
-        url = pathtools.qualify_url(value, base)
+        url = pathtools.qualify_url(value, base_url)
         return '{attr}="{url}"'.format(attr=attr, url=url)
 
     content = re.sub(
@@ -34,8 +36,11 @@ def absolutize_doc_urls(doc, base="/"):
     return replace(doc, content=content)
 
 
-def map_absolutize(docs, base_url="/"):
-    # Early return if base URL is just "/"
-    if str(base_url) == "/":
-        return docs
-    return (absolutize_doc_urls(doc, base_url) for doc in docs)
+@extra_reader
+def read_absolutize_config(config):
+    return {
+        "base_url": config.get("base_url", "/")
+    }
+
+
+map_absolutize_plugin = read_absolutize_config(absolutize_doc_urls)

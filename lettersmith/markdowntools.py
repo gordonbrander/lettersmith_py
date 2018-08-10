@@ -2,14 +2,15 @@ from pathlib import PurePath
 from markdown import markdown
 from mdx_gfm import GithubFlavoredMarkdownExtension
 
-from lettersmith.util import replace, match_mapper
+from lettersmith.util import replace, get_deep
 from lettersmith.path import has_ext
+from lettersmith.cursor import extra_reader
 
 
 MD_LANG_EXTENSIONS=(GithubFlavoredMarkdownExtension(),)
 
 
-MD_EXTENSIONS = (".md", ".markdown", ".mdown", ".txt")
+MD_EXTENSIONS = [".md", ".markdown", ".mdown", ".txt"]
 
 
 def house_markdown(s):
@@ -33,17 +34,26 @@ def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     Updates the output path to .html.
     Returns a new doc.
     """
-    content = markdown(doc.content, extensions=extensions)
-    output_path = PurePath(doc.output_path).with_suffix(".html")
-    return replace(doc, content=content, output_path=str(output_path))
+    if is_markdown_doc(doc):
+        content = markdown(doc.content, extensions=extensions)
+        output_path = PurePath(doc.output_path).with_suffix(".html")
+        return replace(doc, content=content, output_path=str(output_path))
+    else:
+        return doc
 
 
-@match_mapper(is_markdown_doc)
-def map_markdown(doc, extensions=MD_LANG_EXTENSIONS):
+@extra_reader
+def read_markdown_config(config):
     """
-    Given an iterable of docs, return a generator that will yield
-    markdown docs rendered to HTML. Things that aren't markdown docs
-    will be yielded untouched.
+    Read markdown configuration options from top-level config object.
     """
-    return render_doc(doc, extensions)
+    return {
+        "extensions": get_deep(
+            config,
+            ("markdown", "lang_extensions"),
+            MD_LANG_EXTENSIONS
+        )
+    }
 
+
+map_markdown_plugin = read_markdown_config(render_doc)

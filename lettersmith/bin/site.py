@@ -14,7 +14,7 @@ from lettersmith import stub as Stub
 from lettersmith import markdowntools
 from lettersmith import wikilink
 from lettersmith import absolutize
-from lettersmith.permalink import map_permalink
+from lettersmith import permalink
 from lettersmith import templatetools
 from lettersmith import paging
 from lettersmith import taxonomy
@@ -45,7 +45,6 @@ def main():
     build_drafts = config.get("build_drafts", False)
     data_path = config.get("data_path", "data")
     static_paths = config.get("static_paths", [])
-    permalink_templates = config.get("permalink_templates", {})
     rss_groups = config.get("rss", {
         "*": {
             "output_path": "feed.rss"
@@ -77,12 +76,14 @@ def main():
         doc_cache_path = Path(tmp_dir_path).joinpath("docs")
 
         # Process docs one-by-one... render content, etc.
+        # TODO we should break mapping functions into single doc
+        # processing functions, so we can use Pool.map.
         docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
-        docs = markdowntools.map_markdown(docs)
-        docs = absolutize.map_absolutize(docs, base_url=base_url)
-        docs = (Doc.change_ext(doc, ".html") for doc in docs)
-        docs = templatetools.map_templates(docs)
-        docs = map_permalink(docs, permalink_templates)
+        docs = (markdowntools.map_markdown_plugin(doc, config) for doc in docs)
+        docs = (absolutize.map_absolutize_plugin(doc, config) for doc in docs)
+        # docs = (Doc.change_ext(doc, ".html") for doc in docs)
+        docs = (templatetools.add_templates(doc) for doc in docs)
+        docs = (permalink.map_permalink_plugin(doc, config) for doc in docs)
 
         # Pickle processed docs in cache
         docs = pickletools.tee_pickles(docs, output_path_reader(".pkl"),

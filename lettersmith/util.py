@@ -27,6 +27,7 @@ def compose(fn, *fns):
 def get(d, key, default=None):
     """
     A singledispatch getter function.
+    By default, gets attribute (e.g. dot notation).
     """
     return getattr(d, key, default)
 
@@ -34,7 +35,8 @@ def get(d, key, default=None):
 @get.register(dict)
 def get_dict(d, key, default=None):
     """
-    Getter for dictionaries. Does a get on dictionary items.
+    Getter for dictionaries. Does a get on dictionary items
+    instead of attributes.
     """
     return d.get(key, default)
 
