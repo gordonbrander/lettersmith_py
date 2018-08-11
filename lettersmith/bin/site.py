@@ -45,6 +45,7 @@ def main():
     build_drafts = config.get("build_drafts", False)
     data_path = config.get("data_path", "data")
     static_paths = config.get("static_paths", [])
+    permalink_templates = config.get("permalink_templates", {})
     rss_groups = config.get("rss", {
         "*": {
             "output_path": "feed.rss"
@@ -79,11 +80,14 @@ def main():
         # TODO we should break mapping functions into single doc
         # processing functions, so we can use Pool.map.
         docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
-        docs = (markdowntools.map_markdown_plugin(doc, config) for doc in docs)
-        docs = (absolutize.map_absolutize_plugin(doc, config) for doc in docs)
+        docs = (markdowntools.render_doc(doc) for doc in docs)
+        docs = (absolutize.absolutize_doc_urls(doc, base_url) for doc in docs)
         # docs = (Doc.change_ext(doc, ".html") for doc in docs)
         docs = (templatetools.add_templates(doc) for doc in docs)
-        docs = (permalink.map_permalink_plugin(doc, config) for doc in docs)
+        docs = (
+            permalink.map_doc_permalink(doc, permalink_templates)
+            for doc in docs
+        )
 
         # Pickle processed docs in cache
         docs = pickletools.tee_pickles(docs, output_path_reader(".pkl"),
@@ -160,7 +164,12 @@ def main():
             "now": now
         }
 
-        docs = jinjatools.map_jinja(docs, context=context, theme_path=theme_path)
+        # Create a render function
+        render_jinja = jinjatools.lettersmith_doc_renderer(
+            theme_path,
+            context=context
+        )
+        docs = (render_jinja(doc) for doc in docs)
 
         stats = Docs.write(docs, output_path=output_path)
 

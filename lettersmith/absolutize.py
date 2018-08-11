@@ -4,7 +4,6 @@ Tools for making relative URLs absolute in doc content.
 import re
 from lettersmith.util import replace
 from lettersmith import path as pathtools
-from lettersmith.cursor import extra_reader
 
 
 URL_ATTR = r"""(src|href)=["'](.*?)["']"""
@@ -34,13 +33,3 @@ def absolutize_doc_urls(doc, base_url="/"):
     )
 
     return replace(doc, content=content)
-
-
-@extra_reader
-def read_absolutize_config(config):
-    return {
-        "base_url": config.get("base_url", "/")
-    }
-
-
-map_absolutize_plugin = read_absolutize_config(absolutize_doc_urls)

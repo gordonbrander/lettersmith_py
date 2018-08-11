@@ -4,7 +4,6 @@ from mdx_gfm import GithubFlavoredMarkdownExtension
 
 from lettersmith.util import replace, get_deep
 from lettersmith.path import has_ext
-from lettersmith.cursor import extra_reader
 
 
 MD_LANG_EXTENSIONS=(GithubFlavoredMarkdownExtension(),)
@@ -40,20 +39,3 @@ def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
         return replace(doc, content=content, output_path=str(output_path))
     else:
         return doc
-
-
-@extra_reader
-def read_markdown_config(config):
-    """
-    Read markdown configuration options from top-level config object.
-    """
-    return {
-        "extensions": get_deep(
-            config,
-            ("markdown", "lang_extensions"),
-            MD_LANG_EXTENSIONS
-        )
-    }
-
-
-map_markdown_plugin = read_markdown_config(render_doc)
