@@ -43,6 +43,11 @@ def stub(
     )
 
 
+@get.register(Stub)
+def get_doc(doc, key, default=None):
+    return getattr(doc, key, default)
+
+
 @replace.register(Stub)
 def replace_stub(stub, **kwargs):
     """

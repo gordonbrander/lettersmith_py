@@ -8,7 +8,6 @@ from lettersmith import docs as Docs
 from lettersmith import doc as Doc
 from lettersmith import templatetools
 from lettersmith import path as pathtools
-from lettersmith.hash import hash_digest
 from lettersmith.markdowntools import house_markdown
 from lettersmith import taxonomy
 
@@ -42,51 +41,62 @@ def _sample(iterable, k):
         return l
 
 
-# The dict of filter functions to be available by default in the template.
-FILTERS = {
-    "markdown": house_markdown,
-    "sum": sum,
-    "len": len,
-    "filter": filter,
-    "filterfalse": itertools.filterfalse,
-    "islice": itertools.islice,
-    "choice": _choice,
-    "sample": _sample,
-    "shuffle": _shuffle,
-    "to_url": pathtools.to_url,
-    "get": util.get,
-    "sort": util.sort,
-    "sort_by": util.sort_by,
-    "where": util.where,
-    "where_key": util.where_key,
-    "where_not_key": util.where_not_key,
-    "where_contains": util.where_contains,
-    "where_matches": util.where_matches,
-    "where_taxonomy_contains_any": taxonomy.where_taxonomy_contains_any,
-    "remove_index": Docs.remove_index,
-    "remove_id_path": Docs.remove_id_path,
-    "filter_siblings": Docs.filter_siblings,
-    "hash_digest": hash_digest
-}
-
-# A dict of globals available by default in the template
-CONTEXT = {
-    "get": util.get,
-    "len": len,
-    "sum": sum
-}
+def permalink(base_url):
+    def permalink_bound(output_path):
+        return to_url(output_path, base_url)
+    return permalink_bound
 
 
-def create_env(templates_path, filters={}, context={}):
+class FileSystemEnvironment(Environment):
+    def __init__(self, templates_path, filters={}, context={}):
+        loader = FileSystemLoader(templates_path)
+        super().__init__(loader=loader)
+        self.filters.update(filters)
+        self.globals.update(context)
+
+
+class LettersmithEnvironment(FileSystemEnvironment):
     """
-    Factory. Create Jinja environment and populate it with filters.
-    `templates_path` is a pathlike that points to the the template directory.
-    `filters` is a dict of functions to be added to environment.
+    Specialized version of default Jinja environment class that
+    offers additional filters and environment variables.
     """
-    env = Environment(loader=FileSystemLoader(templates_path))
-    env.filters.update(filters)
-    env.globals.update(context)
-    return env
+    lettersmith_filters = {
+        "markdown": house_markdown,
+        "sum": sum,
+        "len": len,
+        "filter": filter,
+        "filterfalse": itertools.filterfalse,
+        "islice": itertools.islice,
+        "choice": _choice,
+        "sample": _sample,
+        "shuffle": _shuffle,
+        "to_url": pathtools.to_url,
+        "get": util.get,
+        "sort": util.sort,
+        "sort_by": util.sort_by,
+        "where": util.where,
+        "where_key": util.where_key,
+        "where_not_key": util.where_not_key,
+        "where_contains": util.where_contains,
+        "where_matches": util.where_matches,
+        "where_taxonomy_contains_any": taxonomy.where_taxonomy_contains_any,
+        "remove_index": Docs.remove_index,
+        "remove_id_path": Docs.remove_id_path,
+        "filter_siblings": Docs.filter_siblings,
+        "tuple": tuple
+    }
+
+    lettersmith_globals = {
+        "get": util.get,
+        "len": len,
+        "sum": sum
+    }
+
+    def __init__(self, templates_path, filters={}, context={}):
+        loader = FileSystemLoader(templates_path)
+        super().__init__(templates_path, filters=filters, context=context)
+        self.filters.update(self.lettersmith_filters)
+        self.globals.update(self.lettersmith_globals)
 
 
 def should_template(doc):
@@ -96,28 +106,33 @@ def should_template(doc):
     return len(doc.templates) > 0
 
 
-def renderer(env):
+def doc_renderer(env):
     """
     Create a render function with a bound environment.
-    Returns a render function.
+    Returns a render function that can render docs.
     """
-    def render(doc):
+    def render_doc(doc):
         """
-        Render a document with bound environment.
+        Render a document with this Jinja environment.
         """
-        jinja_template = env.select_template(doc.templates)
-        rendered = jinja_template.render({"doc": doc})
-        return util.replace(doc, content=rendered)
-    return render
+        if should_template(doc):
+            template = env.select_template(doc.templates)
+            rendered = template.render({"doc": doc})
+            return util.replace(doc, content=rendered)
+        else:
+            return doc
+    return render_doc
 
 
-def map_jinja(docs, context={}, filters={}, theme_path="theme"):
+def lettersmith_doc_renderer(templates_path="theme", context={}, filters={}):
     """
-    Render a list of docs through Jinja templates.
-    Returns a generator of rendered docs.
+    Wraps up the gory details of creating a Jinja renderer.
+    Returns a render function that takes a doc and returns a rendered doc.
+    Template comes preloaded with Jinja default filters, and
+    Lettersmith default filters and globals.
     """
-    all_context = util.merge(CONTEXT, context)
-    all_filters = util.merge(FILTERS, filters)
-    env = create_env(theme_path, filters=all_filters, context=all_context)
-    render = renderer(env)
-    return util.map_match(should_template, render, docs)
+    return doc_renderer(LettersmithEnvironment(
+        templates_path,
+        filters=filters,
+        context=context
+    ))

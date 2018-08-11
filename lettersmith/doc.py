@@ -52,6 +52,11 @@ def doc(id_path, output_path,
     )
 
 
+@get.register(Doc)
+def get_doc(doc, key, default=None):
+    return getattr(doc, key, default)
+
+
 @replace.register(Doc)
 def replace_doc(doc, **kwargs):
     """

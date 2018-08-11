@@ -2,7 +2,7 @@ from pathlib import Path
 from itertools import islice
 from datetime import datetime
 from lettersmith.util import sort_by
-from lettersmith.jinjatools import create_env
+from lettersmith.jinjatools import FileSystemEnvironment
 from lettersmith.path import to_url, to_slug
 from lettersmith import doc as Doc
 
@@ -29,7 +29,11 @@ def render_rss(stubs,
       last_build_date if last_build_date is not None else datetime.now(),
     "read_more": read_more if read_more is not None else READ_MORE
   }
-  env = create_env(str(TEMPLATE_PATH), context=context, filters=FILTERS)
+  env = FileSystemEnvironment(
+    str(TEMPLATE_PATH),
+    context=context,
+    filters=FILTERS
+  )
   rss_template = env.get_template("rss.xml")
   return rss_template.render({
     "stubs": stubs

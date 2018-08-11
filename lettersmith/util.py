@@ -24,12 +24,12 @@ def compose(fn, *fns):
 
 
 @singledispatch
-def get(d, key, default=None):
+def get(x, key, default=None):
     """
     A singledispatch getter function.
     By default, gets attribute (e.g. dot notation).
     """
-    return getattr(d, key, default)
+    raise TypeError("Cannot get entries on unknown type {}".format(x))
 
 
 @get.register(dict)
