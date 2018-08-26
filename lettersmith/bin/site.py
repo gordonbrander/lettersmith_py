@@ -23,7 +23,6 @@ from lettersmith import rss
 from lettersmith import sitemap
 from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
-from lettersmith import pickletools
 
 
 def output_path_reader(ext=None):
@@ -152,6 +151,7 @@ def main():
 
         # Set up template globals
         context = {
+            "load_cache": cache.load,
             "rss_docs": rss_docs,
             "index": index,
             "taxonomy_index": taxonomy_index,
