@@ -5,7 +5,7 @@ from itertools import chain
 from subprocess import CalledProcessError
 import tempfile
 
-from lettersmith.util import get_deep, decorate_match_by_group
+from lettersmith.util import get_deep, tap_each, decorate_match_by_group
 from lettersmith.argparser import lettersmith_argparser
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
@@ -74,7 +74,8 @@ def main():
 
     # Create a temporary directory for cache.
     with tempfile.TemporaryDirectory(prefix="lettersmith_") as tmp_dir_path:
-        doc_cache_path = Path(tmp_dir_path).joinpath("docs")
+        doc_cache_path = Path(tmp_dir_path)
+        cache = Doc.Cache(doc_cache_path)
 
         # Process docs one-by-one... render content, etc.
         # TODO we should break mapping functions into single doc
@@ -89,9 +90,9 @@ def main():
             for doc in docs
         )
 
+
         # Pickle processed docs in cache
-        docs = pickletools.tee_pickles(docs, output_path_reader(".pkl"),
-            dir_path=doc_cache_path)
+        docs = tap_each(cache.dump, docs)
 
         # Convert to stubs in memory
         stubs = tuple(Stub.from_doc(doc) for doc in docs)
@@ -133,18 +134,16 @@ def main():
         gen_docs = paging_docs + tax_archive_docs + rss_docs + (sitemap_doc,)
         gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
 
-        # Add generated stubs to list of stubs
-        stubs = stubs + gen_stubs
-
         wikilink_index = wikilink.index_wikilinks(stubs, base_url=base_url)
         backlink_index = wikilink.index_backlinks(stubs)
         taxonomy_index = taxonomy.index_by_taxonomy(stubs, taxonomies)
+
         # Create dict index for ad-hoc stub access in templates.
-        index = {stub.id_path: stub for stub in stubs}
+        index = {stub.id_path: stub for stub in (stubs + gen_stubs)}
 
         # The previous doc generator has been exhausted, so load docs from
         # cache again.
-        docs = pickletools.load_pickles(doc_cache_path.glob("**/*.pkl"))
+        docs = (cache.load(stub) for stub in stubs)
         # Map wikilinks, but only those that exist in wikilink_index.
         docs = wikilink.map_wikilinks(docs, wikilink_index)
 

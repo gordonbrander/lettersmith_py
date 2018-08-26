@@ -1,6 +1,8 @@
 from pathlib import PurePath
 import json
+import hashlib
 from collections import namedtuple
+import pickle
 
 import frontmatter
 
@@ -175,6 +177,44 @@ def write(doc, output_dir):
     Uses `doc.output_path` and `output_dir` to construct the output path.
     """
     write_file_deep(PurePath(output_dir).joinpath(doc.output_path), doc.content)
+
+
+def _hashstr(s):
+    return hashlib.md5(str(s).encode()).hexdigest()
+
+
+def _cache_path(id_path):
+    """
+    Read a doc ID path
+    """
+    return PurePath(_hashstr(id_path)).with_suffix('.pkl')
+
+
+def dump_cache(cache_path, doc):
+    doc_cache_path = _cache_path(doc.id_path)
+    with open(PurePath(cache_path, doc_cache_path), "wb") as f:
+        pickle.dump(doc, f)
+        return doc
+
+
+def load_cache(cache_path, stub):
+    doc_cache_path = _cache_path(stub.id_path)
+    with open(PurePath(cache_path, doc_cache_path), "rb") as f:
+        return pickle.load(f)
+
+
+class Cache:
+    """
+    Memoized cache dump/load for docs
+    """
+    def __init__(self, cache_path):
+        self.cache_path = cache_path
+
+    def dump(self, doc):
+        return dump_cache(self.cache_path, doc)
+
+    def load(self, stub):
+        return load_cache(self.cache_path, stub)
 
 
 def change_ext(doc, ext):

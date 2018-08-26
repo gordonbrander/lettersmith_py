@@ -267,3 +267,14 @@ def sort_by(iter_of_dicts, key, reverse=False, default=None):
     """Sort an iterable of dicts via a key path"""
     fkey = lambda x: get(x, key, default=default)
     return sort(iter_of_dicts, key=fkey, reverse=reverse)
+
+
+def tap_each(f, iter):
+    """
+    Perform a side-effect on each item of an iterable.
+    Returns an iterable that must be consumed to perform the
+    side-effect.
+    """
+    for x in iter:
+        f(x)
+        yield x
