@@ -4,7 +4,7 @@ Tools for building pagination.
 
 from math import ceil
 from itertools import islice, chain
-from lettersmith.util import chunk
+from lettersmith.util import chunk, decorate_group_matching_id_path
 from lettersmith import doc as Doc
 
 
@@ -36,6 +36,7 @@ def next_i(i, length):
     return min(i + 1, length - 1)
 
 
+@decorate_group_matching_id_path
 def gen_paging(stubs,
     template=None,
     output_path_template=None,

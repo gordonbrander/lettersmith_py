@@ -5,7 +5,7 @@ from itertools import chain
 from subprocess import CalledProcessError
 import tempfile
 
-from lettersmith.util import get_deep, tap_each, decorate_match_by_group
+from lettersmith.util import get_deep, tap_each, replace
 from lettersmith.argparser import lettersmith_argparser
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
@@ -45,12 +45,8 @@ def main():
     data_path = config.get("data_path", "data")
     static_paths = config.get("static_paths", [])
     permalink_templates = config.get("permalink_templates", {})
-    rss_groups = config.get("rss", {
-        "*": {
-            "output_path": "feed.rss"
-        }
-    })
-    paging_groups = config.get("paging", {})
+    rss_config = config.get("rss", {"*": {"output_path": "feed.rss"}})
+    paging_config = config.get("paging", {})
     taxonomies = get_deep(config, ("taxonomies", "keys"), tuple())
     taxonomy_output_path_template = get_deep(config,
         ("taxonomy", "output_path_template"))
@@ -96,41 +92,30 @@ def main():
         # Convert to stubs in memory
         stubs = tuple(Stub.from_doc(doc) for doc in docs)
 
-        # Decorate gen_paging, making it a "match by group" function
-        gen_paging_groups = decorate_match_by_group(
-            paging.gen_paging,
-            per_page=10
-        )
-
         # Gen paging groups and then flatten iterable of iterables.
-        paging_docs = tuple(chain.from_iterable(gen_paging_groups(
-            stubs,
-            paging_groups
-        )))
+        paging_doc_iters = paging.gen_paging(stubs, paging_config)
+        paging_docs = tuple(chain.from_iterable(paging_doc_iters))
 
-        tax_archive_docs = tuple(taxonomy.gen_taxonomy_archives(
-            stubs,
-            taxonomies=taxonomies,
-            output_path_template=taxonomy_output_path_template
-        ))
-
-        # Decorate gen_rss_feed, making it a "match by group" function
-        gen_rss_feeds = decorate_match_by_group(
-            rss.gen_rss_feed,
-            last_build_date=now,
-            base_url=base_url,
-            title=site_title,
-            description=site_description,
-            author=site_author
-        )
-
-        # Gen rss feed docs. Collect into a tuple, because we'll be going
+        # Gen rss feed docs. Then collect into a tuple, because we'll be going
         # over this iterator more than once.
-        rss_docs = tuple(gen_rss_feeds(stubs, rss_groups))
+        RSS_DEFAULTS = {
+            "last_build_date": now,
+            "base_url": base_url,
+            "title": site_title,
+            "description": site_description,
+            "author": site_author
+        }
+        rss_docs_iter = rss.gen_rss_feed(stubs, {
+            glob: replace(RSS_DEFAULTS, **group_kwargs)
+            for glob, group_kwargs
+            in rss_config.items()
+        })
+        rss_docs = tuple(rss_docs_iter)
+
         sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
 
         # Add generated docs to stubs
-        gen_docs = paging_docs + tax_archive_docs + rss_docs + (sitemap_doc,)
+        gen_docs = paging_docs + rss_docs + (sitemap_doc,)
         gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
 
         wikilink_index = wikilink.index_wikilinks(stubs, base_url=base_url)
