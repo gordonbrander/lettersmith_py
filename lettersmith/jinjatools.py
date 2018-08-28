@@ -79,10 +79,13 @@ class LettersmithEnvironment(FileSystemEnvironment):
         "where_not_key": util.where_not_key,
         "where_contains": util.where_contains,
         "where_matches": util.where_matches,
+        "join": util.join,
         "where_taxonomy_contains_any": taxonomy.where_taxonomy_contains_any,
         "remove_index": Docs.remove_index,
         "remove_id_path": Docs.remove_id_path,
         "filter_siblings": Docs.filter_siblings,
+        "to_slug": pathtools.to_slug,
+        "to_slugs": util.lift_iter(pathtools.to_slug),
         "tuple": tuple
     }
 
