@@ -104,40 +104,6 @@ def chunk(iterable, n):
         yield chunk
 
 
-def map_match(predicate, f, iterable, *args, **kwargs):
-    """
-    Map any items in iterable that match `predicate`. Any item that
-    doesn't pass `predicate` test is untouched — it will still be
-    yielded by the generator, but it won't be mapped.
-    """
-    for x in iterable:
-        if predicate(x):
-            yield f(x, *args, **kwargs)
-        else:
-            yield x
-
-
-def match_mapper(predicate):
-    """
-    This decorator lifts a fuction which operates on a single item
-    to one that operates over an iterable of items.
-
-    Items that match `predicate` are mapped with `f`. Items which
-    do not are still yielded, but not touched.
-
-    The resulting function returns a generator for results.
-    """
-    def decorate(f):
-        def map_match(iterable, *args, **kwargs):
-            for x in iterable:
-                if predicate(x):
-                    yield f(x, *args, **kwargs)
-                else:
-                    yield x
-        return map_match
-    return decorate
-
-
 def id_path_matches(x, match):
     """
     Predicate function that tests whether the id_path of a thing
@@ -156,25 +122,19 @@ def match_by_id_path(docs, match):
             yield doc
 
 
-def decorate_match_by_group(f, *args, **default_kwargs):
-    """
-    Decorates a function `f` with an additional `match` keyword argument.
-    This argument is a Unix-style glob string that will be used to
-    filter matches.
+def decorate_group_matching(predicate):
+    def decorate_f(f):
+        def f_match_group(iter, groups, defaults={}):
+            items = tuple(iter)
+            for pattern, kwargs in groups.items():
+                matches = tuple(item for item in items if predicate(item, pattern))
+                yield f(matches, **replace(defaults, **kwargs))
+        f_match_group.inner = f
+        return f_match_group
+    return decorate_f
 
-    This is meant to be used to decorate functions that take an iterable
-    and return an iterable.
-    """
-    def f_wrap(stubs, groups):
-        # Collect iter into tuple, because we'll be going over it
-        # more than once.
-        stubs = tuple(stubs)
-        for glob, group_kwargs in groups.items():
-            matches = match_by_id_path(stubs, glob)
-            # Allow group_kwargs to overshadow default_kwargs.
-            kwargs = merge(default_kwargs, group_kwargs)
-            yield f(matches, *args, **kwargs)
-    return f_wrap
+
+decorate_group_matching_id_path = decorate_group_matching(id_path_matches)
 
 
 _EMPTY_TUPLE = tuple()
@@ -263,10 +223,27 @@ def sort(iterable, key=None, reverse=None):
     return l
 
 
+def lift_iter(f):
+    """
+    Lift a function to consume an iterator instead of single values.
+    """
+    def f_iter(iter, *args, **kwargs):
+        return (f(x, *args, **kwargs) for x in iter)
+    return f_iter
+
+
 def sort_by(iter_of_dicts, key, reverse=False, default=None):
     """Sort an iterable of dicts via a key path"""
     fkey = lambda x: get(x, key, default=default)
     return sort(iter_of_dicts, key=fkey, reverse=reverse)
+
+
+def join(words, sep="", template="{word}"):
+    """
+    Join an iterable of strings, with optional template string defining
+    how each word is to be templated before joining.
+    """
+    return sep.join(template.format(word=word) for word in words)
 
 
 def tap_each(f, iter):
