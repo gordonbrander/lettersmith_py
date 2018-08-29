@@ -6,6 +6,13 @@ from functools import reduce, singledispatch
 from fnmatch import fnmatch
 
 
+def id(x):
+    """
+    The id function.
+    """
+    return x
+
+
 def compose2(f, e):
     """Compose 2 functions"""
     return lambda x: f(e(x))
@@ -17,32 +24,38 @@ def compose(fn, *fns):
 
 
 @singledispatch
-def get(d, key, default=None):
+def get(x, key, default=None):
     """
     A singledispatch getter function.
+    By default, gets attribute (e.g. dot notation).
     """
-    return getattr(d, key, default)
+    raise TypeError("Cannot get entries on unknown type {}".format(x))
 
 
 @get.register(dict)
 def get_dict(d, key, default=None):
     """
-    Getter for dictionaries. Does a get on dictionary items.
+    Getter for dictionaries. Does a get on dictionary items
+    instead of attributes.
     """
     return d.get(key, default)
 
 
-def get_deep(d, keys, default=None):
+def get_deep(d, key, default=None):
     """
     Get a value in a dictionary, or get a deep value in
     nested dictionaries.
 
-    If `keys` is a string, will do a regular `dict.get()`.
+    If `keys` is a string, will split on ".".
     If `keys` is an iterable of strings, will attempt to do a deep get.
     If the get fails, will return `default` value.
+
+    Example:
+
+        get_deep(x, "some.deep.key")
+        get_deep(x, ("some", "deep", "key"))
     """
-    if type(keys) is str:
-        return get(d, keys)
+    keys = key.split(".") if type(key) is str else tuple(key)
     for key in keys:
         d = get(d, key)
         if d == None:
@@ -95,20 +108,51 @@ def chunk(iterable, n):
         yield chunk
 
 
-def map_match(predicate, f, iterable, *args, **kwargs):
+def id_path_matches(x, match):
     """
-    Map any items in iterable that match `predicate`. Any item that
-    doesn't pass `predicate` test is untouched — it will still be
-    yielded by the generator, but it won't be mapped.
+    Predicate function that tests whether the id_path of a thing
+    (as determined by `get`) matches a glob pattern.
     """
-    for x in iterable:
-        if predicate(x):
-            yield f(x, *args, **kwargs)
-        else:
-            yield x
+    # We fast-path for "everything" matches.
+    return fnmatch(get(x, "id_path"), match) if match != "*" else True
+
+
+def match_by_id_path(docs, match):
+    """
+    Filter docs by matching their id_path against a glob pattern.
+    """
+    for doc in docs:
+        if id_path_matches(doc, match):
+            yield doc
+
+
+def decorate_group_matching(predicate):
+    def decorate_f(f):
+        def f_match_group(iter, groups, defaults={}):
+            items = tuple(iter)
+            for pattern, kwargs in groups.items():
+                matches = tuple(item for item in items if predicate(item, pattern))
+                yield f(matches, **replace(defaults, **kwargs))
+        f_match_group.inner = f
+        return f_match_group
+    return decorate_f
+
+
+decorate_group_matching_id_path = decorate_group_matching(id_path_matches)
 
 
 _EMPTY_TUPLE = tuple()
+
+
+def any_in(collection, values):
+    """
+    Check if any of a collection of values is in `collection`.
+    Returns boolean.
+    """
+    for value in values:
+        if value in collection:
+            return True
+    return False
 
 
 def contains(x, key, value):
@@ -172,18 +216,47 @@ def where_matches(dicts, key, glob):
     return (x for x in dicts if fnmatch(get_deep(x, key), glob))
 
 
-def sort(iterable, key=None, reverse=None):
+def lift_iter(f):
     """
-    Sort an iterable, returning a new list.
-    This is the same thing as list.sort, but instead of sorting in place,
-    it accepts any iterable and returns a new list.
+    Lift a function to consume an iterator instead of single values.
     """
-    l = list(iterable)
-    l.sort(key=key, reverse=reverse)
-    return l
+    def f_iter(iter, *args, **kwargs):
+        return (f(x, *args, **kwargs) for x in iter)
+    return f_iter
 
 
 def sort_by(iter_of_dicts, key, reverse=False, default=None):
     """Sort an iterable of dicts via a key path"""
     fkey = lambda x: get(x, key, default=default)
-    return sort(iter_of_dicts, key=fkey, reverse=reverse)
+    return sorted(iter_of_dicts, key=fkey, reverse=reverse)
+
+
+def _first(pair):
+    return pair[0]
+
+
+def sort_items_by_key(items, reverse=False):
+    return sorted(
+        items,
+        key=_first,
+        reverse=reverse
+    )
+
+
+def join(words, sep="", template="{word}"):
+    """
+    Join an iterable of strings, with optional template string defining
+    how each word is to be templated before joining.
+    """
+    return sep.join(template.format(word=word) for word in words)
+
+
+def tap_each(f, iter):
+    """
+    Perform a side-effect on each item of an iterable.
+    Returns an iterable that must be consumed to perform the
+    side-effect.
+    """
+    for x in iter:
+        f(x)
+        yield x

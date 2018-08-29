@@ -2,14 +2,14 @@ from pathlib import PurePath
 from markdown import markdown
 from mdx_gfm import GithubFlavoredMarkdownExtension
 
-from lettersmith.util import replace, map_match
+from lettersmith.util import replace, get_deep
 from lettersmith.path import has_ext
 
 
 MD_LANG_EXTENSIONS=(GithubFlavoredMarkdownExtension(),)
 
 
-MD_EXTENSIONS = (".md", ".markdown", ".mdown", ".txt")
+MD_EXTENSIONS = [".md", ".markdown", ".mdown", ".txt"]
 
 
 def house_markdown(s):
@@ -33,15 +33,9 @@ def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     Updates the output path to .html.
     Returns a new doc.
     """
-    content = markdown(doc.content, extensions=extensions)
-    output_path = PurePath(doc.output_path).with_suffix(".html")
-    return replace(doc, content=content, output_path=str(output_path))
-
-
-def map_markdown(docs, extensions=MD_LANG_EXTENSIONS):
-    """
-    Given an iterable of docs, return a generator that will yield
-    markdown docs rendered to HTML. Things that aren't markdown docs
-    will be yielded untouched. 
-    """
-    return map_match(is_markdown_doc, render_doc, docs, extensions=extensions)
+    if is_markdown_doc(doc):
+        content = markdown(doc.content, extensions=extensions)
+        output_path = PurePath(doc.output_path).with_suffix(".html")
+        return replace(doc, content=content, output_path=str(output_path))
+    else:
+        return doc

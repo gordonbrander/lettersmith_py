@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime
 from itertools import islice
 from lettersmith import doc as Doc
-from lettersmith.jinjatools import create_env
+from lettersmith.jinjatools import FileSystemEnvironment
 from lettersmith.path import to_url
 
 MODULE_PATH = Path(__file__).parent
@@ -17,7 +17,11 @@ def render_sitemap(stubs,
   base_url="/", last_build_date=None,
   title="Feed", description="", author=""):
   context = {"base_url": base_url}
-  env = create_env(str(TEMPLATE_PATH), context=context, filters=FILTERS)
+  env = FileSystemEnvironment(
+    str(TEMPLATE_PATH),
+    context=context,
+    filters=FILTERS
+  )
   template = env.get_template("sitemap.xml")
   return template.render({"stubs": stubs})
 

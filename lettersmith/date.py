@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from os import path
+from functools import singledispatch
 
 
 def read_file_times(pathlike):
@@ -9,12 +10,35 @@ def read_file_times(pathlike):
 
     If no value can be found, will return unix epoch for both.
     """
+    path_str = str(pathlike)
     try:
-        modified_time = datetime.fromtimestamp(path.getmtime(pathlike))
-        created_time = datetime.fromtimestamp(path.getctime(pathlike))
+        modified_time = datetime.fromtimestamp(path.getmtime(path_str))
+        created_time = datetime.fromtimestamp(path.getctime(path_str))
         return created_time, modified_time
     except OSError:
         return EPOCH, EPOCH
+
+
+@singledispatch
+def to_datetime(x):
+    """
+    Given a date or datetime, return a datetime.
+    Used to read datetime values from meta fields.
+    """
+    raise TypeError("read function not implemented for type {}".format(x))
+
+
+@to_datetime.register(datetime)
+def datetime_to_datetime(dt):
+    return dt
+
+
+@to_datetime.register(date)
+def date_to_datetime(d):
+    """
+    Convert a date to a datetime.
+    """
+    return datetime(d.year, d.month, d.day)
 
 
 def parse_iso_8601(dt_str):

@@ -10,11 +10,9 @@ def load(file_paths, relative_to=""):
     Given an iterable of file paths, create an iterable of loaded docs.
     Ignores special files.
     """
-    return (
-        Doc.load(x, relative_to=relative_to)
-        for x in file_paths
-        if is_doc_file(x)
-    )
+    for path in file_paths:
+        if is_doc_file(path):
+            yield Doc.load(path, relative_to=relative_to)
 
 
 def write(docs, output_path="public"):
@@ -30,6 +28,13 @@ def write(docs, output_path="public"):
 
 def remove_drafts(docs):
     return (doc for doc in docs if not is_draft(doc.id_path))
+
+
+def remove_id_path(docs, id_path):
+    """
+    Remove docs with a given id_path.
+    """
+    return (doc for doc in docs if doc.id_path != id_path)
 
 
 def remove_index(docs):
