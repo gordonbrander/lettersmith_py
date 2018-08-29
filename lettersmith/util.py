@@ -41,17 +41,21 @@ def get_dict(d, key, default=None):
     return d.get(key, default)
 
 
-def get_deep(d, keys, default=None):
+def get_deep(d, key, default=None):
     """
     Get a value in a dictionary, or get a deep value in
     nested dictionaries.
 
-    If `keys` is a string, will do a regular `dict.get()`.
+    If `keys` is a string, will split on ".".
     If `keys` is an iterable of strings, will attempt to do a deep get.
     If the get fails, will return `default` value.
+
+    Example:
+
+        get_deep(x, "some.deep.key")
+        get_deep(x, ("some", "deep", "key"))
     """
-    if type(keys) is str:
-        return get(d, keys)
+    keys = key.split(".") if type(key) is str else tuple(key)
     for key in keys:
         d = get(d, key)
         if d == None:
@@ -212,17 +216,6 @@ def where_matches(dicts, key, glob):
     return (x for x in dicts if fnmatch(get_deep(x, key), glob))
 
 
-def sort(iterable, key=None, reverse=None):
-    """
-    Sort an iterable, returning a new list.
-    This is the same thing as list.sort, but instead of sorting in place,
-    it accepts any iterable and returns a new list.
-    """
-    l = list(iterable)
-    l.sort(key=key, reverse=reverse)
-    return l
-
-
 def lift_iter(f):
     """
     Lift a function to consume an iterator instead of single values.
@@ -235,7 +228,19 @@ def lift_iter(f):
 def sort_by(iter_of_dicts, key, reverse=False, default=None):
     """Sort an iterable of dicts via a key path"""
     fkey = lambda x: get(x, key, default=default)
-    return sort(iter_of_dicts, key=fkey, reverse=reverse)
+    return sorted(iter_of_dicts, key=fkey, reverse=reverse)
+
+
+def _first(pair):
+    return pair[0]
+
+
+def sort_items_by_key(items, reverse=False):
+    return sorted(
+        items,
+        key=_first,
+        reverse=reverse
+    )
 
 
 def join(words, sep="", template="{word}"):
