@@ -55,19 +55,6 @@ def gen_taxonomy_archives(stubs,
             )
 
 
-def where_taxonomy_contains_any(stubs, taxonomy, terms):
-    """
-    Given a list of stubs (or docs), yields any stubs that contain
-    any of the terms.
-    """
-    for stub in stubs:
-        try:
-            if util.any_in(stub.meta[taxonomy], terms):
-                yield stub
-        except KeyError:
-            pass
-
-
 def index_by_taxonomy(stubs, taxonomies=None):
     """
     Create a new index by taxonomy.

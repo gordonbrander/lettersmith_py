@@ -206,6 +206,18 @@ def where_contains(dicts, key, value):
     return (x for x in dicts if contains(x, key, value))
 
 
+def where_contains_any(dicts, key, terms):
+    """
+    Given a list of stubs (or docs), yields any stubs that contain
+    any of the terms.
+    """
+    return (
+        x
+        for x in dicts
+        if any_in(get_deep(x, key, _EMPTY_TUPLE), terms)
+    )
+
+
 def where_matches(dicts, key, glob):
     """
     Query an iterable of dictionaries, matching the value against a
