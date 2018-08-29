@@ -108,7 +108,7 @@ def to_url(pathlike, base="/"):
     """
     slug = to_slug(pathlike)
     purepath = PurePath(slug)
-    if purepath.stem == "index":
+    if purepath.name == "index.html":
         purepath = ensure_trailing_slash(purepath.parent)
     qualified = qualify_url(purepath, base=base)
     return qualified
