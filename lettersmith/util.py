@@ -179,6 +179,14 @@ def where(dicts, key, value, is_match=True):
     return (x for x in dicts if (get_deep(x, key) == value) == is_match)
 
 
+def where_not(dicts, key, value, is_match=True):
+    """
+    Query an iterable of dictionaries for keys not matching value.
+    `key` may be an iterable of keys representing a key path.
+    """
+    return (x for x in dicts if (get_deep(x, key) == value) != is_match)
+
+
 def where_key(dicts, key):
     """
     Query an iterable of dictionaries that have `key`.
