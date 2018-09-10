@@ -1,5 +1,6 @@
 import random
 import itertools
+import json
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -55,52 +56,54 @@ class FileSystemEnvironment(Environment):
         self.globals.update(context)
 
 
+TEMPLATE_FUNCTIONS = {
+    "markdown": house_markdown,
+    "sorted": sorted,
+    "json_dumps": json.dumps
+    "sum": sum,
+    "len": len,
+    "filter": filter,
+    "filterfalse": itertools.filterfalse,
+    "islice": itertools.islice,
+    "choice": _choice,
+    "sample": _sample,
+    "shuffle": _shuffle,
+    "to_url": pathtools.to_url,
+    "get": util.get,
+    "sorted": sorted,
+    "sort_by": util.sort_by,
+    "sort_items_by_key": util.sort_items_by_key,
+    "where": util.where,
+    "where_key": util.where_key,
+    "where_not_key": util.where_not_key,
+    "where_contains": util.where_contains,
+    "where_contains_any": util.where_contains_any,
+    "where_matches": util.where_matches,
+    "join": util.join,
+    "remove_index": Docs.remove_index,
+    "remove_id_path": Docs.remove_id_path,
+    "filter_siblings": Docs.filter_siblings,
+    "to_slug": pathtools.to_slug,
+    "to_slugs": util.lift_iter(pathtools.to_slug),
+    "tuple": tuple,
+    "json_dumps": json.dumps
+}
+
+
 class LettersmithEnvironment(FileSystemEnvironment):
     """
     Specialized version of default Jinja environment class that
     offers additional filters and environment variables.
     """
-    lettersmith_filters = {
-        "markdown": house_markdown,
-        "sum": sum,
-        "len": len,
-        "filter": filter,
-        "filterfalse": itertools.filterfalse,
-        "islice": itertools.islice,
-        "choice": _choice,
-        "sample": _sample,
-        "shuffle": _shuffle,
-        "to_url": pathtools.to_url,
-        "get": util.get,
-        "sorted": sorted,
-        "sort_by": util.sort_by,
-        "sort_items_by_key": util.sort_items_by_key,
-        "where": util.where,
-        "where_key": util.where_key,
-        "where_not_key": util.where_not_key,
-        "where_contains": util.where_contains,
-        "where_contains_any": util.where_contains_any,
-        "where_matches": util.where_matches,
-        "join": util.join,
-        "remove_index": Docs.remove_index,
-        "remove_id_path": Docs.remove_id_path,
-        "filter_siblings": Docs.filter_siblings,
-        "to_slug": pathtools.to_slug,
-        "to_slugs": util.lift_iter(pathtools.to_slug),
-        "tuple": tuple
-    }
-
-    lettersmith_globals = {
-        "get": util.get,
-        "len": len,
-        "sum": sum
-    }
-
     def __init__(self, templates_path, filters={}, context={}):
         loader = FileSystemLoader(templates_path)
-        super().__init__(templates_path, filters=filters, context=context)
-        self.filters.update(self.lettersmith_filters)
-        self.globals.update(self.lettersmith_globals)
+        super().__init__(
+            templates_path,
+            filters=TEMPLATE_FUNCTIONS,
+            context=TEMPLATE_FUNCTIONS
+        )
+        self.filters.update(filters)
+        self.globals.update(context)
 
 
 def should_template(doc):
