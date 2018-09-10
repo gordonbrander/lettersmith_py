@@ -4,11 +4,10 @@ import hashlib
 from collections import namedtuple
 import pickle
 
-import frontmatter
+from lettersmith.yamltools import load_frontmatter
 
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
-from lettersmith import yamltools
 from lettersmith import path as pathtools
 from lettersmith.util import replace, get
 
@@ -85,29 +84,26 @@ def load(pathlike, relative_to=""):
 
     Returns a dictionary.
     """
-    # TODO need to grab date from meta
     file_created, file_modified = read_file_times(pathlike)
-    with open(str(pathlike)) as f:
-        meta, content = frontmatter.parse(f.read())
-        input_path = PurePath(pathlike)
-        id_path = input_path.relative_to(relative_to)
-        output_path = pathtools.to_nice_path(id_path)
-        section = pathtools.tld(id_path)
-        title = meta.get("title", pathtools.to_title(input_path))
-        created = meta.get("created", file_created)
-        modified = meta.get("modified", file_modified)
-
-        return doc(
-            id_path=id_path,
-            output_path=output_path,
-            input_path=input_path,
-            created=created,
-            modified=modified,
-            title=title,
-            section=section,
-            meta=meta,
-            content=content
-        )
+    meta, content = load_frontmatter(pathlike)
+    input_path = PurePath(pathlike)
+    id_path = input_path.relative_to(relative_to)
+    output_path = pathtools.to_nice_path(id_path)
+    section = pathtools.tld(id_path)
+    title = meta.get("title", pathtools.to_title(input_path))
+    created = meta.get("created", file_created)
+    modified = meta.get("modified", file_modified)
+    return doc(
+        id_path=id_path,
+        output_path=output_path,
+        input_path=input_path,
+        created=created,
+        modified=modified,
+        title=title,
+        section=section,
+        meta=meta,
+        content=content
+    )
 
 
 def from_stub(stub):
@@ -135,19 +131,18 @@ def load_stub(stub, relative_to=""):
     Loads a doc from a stub.
     Returns a doc.
     """
-    with open(stub.input_path) as f:
-        _, content = frontmatter.parse(f.read())
-        return doc(
-            id_path=stub.id_path,
-            output_path=stub.output_path,
-            input_path=stub.input_path,
-            created=stub.created,
-            modified=stub.modified,
-            title=stub.title,
-            section=stub.section,
-            content=content,
-            meta=stub.meta
-        )
+    _, content = load_frontmatter(stub.input_path)
+    return doc(
+        id_path=stub.id_path,
+        output_path=stub.output_path,
+        input_path=stub.input_path,
+        created=stub.created,
+        modified=stub.modified,
+        title=stub.title,
+        section=stub.section,
+        content=content,
+        meta=stub.meta
+    )
 
 
 def to_json(doc):
@@ -208,7 +203,7 @@ class Cache:
     Memoized cache dump/load for docs
     """
     def __init__(self, cache_path):
-        self.cache_path = cache_path
+        self.cache_path = PurePath(cache_path)
 
     def dump(self, doc):
         return dump_cache(self.cache_path, doc)
