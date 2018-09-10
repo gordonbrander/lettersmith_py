@@ -18,7 +18,7 @@ Doc = namedtuple("Doc", (
     "id_path", "output_path", "input_path", "created", "modified",
     "title", "content", "section", "meta", "templates"
 ))
-Doc.__docstring__ = """
+Doc.__doc__ = """
 Docs are namedtuples that represent a document to be transformed,
 and eventually written to disk.
 

@@ -13,7 +13,7 @@ Stub = namedtuple("Stub", (
     "title", "summary", "section",
     "meta"
 ))
-Stub.__docstring__ = """
+Stub.__doc__ = """
 Stubs are namedtuples that represent stub documents.
 Stubs are meant to be small, so that many can be collected in memory
 for cross-referencing via meta information.
