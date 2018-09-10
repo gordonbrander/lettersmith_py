@@ -25,13 +25,6 @@ from lettersmith.data import load_data_files
 from lettersmith.file import copy_all
 
 
-def output_path_reader(ext=None):
-    def read_doc(doc):
-        output_path = PurePath(doc.output_path)
-        return output_path.with_suffix(ext) if ext != None else output_path
-    return read_doc
-
-
 def main():
     parser = lettersmith_argparser(
         description="""Generates a blog-aware site with Lettersmith""")
@@ -69,8 +62,7 @@ def main():
 
     # Create a temporary directory for cache.
     with tempfile.TemporaryDirectory(prefix="lettersmith_") as tmp_dir_path:
-        doc_cache_path = Path(tmp_dir_path)
-        cache = Doc.Cache(doc_cache_path)
+        cache = Doc.Cache(tmp_dir_path)
 
         # Process docs one-by-one... render content, etc.
         # TODO we should break mapping functions into single doc
@@ -78,7 +70,7 @@ def main():
         docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
         docs = (markdowntools.render_doc(doc) for doc in docs)
         docs = (absolutize.absolutize_doc_urls(doc, base_url) for doc in docs)
-        # docs = (Doc.change_ext(doc, ".html") for doc in docs)
+        docs = (Doc.change_ext(doc, ".html") for doc in docs)
         docs = (templatetools.add_templates(doc) for doc in docs)
         docs = (
             permalink.map_doc_permalink(doc, permalink_templates)
