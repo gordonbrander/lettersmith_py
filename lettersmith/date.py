@@ -25,7 +25,7 @@ def to_datetime(x):
     Given a date or datetime, return a datetime.
     Used to read datetime values from meta fields.
     """
-    raise TypeError("read function not implemented for type {}".format(x))
+    raise TypeError("read function not implemented for type {}".format(type(x)))
 
 
 @to_datetime.register(datetime)
@@ -41,7 +41,15 @@ def date_to_datetime(d):
     return datetime(d.year, d.month, d.day)
 
 
-def parse_iso_8601(dt_str):
+@to_datetime.register(str)
+def date_to_datetime(s):
+    """
+    Convert an ISO 8601 date string to a datetime.
+    """
+    return parse_isoformat(s)
+
+
+def parse_isoformat(dt_str):
     """
     Parse an ISO 8601 date string into a datetime. Supports the following date
     styles:
@@ -61,7 +69,7 @@ def parse_iso_8601(dt_str):
     return datetime.strptime(dt_str, "%Y %m %d")
 
 
-def format_iso_8601(dt):
+def format_isoformat(dt):
     """
     Format datetime as ISO 8601 https://en.wikipedia.org/wiki/ISO_8601
     '%Y-%m-%d'
@@ -70,4 +78,4 @@ def format_iso_8601(dt):
 
 
 EPOCH = datetime.fromtimestamp(0)
-EPOCH_ISO_8601 = format_iso_8601(EPOCH)
+EPOCH_ISO_8601 = format_isoformat(EPOCH)
