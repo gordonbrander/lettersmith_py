@@ -59,7 +59,7 @@ class FileSystemEnvironment(Environment):
 TEMPLATE_FUNCTIONS = {
     "markdown": house_markdown,
     "sorted": sorted,
-    "json_dumps": json.dumps
+    "json_dumps": json.dumps,
     "sum": sum,
     "len": len,
     "filter": filter,
