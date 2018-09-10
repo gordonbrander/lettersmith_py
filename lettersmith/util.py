@@ -239,7 +239,7 @@ def lift_iter(f):
 
 def sort_by(iter_of_dicts, key, reverse=False, default=None):
     """Sort an iterable of dicts via a key path"""
-    fkey = lambda x: get(x, key, default=default)
+    fkey = lambda x: get_deep(x, key, default=default)
     return sorted(iter_of_dicts, key=fkey, reverse=reverse)
 
 
