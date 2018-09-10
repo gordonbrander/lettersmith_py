@@ -58,7 +58,10 @@ def main():
     paths = (x for x in paths if pathtools.is_doc_file(x))
 
     # Load doc datastructures
-    docs = (Doc.load(path, relative_to=input_path) for path in paths)
+    docs = (
+        Doc.load(Doc.parse_frontmatter, path, relative_to=input_path)
+        for path in paths
+    )
 
     # Create a temporary directory for cache.
     with tempfile.TemporaryDirectory(prefix="lettersmith_") as tmp_dir_path:

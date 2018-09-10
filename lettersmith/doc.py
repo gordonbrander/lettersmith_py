@@ -4,7 +4,8 @@ import hashlib
 from collections import namedtuple
 import pickle
 
-from lettersmith.yamltools import load_frontmatter
+import frontmatter
+import yaml
 
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
@@ -74,18 +75,33 @@ def replace_meta(doc, **kwargs):
     return replace(doc, meta=replace(doc.meta, **kwargs))
 
 
+class DocParseError(Exception):
+    pass
 
-def load(pathlike, relative_to=""):
+
+def load(parse, pathlike, relative_to=""):
     """
     Loads a basic doc dictionary from a file path. This dictionary
     contains content string, and some basic information about the file.
     Typically, you decorate the doc later with meta and other fields.
     Create a doc dict, populating it with sensible defaults
 
+    parse is a function that takes a string, and returns a tuple of
+    `(meta, content)`, where `meta` is a dictionary and `content` is a string.
+
     Returns a dictionary.
     """
     file_created, file_modified = read_file_times(pathlike)
-    meta, content = load_frontmatter(pathlike)
+    with open(pathlike, 'r') as f:
+        try:
+            meta, content = parse(f.read())
+        # Raise a more useful exception that includes the doc's path.
+        except Exception as e:
+            msg = 'Error encountered while parsing "{path}" with {func}.'.format(
+                path=pathlike,
+                func=parse.__name__
+            )
+            raise DocParseError(msg) from e
     input_path = PurePath(pathlike)
     id_path = input_path.relative_to(relative_to)
     output_path = pathtools.to_nice_path(id_path)
@@ -106,6 +122,18 @@ def load(pathlike, relative_to=""):
     )
 
 
+# Export parsers to use with load.
+parse_frontmatter = frontmatter.parse
+
+
+def parse_yaml(s):
+    """
+    Parse a YAML string to meta and content.
+    YAML is treated as meta. Content is empty string.
+    """
+    return yaml.load(s), ""
+
+
 def from_stub(stub):
     """
     Create a doc dictionary from an stub dictionary.
@@ -122,25 +150,6 @@ def from_stub(stub):
         modified=stub.modified,
         title=stub.title,
         section=stub.section,
-        meta=stub.meta
-    )
-
-
-def load_stub(stub, relative_to=""):
-    """
-    Loads a doc from a stub.
-    Returns a doc.
-    """
-    _, content = load_frontmatter(stub.input_path)
-    return doc(
-        id_path=stub.id_path,
-        output_path=stub.output_path,
-        input_path=stub.input_path,
-        created=stub.created,
-        modified=stub.modified,
-        title=stub.title,
-        section=stub.section,
-        content=content,
         meta=stub.meta
     )
 
