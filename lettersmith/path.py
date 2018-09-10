@@ -130,20 +130,16 @@ def is_dotfile(pathlike):
     return PurePath(pathlike).name.startswith(".")
 
 
-def is_config_file(pathlike):
-    """Check if the file is a lettersmith config file"""
-    return PurePath(pathlike).name == "lettersmith.yaml"
-
-
 def is_doc_file(pathlike):
     """
     Is this path a valid doc-like path?
 
     
     """
-    return (is_file_like(pathlike)
+    return (
+        is_file_like(pathlike)
         and not is_dotfile(pathlike)
-        and not is_config_file(pathlike))
+    )
 
 
 def is_index(pathlike):
