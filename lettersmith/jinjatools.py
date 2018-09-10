@@ -72,6 +72,7 @@ TEMPLATE_FUNCTIONS = {
     "get": util.get,
     "sorted": sorted,
     "sort_by": util.sort_by,
+    "sort_by_keys": util.sort_by_keys,
     "sort_items_by_key": util.sort_items_by_key,
     "where": util.where,
     "where_key": util.where_key,

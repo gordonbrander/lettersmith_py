@@ -2,16 +2,6 @@ import unittest
 from lettersmith import util
 
 
-class test_put(unittest.TestCase):
-    def test_put(self):
-        d = {"foo": 5, "bar": 10}
-        d2 = util.put(d, "foo", 0)
-        self.assertIsNot(d, d2)
-        self.assertEqual(d["foo"], 5)
-        self.assertEqual(d2["foo"], 0)
-        self.assertEqual(d2["bar"], 10)
-
-
 class test_merge(unittest.TestCase):
     def test_merge_value(self):
         d = {"foo": 5, "bar": 10}
@@ -22,16 +12,7 @@ class test_merge(unittest.TestCase):
         self.assertEqual(d2["bar"], 10)
 
 
-class test_unset(unittest.TestCase):
-    def test_delete(self):
-        d = {"foo": 5, "bar": 10, "baz": 20}
-        d2 = util.unset(d, ("foo", "bar"))
-        self.assertRaises(KeyError, lambda: d2["foo"])
-        self.assertRaises(KeyError, lambda: d2["bar"])
-        self.assertEqual(d2["baz"], 20)
-
-
-class test_get(unittest.TestCase):
+class test_get_deep(unittest.TestCase):
     data = {
         "foo": {
             "bar": {
@@ -44,7 +25,7 @@ class test_get(unittest.TestCase):
         """
         Can get via a string
         """
-        v = util.get(self.data, "foo")
+        v = util.get_deep(self.data, "foo")
         self.assertEqual(type(v), dict)
 
 
@@ -52,7 +33,7 @@ class test_get(unittest.TestCase):
         """
         Can return a default for properties that don't exist.
         """
-        v = util.get(self.data, "kablooey", default=True)
+        v = util.get_deep(self.data, "kablooey", default=True)
         self.assertEqual(v, True)
 
 
@@ -60,7 +41,7 @@ class test_get(unittest.TestCase):
         """
         The default default is None
         """
-        v = util.get(self.data, "kablooey")
+        v = util.get_deep(self.data, "kablooey")
         self.assertIsNone(v)
 
 
@@ -68,8 +49,17 @@ class test_get(unittest.TestCase):
         """
         Can get deep properties
         """
-        v = util.get(self.data, ("foo", "bar", "baz"))
+        v = util.get_deep(self.data, ("foo", "bar", "baz"))
         self.assertEqual(v, 10)
+
+
+    def test_5(self):
+        """
+        Can get deep properties using dot-separated strings
+        """
+        v = util.get_deep(self.data, "foo.bar.baz")
+        self.assertEqual(v, 10)
+
 
 
 class test_has_key(unittest.TestCase):
@@ -133,6 +123,21 @@ class test_where_matches(unittest.TestCase):
         tuple_res = tuple(res)
         self.assertEqual(len(tuple_res), 1)
         self.assertEqual(tuple_res[0]["id_path"], "foo/bar/baz/somefile.txt")
+
+
+class test_sort_by_keys(unittest.TestCase):
+    data = [
+        {"weight": 0, "title": "b", "id": 0},
+        {"weight": 1, "title": "b", "id": 1},
+        {"weight": 1, "title": "a", "id": 2},
+        {"weight": 0, "title": "a", "id": 3},
+        {"title": "c"},
+    ]
+
+    def test_sort(self):
+        res = util.sort_by_keys(self.data, ("weight", "title"), (0, ""))
+        self.assertEqual(res[0]["id"], 3)
+        self.assertEqual(res[1]["id"], 0)
 
 
 if __name__ == '__main__':

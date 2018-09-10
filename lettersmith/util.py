@@ -237,19 +237,45 @@ def lift_iter(f):
     return f_iter
 
 
-def sort_by(iter_of_dicts, key, reverse=False, default=None):
+def sort_by(dicts_iter, key, default=None, reverse=False):
     """Sort an iterable of dicts via a key path"""
     fkey = lambda x: get_deep(x, key, default=default)
-    return sorted(iter_of_dicts, key=fkey, reverse=reverse)
+    return sorted(dicts_iter, key=fkey, reverse=reverse)
+
+
+def sort_by_keys(dicts_iter, keys, defaults=_EMPTY_TUPLE, reverse=False):
+    """
+    Sort an iterable of dicts by multiple key values at once.
+    `keys` is an iterable of keys that describe, in order, which values
+    to sort by. Each key may be a key or a key path.
+    `defaults` is an iterable of values that are used as defaults when
+    a key is missing. It must be the same length as `keys`.
+
+    This can be used to sort dicts by multiple fields, for example, by
+    weight, as well as date.
+    """
+    dicts_tuple = tuple(dicts_iter)
+    keys_tuple = tuple(keys)
+    defaults_tuple = tuple(defaults)
+    if (len(defaults_tuple) is not len(keys_tuple)):
+        raise ValueError("defaults iterable must be same length as keys")
+    fkey = lambda d: tuple(
+        get_deep(d, key, default)
+        for key, default in zip(keys_tuple, defaults_tuple)
+    )
+    return sorted(dicts_tuple, key=fkey, reverse=reverse)
 
 
 def _first(pair):
     return pair[0]
 
 
-def sort_items_by_key(items, reverse=False):
+def sort_items_by_key(dict, reverse=False):
+    """
+    Sort a dict's items by key, returning a sorted iterable of tuples.
+    """
     return sorted(
-        items,
+        dict.items(),
         key=_first,
         reverse=reverse
     )
