@@ -109,7 +109,10 @@ def load(pathlike, parse=parse_frontmatter, relative_to=""):
             meta, content = parse(f.read())
         # Raise a more useful exception that includes the doc's path.
         except Exception as e:
-            msg = 'Error encountered while parsing "{path}" with {module}.{func}.'.format(
+            msg = (
+                'Error encountered while parsing '
+                '"{path}" with {module}.{func}.'
+            ).format(
                 path=pathlike,
                 func=parse.__qualname__,
                 module=parse.__module__
