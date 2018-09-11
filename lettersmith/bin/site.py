@@ -59,7 +59,7 @@ def main():
 
     # Load doc datastructures
     docs = (
-        Doc.load(Doc.parse_frontmatter, path, relative_to=input_path)
+        Doc.load(path, relative_to=input_path)
         for path in paths
     )
 

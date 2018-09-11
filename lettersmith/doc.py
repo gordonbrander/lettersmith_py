@@ -79,7 +79,19 @@ class DocParseError(Exception):
     pass
 
 
-def load(parse, pathlike, relative_to=""):
+# Export parsers to use with load.
+parse_frontmatter = frontmatter.parse
+
+
+def parse_yaml(s):
+    """
+    Parse a YAML string to meta and content.
+    YAML is treated as meta. Content is empty string.
+    """
+    return yaml.load(s), ""
+
+
+def load(pathlike, parse=parse_frontmatter, relative_to=""):
     """
     Loads a basic doc dictionary from a file path. This dictionary
     contains content string, and some basic information about the file.
@@ -97,9 +109,10 @@ def load(parse, pathlike, relative_to=""):
             meta, content = parse(f.read())
         # Raise a more useful exception that includes the doc's path.
         except Exception as e:
-            msg = 'Error encountered while parsing "{path}" with {func}.'.format(
+            msg = 'Error encountered while parsing "{path}" with {module}.{func}.'.format(
                 path=pathlike,
-                func=parse.__name__
+                func=parse.__qualname__,
+                module=parse.__module__
             )
             raise DocParseError(msg) from e
     input_path = PurePath(pathlike)
@@ -120,18 +133,6 @@ def load(parse, pathlike, relative_to=""):
         meta=meta,
         content=content
     )
-
-
-# Export parsers to use with load.
-parse_frontmatter = frontmatter.parse
-
-
-def parse_yaml(s):
-    """
-    Parse a YAML string to meta and content.
-    YAML is treated as meta. Content is empty string.
-    """
-    return yaml.load(s), ""
 
 
 def from_stub(stub):
