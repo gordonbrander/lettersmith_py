@@ -171,12 +171,20 @@ def has_key(x, key):
     return get_deep(x, key) != None
 
 
-def where(dicts, key, value, is_match=True):
+def where(dicts, key, value):
     """
     Query an iterable of dictionaries for keys matching value.
     `key` may be an iterable of keys representing a key path.
     """
-    return (x for x in dicts if (get_deep(x, key) == value) == is_match)
+    return (x for x in dicts if (get_deep(x, key) == value))
+
+
+def where_not(dicts, key, value):
+    """
+    Query an iterable of dictionaries for keys NOT matching value.
+    `key` may be an iterable of keys representing a key path.
+    """
+    return (x for x in dicts if (get_deep(x, key) != value))
 
 
 def where_key(dicts, key):
