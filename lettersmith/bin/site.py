@@ -84,6 +84,9 @@ def main():
         # Pickle processed docs in cache
         docs = tap_each(cache.dump, docs)
 
+        # Strip special syntax before converting docs to stubs
+        docs = (wikilink.strip_doc_wikilinks(doc) for doc in docs)
+
         # Convert to stubs in memory
         stubs = tuple(Stub.from_doc(doc) for doc in docs)
 
@@ -124,7 +127,7 @@ def main():
         # cache again.
         docs = (cache.load(stub) for stub in stubs)
         # Map wikilinks, but only those that exist in wikilink_index.
-        docs = wikilink.map_wikilinks(docs, wikilink_index)
+        docs = (wikilink.render_doc(doc, wikilink_index) for doc in docs)
 
         # Chain together all doc iterators
         docs = chain(docs, gen_docs)

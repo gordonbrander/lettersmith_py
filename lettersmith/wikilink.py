@@ -50,6 +50,15 @@ def render_doc(doc, wikilink_index,
     return replace(doc, content=content)
 
 
+def strip_doc_wikilinks(doc):
+    """
+    Strip wikilinks from doc content field.
+    Useful for making stubs with a clean summary.
+    """
+    content = re.sub(WIKILINK, r'\1', doc.content)
+    return replace(doc, content=content)
+
+
 def uplift_wikilinks(doc):
     """
     Find all wikilinks in doc and assign them to a wikilinks property of doc.
@@ -92,13 +101,3 @@ def index_backlinks(stubs):
             except KeyError:
                 pass
     return backlink_index
-
-
-def map_wikilinks(docs, wikilink_index,
-    link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE):
-    """
-    Return a generator that will yield docs with `[[wikilinks]]` rendered as
-    HTML links.
-    """
-    for doc in docs:
-        yield render_doc(doc, wikilink_index, link_template, nolink_template)
