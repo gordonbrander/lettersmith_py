@@ -126,8 +126,10 @@ def main():
         # The previous doc generator has been exhausted, so load docs from
         # cache again.
         docs = (cache.load(stub) for stub in stubs)
+
         # Map wikilinks, but only those that exist in wikilink_index.
-        docs = (wikilink.render_doc(doc, wikilink_index) for doc in docs)
+        render_doc_wikilinks = wikilink.doc_renderer(wikilink_index)
+        docs = (render_doc_wikilinks(doc) for doc in docs)
 
         # Chain together all doc iterators
         docs = chain(docs, gen_docs)

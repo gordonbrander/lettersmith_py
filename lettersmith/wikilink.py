@@ -18,7 +18,7 @@ from lettersmith.util import replace
 
 WIKILINK = r'\[\[([^\]]+)\]\]'
 LINK_TEMPLATE = '<a href="{url}" class="wikilink">{text}</a>'
-NOLINK_TEMPLATE = '<span title="Page doesn\'t exist yet" class="nolink">{text}</span>'
+NOLINK_TEMPLATE = '<span class="nolink">{text}</span>'
 
 
 def parse_inner(tag_inner):
@@ -29,9 +29,16 @@ def parse_inner(tag_inner):
     return tag_inner.strip()
 
 
-def render_doc(doc, wikilink_index,
+def doc_renderer(wikilink_index,
     link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE):
-    """Render wikilinks in doc content field."""
+    """
+    Given a wikilink index, returns a doc rendering function that will
+    render all `[[wikilinks]]` to HTML links.
+
+    If a `[[wikilink]]` exists in the index, it will be rendered as an
+    HTML link. However, if it doesn't exist, it will be rendered
+    using `nolink_template`.
+    """
     def render_inner_match(match):
         inner = match.group(1)
         text = parse_inner(inner)
@@ -41,13 +48,22 @@ def render_doc(doc, wikilink_index,
         except KeyError:
             return nolink_template.format(text=text)
 
-    content = re.sub(
-        WIKILINK,
-        render_inner_match,
-        doc.content
-    )
+    def render_doc(doc):
+        """
+        Render a doc's wikilinks to HTML links.
 
-    return replace(doc, content=content)
+        If a `[[wikilink]]` exists in the index, it will be rendered as an
+        HTML link. However, if it doesn't exist, it will be rendered
+        using `nolink_template`.
+        """
+        content = re.sub(
+            WIKILINK,
+            render_inner_match,
+            doc.content
+        )
+        return replace(doc, content=content)
+
+    return render_doc
 
 
 def strip_doc_wikilinks(doc):
