@@ -2,6 +2,22 @@ import unittest
 from lettersmith import util
 
 
+class test_compose(unittest.TestCase):
+    def test_1(self):
+        def a(s):
+            return s + "a"
+
+        def b(s):
+            return s + "b"
+
+        def c(s):
+            return s + "c"
+
+        abc = util.compose(c, b, a)
+        s = abc("_")
+        self.assertEqual(s, "_abc")
+
+
 class test_merge(unittest.TestCase):
     def test_merge_value(self):
         d = {"foo": 5, "bar": 10}
