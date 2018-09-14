@@ -116,37 +116,42 @@ def main():
         gen_docs = paging_docs + rss_docs + (sitemap_doc,)
         gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
 
-        wikilink_index = wikilink.index_wikilinks(stubs, base_url=base_url)
-        backlink_index = wikilink.index_backlinks(stubs)
-        taxonomy_index = taxonomy.index_by_taxonomy(stubs, taxonomies)
+        index = {}
+
+        index["wikilink"] = wikilink.index_wikilinks(
+            stubs,
+            base_url=base_url
+        )
+        index["backlink"] = wikilink.index_backlinks(stubs)
+        index["taxonomy"] = taxonomy.index_by_taxonomy(stubs, taxonomies)
 
         # Create dict index for ad-hoc stub access in templates.
-        index = {stub.id_path: stub for stub in (stubs + gen_stubs)}
-
-        # The previous doc generator has been exhausted, so load docs from
-        # cache again.
-        docs = (cache.load(stub) for stub in stubs)
-
-        # Map wikilinks, but only those that exist in wikilink_index.
-        render_doc_wikilinks = wikilink.doc_renderer(wikilink_index)
-        docs = (render_doc_wikilinks(doc) for doc in docs)
-
-        # Chain together all doc iterators
-        docs = chain(docs, gen_docs)
+        index["id_path"] = {
+            stub.id_path: stub
+            for stub in (stubs + gen_stubs)
+        }
 
         # Set up template globals
         context = {
             "load_cache": cache.load,
             "rss_docs": rss_docs,
             "index": index,
-            "taxonomy_index": taxonomy_index,
-            "backlink_index": backlink_index,
-            "wikilink_index": wikilink_index,
             "site": config.get("site", {}),
             "data": data,
             "base_url": base_url,
             "now": now
         }
+
+        # The previous doc generator has been exhausted, so load docs from
+        # cache again.
+        docs = (cache.load(stub) for stub in stubs)
+
+        # Map wikilinks, but only those that exist in wikilink_index.
+        render_wikilinks = wikilink.doc_renderer(index["wikilink"])
+        docs = (render_wikilinks(doc) for doc in docs)
+
+        # Chain together all doc iterators
+        docs = chain(docs, gen_docs)
 
         # Create a render function
         render_jinja = jinjatools.lettersmith_doc_renderer(
