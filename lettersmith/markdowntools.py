@@ -2,7 +2,7 @@ from pathlib import PurePath
 from markdown import markdown
 from mdx_gfm import GithubFlavoredMarkdownExtension
 
-from lettersmith.util import replace, get_deep
+from lettersmith.util import replace, bind_extra
 from lettersmith.path import has_ext
 
 
@@ -27,6 +27,7 @@ def is_markdown_doc(doc):
     return has_ext(doc.id_path, MD_EXTENSIONS)
 
 
+@bind_extra
 def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     """
     Render markdown in content field of doc dictionary.

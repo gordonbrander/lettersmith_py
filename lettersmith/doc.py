@@ -10,7 +10,7 @@ import yaml
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
-from lettersmith.util import replace, get
+from lettersmith.util import replace, get, bind_extra
 
 
 _EMPTY_TUPLE = tuple()
@@ -67,6 +67,7 @@ def replace_doc(doc, **kwargs):
     return doc._replace(**kwargs)
 
 
+@bind_extra
 def replace_meta(doc, **kwargs):
     """
     Put a value into a doc's meta dictionary.
@@ -225,16 +226,8 @@ class Cache:
         return load_cache(self.cache_path, stub)
 
 
+@bind_extra
 def change_ext(doc, ext):
     """Change the extention on a doc's output_path, returning a new doc."""
     updated_path = PurePath(doc.output_path).with_suffix(ext)
     return replace(doc, output_path=str(updated_path))
-
-
-def with_path(glob):
-    """
-    Check if a path matches glob pattern.
-    """
-    def has_path(doc):
-        return fnmatch(doc.id_path, glob)
-    return has_path

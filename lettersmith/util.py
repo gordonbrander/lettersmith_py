@@ -2,7 +2,7 @@
 Utility functions.
 Mostly tools for working with dictionaries and iterables.
 """
-from functools import reduce, singledispatch
+from functools import reduce, singledispatch, wraps
 from fnmatch import fnmatch
 
 
@@ -21,6 +21,22 @@ def compose2(f, e):
 def compose(fn, *fns):
     """Compose n functions"""
     return reduce(compose2, fns, fn)
+
+
+def bind_extra(func):
+    """
+    Sets a `.bind_extra` factory function that takes all extra
+    arguments, after the first argument of the original function.
+    This factory function returns a function that takes a single
+    value argument.
+    """
+    def factory(*args, **kwargs):
+        @wraps(func)
+        def map(v):
+            return func(v, *args, **kwargs)
+        return map
+    func.bind_extra = factory
+    return func
 
 
 @singledispatch

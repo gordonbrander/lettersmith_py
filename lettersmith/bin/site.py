@@ -68,11 +68,10 @@ def main():
         cache = Doc.Cache(tmp_dir_path)
 
         # Process docs one-by-one... render content, etc.
-        # TODO we should break mapping functions into single doc
-        # processing functions, so we can use Pool.map.
         docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
         docs = (markdowntools.render_doc(doc) for doc in docs)
-        docs = (absolutize.absolutize_doc_urls(doc, base_url) for doc in docs)
+        absolutize_doc_urls = absolutize.absolutize(base_url)
+        docs = (absolutize_doc_urls(doc) for doc in docs)
         docs = (Doc.change_ext(doc, ".html") for doc in docs)
         docs = (templatetools.add_templates(doc) for doc in docs)
         docs = (
