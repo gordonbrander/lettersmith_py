@@ -50,8 +50,13 @@ def main():
 
     data = load_data_files(data_path)
 
-    # Grab all markdown files
-    paths = input_path.glob("**/*.md")
+    # Grab all markdown, YAML, and JSON files.
+    paths = pathtools.glob_all(input_path, (
+        "**/*.md",
+        "**/*.yaml",
+        "**/*.yml",
+        "**/*.json")
+    )
     # Filter out drafts
     paths = (x for x in paths if pathtools.should_pub(x, build_drafts))
     # Filter out special files

@@ -10,7 +10,7 @@ import yaml
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
-from lettersmith.util import replace, get, bind_extra
+from lettersmith.util import replace, get, bind_extra, multidispatch
 
 
 _EMPTY_TUPLE = tuple()
@@ -92,7 +92,15 @@ def parse_yaml(s):
     return yaml.load(s), ""
 
 
-def load(pathlike, parse=parse_frontmatter, relative_to=""):
+def parse_json(s):
+    """
+    Parse a YAML string to meta and content.
+    YAML is treated as meta. Content is empty string.
+    """
+    return json.loads(s), ""
+
+
+def load_and_parse(pathlike, parse=parse_frontmatter, relative_to=""):
     """
     Loads a basic doc dictionary from a file path. This dictionary
     contains content string, and some basic information about the file.
@@ -137,6 +145,26 @@ def load(pathlike, parse=parse_frontmatter, relative_to=""):
         meta=meta,
         content=content
     )
+
+
+def _dispatch_by_ext(pathlike, relative_to):
+    return PurePath(pathlike).suffix
+
+
+@multidispatch(_dispatch_by_ext)
+def load(pathlike, relative_to=""):
+    return load_and_parse(pathlike, parse_frontmatter)
+
+
+@load.register(".yaml")
+@load.register(".yml")
+def load_yaml(pathlike, relative_to=""):
+    return load_and_parse(pathlike, parse_yaml)
+
+
+@load.register(".json")
+def load_json(pathlike, relative_to=""):
+    return load_and_parse(pathlike, parse_json)
 
 
 def from_stub(stub):

@@ -39,6 +39,33 @@ def bind_extra(func):
     return func
 
 
+def multidispatch(key):
+    """
+    Like functools.singledispatch, except it lets you dispatch on any
+    combination of key values by using a `key` function to calculate
+    a key for the function to dispatch to.
+    """
+    def wrap(default):
+        registry = {}
+        def register(key):
+            def wrap(func):
+                registry[key] = func
+                return func
+            return wrap
+
+        @wraps(default)
+        def dispatch(*args, **kwargs):
+            try:
+                k = key(*args, **kwargs)
+                func = registry[k]
+                return func(*args, **kwargs)
+            except KeyError:
+                return default(*args, **kwargs)
+        dispatch.register = register
+        return dispatch
+    return wrap
+
+
 @singledispatch
 def get(x, key, default=None):
     """
