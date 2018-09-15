@@ -9,14 +9,10 @@
   </title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="twitter:card" content="summary" />
-  {% if title %}
-    <meta name="twitter:title" content="{{ title }}"/>
+  {% if doc.title %}
+    <meta name="twitter:title" content="{{ doc.title }}"/>
   {% endif %}
-  {% if summary %}
-    <meta name="twitter:description" content="{{ summary }}"/>
-  {% else %}
-    <meta name="twitter:description" content="{{ content | striptags | trim | truncate(100) }}"/>
-  {% endif %}
+  <meta name="twitter:description" content="{{ doc.content | striptags | trim | truncate(100) }}"/>
   {% if site.twitter_name %}
     <meta name="twitter:site" content="@{{ site.twitter_name }}"/>
     <meta name="twitter:creator" content="@{{ site.twitter_name }}"/>
