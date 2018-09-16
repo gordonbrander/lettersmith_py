@@ -30,7 +30,8 @@ generator functions so that only one is in memory at a time.
 
 For collecting many in memory, and cross-referencing, we use Stubs.
 Stubs are meant to be stub docs. They contain just meta information
-about the doc. You can turn a doc into a stub with `to_stub(doc)`.
+about the doc. You can turn a doc into a stub with
+`lettersmith.stub.from_doc(doc)`.
 """
 
 

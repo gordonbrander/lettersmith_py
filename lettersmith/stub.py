@@ -19,7 +19,7 @@ Stubs are meant to be small, so that many can be collected in memory
 for cross-referencing via meta information.
 
 Once you're finished building indexes it's typical to transform these
-stubs into docs with `Doc.load_stub`.
+stubs into docs with `lettersmith.doc.load_stub`.
 """
 
 
