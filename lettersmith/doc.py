@@ -171,7 +171,7 @@ def load(pathlike, relative_to=""):
     so you can also register your own handlers for other file extensions.
     Use decorator `@load.register(".someext")`.
     """
-    return load_and_parse(pathlike, parse_frontmatter)
+    return load_and_parse(pathlike, parse_frontmatter, relative_to)
 
 
 @load.register(".yaml")
@@ -183,7 +183,7 @@ def load_yaml(pathlike, relative_to=""):
     Parses the file contents, places everything in meta, and
     assign an empty string to the content field.
     """
-    return load_and_parse(pathlike, parse_yaml)
+    return load_and_parse(pathlike, parse_yaml, relative_to)
 
 
 @load.register(".json")
@@ -194,7 +194,7 @@ def load_json(pathlike, relative_to=""):
     Parses the file contents, places everything in meta, and
     assign an empty string to the content field.
     """
-    return load_and_parse(pathlike, parse_json)
+    return load_and_parse(pathlike, parse_json, relative_to)
 
 
 def from_stub(stub):
