@@ -148,22 +148,51 @@ def load_and_parse(pathlike, parse=parse_frontmatter, relative_to=""):
 
 
 def _dispatch_by_ext(pathlike, relative_to):
+    """
+    Dispatch by the file extension of `pathlike`.
+    """
     return PurePath(pathlike).suffix
 
 
 @multidispatch(_dispatch_by_ext)
 def load(pathlike, relative_to=""):
+    """
+    Load a file at `pathlike`, and parse it into a doc.
+
+    By default, treats any file as a text file, and will parse YAML
+    headmatter, placing the parsed result in the `meta` field of the doc.
+
+    There are also special handlers registered for YAML and JSON files.
+    These parse the file contents, place everything in meta, and
+    assign an empty string to the content field.
+
+    `load` is a multidispatch method, that dispatches on file extension,
+    so you can also register your own handlers for other file extensions.
+    Use decorator `@load.register(".someext")`.
+    """
     return load_and_parse(pathlike, parse_frontmatter)
 
 
 @load.register(".yaml")
 @load.register(".yml")
 def load_yaml(pathlike, relative_to=""):
+    """
+    Load and parse a YAML file to a doc.
+
+    Parses the file contents, places everything in meta, and
+    assign an empty string to the content field.
+    """
     return load_and_parse(pathlike, parse_yaml)
 
 
 @load.register(".json")
 def load_json(pathlike, relative_to=""):
+    """
+    Load and parse a JSON file to a doc.
+
+    Parses the file contents, places everything in meta, and
+    assign an empty string to the content field.
+    """
     return load_and_parse(pathlike, parse_json)
 
 
