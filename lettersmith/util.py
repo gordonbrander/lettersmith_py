@@ -2,7 +2,7 @@
 Utility functions.
 Mostly tools for working with dictionaries and iterables.
 """
-from functools import reduce, singledispatch, wraps
+from functools import reduce, singledispatch, wraps, partial
 from fnmatch import fnmatch
 
 
@@ -21,49 +21,6 @@ def compose2(f, e):
 def compose(fn, *fns):
     """Compose n functions"""
     return reduce(compose2, fns, fn)
-
-
-def bind_extra(func):
-    """
-    Sets a `.bind_extra` factory function that takes all extra
-    arguments, after the first argument of the original function.
-    This factory function returns a function that takes a single
-    value argument.
-    """
-    def factory(*args, **kwargs):
-        @wraps(func)
-        def map(v):
-            return func(v, *args, **kwargs)
-        return map
-    func.bind_extra = factory
-    return func
-
-
-def multidispatch(key):
-    """
-    Like functools.singledispatch, except it lets you dispatch on any
-    combination of key values by using a `key` function to calculate
-    a key for the function to dispatch to.
-    """
-    def wrap(default):
-        registry = {}
-        def register(key):
-            def wrap(func):
-                registry[key] = func
-                return func
-            return wrap
-
-        @wraps(default)
-        def dispatch(*args, **kwargs):
-            try:
-                k = key(*args, **kwargs)
-                func = registry[k]
-                return func(*args, **kwargs)
-            except KeyError:
-                return default(*args, **kwargs)
-        dispatch.register = register
-        return dispatch
-    return wrap
 
 
 @singledispatch
@@ -151,22 +108,35 @@ def chunk(iterable, n):
         yield chunk
 
 
-def id_path_matches(x, match):
+def matches_id_path(doc, match):
     """
     Predicate function that tests whether the id_path of a thing
     (as determined by `get`) matches a glob pattern.
     """
     # We fast-path for "everything" matches.
-    return fnmatch(get(x, "id_path"), match) if match != "*" else True
+    return fnmatch(get(doc, "id_path"), match) if match != "*" else True
 
 
-def match_by_id_path(docs, match):
+def matching_id_path(match):
+    return partial(matches_id_path, match=match)
+
+
+def maps_if(predicate):
     """
-    Filter docs by matching their id_path against a glob pattern.
+    Decorate a function so that it only touches value if value
+    passes predicate test.
     """
-    for doc in docs:
-        if id_path_matches(doc, match):
-            yield doc
+    def wrap(func):
+        @wraps(func)
+        def wrapped(x, *args, **kwargs):
+            if predicate(x):
+                return func(x, *args, **kwargs)
+            else:
+                return x
+        wrapped.__predicate__ = predicate
+        wrapped.__wrapped__ = func
+        return wrapped
+    return wrap
 
 
 def decorate_group_matching(predicate):
@@ -181,7 +151,7 @@ def decorate_group_matching(predicate):
     return decorate_f
 
 
-decorate_group_matching_id_path = decorate_group_matching(id_path_matches)
+decorate_group_matching_id_path = decorate_group_matching(matches_id_path)
 
 
 _EMPTY_TUPLE = tuple()

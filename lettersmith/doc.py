@@ -10,7 +10,7 @@ import yaml
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
-from lettersmith.util import replace, get, bind_extra, multidispatch
+from lettersmith.util import replace, get, maps_if
 
 
 _EMPTY_TUPLE = tuple()
@@ -68,7 +68,6 @@ def replace_doc(doc, **kwargs):
     return doc._replace(**kwargs)
 
 
-@bind_extra
 def replace_meta(doc, **kwargs):
     """
     Put a value into a doc's meta dictionary.
@@ -77,124 +76,33 @@ def replace_meta(doc, **kwargs):
     return replace(doc, meta=replace(doc.meta, **kwargs))
 
 
-class DocParseError(Exception):
-    pass
-
-
-# Export parsers to use with load.
-parse_frontmatter = frontmatter.parse
-
-
-def parse_yaml(s):
+def load(pathlike, relative_to=""):
     """
-    Parse a YAML string to meta and content.
-    YAML is treated as meta. Content is empty string.
-    """
-    return yaml.load(s), ""
-
-
-def parse_json(s):
-    """
-    Parse a YAML string to meta and content.
-    YAML is treated as meta. Content is empty string.
-    """
-    return json.loads(s), ""
-
-
-def load_and_parse(pathlike, parse=parse_frontmatter, relative_to=""):
-    """
-    Loads a basic doc dictionary from a file path. This dictionary
-    contains content string, and some basic information about the file.
+    Loads a basic doc dictionary from a file path.
+    `content` field will contain contents of file.
     Typically, you decorate the doc later with meta and other fields.
-    Create a doc dict, populating it with sensible defaults
 
-    parse is a function that takes a string, and returns a tuple of
-    `(meta, content)`, where `meta` is a dictionary and `content` is a string.
-
-    Returns a dictionary.
+    Returns a doc.
     """
     file_created, file_modified = read_file_times(pathlike)
     with open(pathlike, 'r') as f:
-        try:
-            meta, content = parse(f.read())
-        # Raise a more useful exception that includes the doc's path.
-        except Exception as e:
-            msg = (
-                'Error encountered while parsing '
-                '"{path}" with {module}.{func}.'
-            ).format(
-                path=pathlike,
-                func=parse.__qualname__,
-                module=parse.__module__
-            )
-            raise DocParseError(msg) from e
+        content = f.read()
     input_path = PurePath(pathlike)
     id_path = input_path.relative_to(relative_to)
     output_path = pathtools.to_nice_path(id_path)
     section = pathtools.tld(id_path)
-    title = meta.get("title", pathtools.to_title(input_path))
-    created = meta.get("created", file_created)
-    modified = meta.get("modified", file_modified)
+    title = pathtools.to_title(input_path)
     return doc(
         id_path=id_path,
         output_path=output_path,
         input_path=input_path,
-        created=created,
-        modified=modified,
+        created=file_created,
+        modified=file_modified,
         title=title,
         section=section,
-        meta=meta,
+        meta={},
         content=content
     )
-
-
-def _dispatch_by_ext(pathlike, relative_to):
-    """
-    Dispatch by the file extension of `pathlike`.
-    """
-    return PurePath(pathlike).suffix
-
-
-@multidispatch(_dispatch_by_ext)
-def load(pathlike, relative_to=""):
-    """
-    Load a file at `pathlike`, and parse it into a doc.
-
-    By default, treats any file as a text file, and will parse YAML
-    headmatter, placing the parsed result in the `meta` field of the doc.
-
-    There are also special handlers registered for YAML and JSON files.
-    These parse the file contents, place everything in meta, and
-    assign an empty string to the content field.
-
-    `load` is a multidispatch method, that dispatches on file extension,
-    so you can also register your own handlers for other file extensions.
-    Use decorator `@load.register(".someext")`.
-    """
-    return load_and_parse(pathlike, parse_frontmatter, relative_to)
-
-
-@load.register(".yaml")
-@load.register(".yml")
-def load_yaml(pathlike, relative_to=""):
-    """
-    Load and parse a YAML file to a doc.
-
-    Parses the file contents, places everything in meta, and
-    assign an empty string to the content field.
-    """
-    return load_and_parse(pathlike, parse_yaml, relative_to)
-
-
-@load.register(".json")
-def load_json(pathlike, relative_to=""):
-    """
-    Load and parse a JSON file to a doc.
-
-    Parses the file contents, places everything in meta, and
-    assign an empty string to the content field.
-    """
-    return load_and_parse(pathlike, parse_json, relative_to)
 
 
 def from_stub(stub):
@@ -246,6 +154,104 @@ def write(doc, output_dir):
     write_file_deep(PurePath(output_dir).joinpath(doc.output_path), doc.content)
 
 
+def uplift_meta(doc):
+    """
+    Reads "magic" fields in the meta and uplifts their values to doc
+    properties.
+    """
+    return doc._replace(
+        title=doc.meta.get("title", doc.title),
+        created=to_datetime(doc.meta.get("created", doc.created)),
+        modified=to_datetime(doc.meta.get("modified", doc.modified))
+    )
+
+
+def ext(*exts):
+    """
+    Create an extension predicate function.
+    """
+    def has_ext(doc):
+        return pathtools.has_ext(doc.id_path, *exts)
+    return has_ext
+
+
+def maps_if_ext(*exts):
+    """
+    Decorate a doc mapping function so it will only map a doc if the
+    doc's `id_path` has one of the extensions listed in the `*ext` args.
+    If the doc does not have any of those extensions, it is left
+    untouched.
+    """
+    return maps_if(ext(*exts))
+
+
+def change_ext(doc, ext):
+    """Change the extention on a doc's output_path, returning a new doc."""
+    updated_path = PurePath(doc.output_path).with_suffix(ext)
+    return doc._replace(output_path=str(updated_path))
+
+
+class DocException(Exception):
+    pass
+
+
+def doc_exceptions(func):
+    """
+    Decorates a mapping function for docs, giving it a more useful
+    exception message.
+    """
+    def map_doc(doc):
+        try:
+            return func(doc)
+        except Exception as e:
+            msg = (
+                'Error encountered while mapping doc '
+                '"{id_path}" with {module}.{func}.'
+            ).format(
+                id_path=doc.id_path,
+                func=func.__qualname__,
+                module=func.__module__
+            )
+            raise DocException(msg) from e
+    map_doc.__wrapped__ = func
+    return map_doc
+
+
+@doc_exceptions
+def parse_frontmatter(doc):
+    meta, content = frontmatter.parse(doc.content)
+    return doc._replace(
+        meta=meta,
+        content=content
+    )
+
+
+@doc_exceptions
+def parse_yaml(doc):
+    """
+    Parse YAML in the doc's content property, placing it in meta
+    and replacing content property with an empty string.
+    """
+    meta = yaml.load(doc.content)
+    return doc._replace(
+        meta=meta,
+        content=""
+    )
+
+
+@doc_exceptions
+def parse_json(doc):
+    """
+    Parse JSON in the doc's content property, placing it in meta
+    and replacing content property with an empty string.
+    """
+    meta = json.loads(doc.content)
+    return doc._replace(
+        meta=meta,
+        content=""
+    )
+
+
 def _hashstr(s):
     return hashlib.md5(str(s).encode()).hexdigest()
 
@@ -257,19 +263,6 @@ def _cache_path(id_path):
     return PurePath(_hashstr(id_path)).with_suffix('.pkl')
 
 
-def dump_cache(cache_path, doc):
-    doc_cache_path = _cache_path(doc.id_path)
-    with open(PurePath(cache_path, doc_cache_path), "wb") as f:
-        pickle.dump(doc, f)
-        return doc
-
-
-def load_cache(cache_path, stub):
-    doc_cache_path = _cache_path(stub.id_path)
-    with open(PurePath(cache_path, doc_cache_path), "rb") as f:
-        return pickle.load(f)
-
-
 class Cache:
     """
     Memoized cache dump/load for docs
@@ -278,14 +271,12 @@ class Cache:
         self.cache_path = PurePath(cache_path)
 
     def dump(self, doc):
-        return dump_cache(self.cache_path, doc)
+        doc_cache_path = _cache_path(doc.id_path)
+        with open(PurePath(self.cache_path, doc_cache_path), "wb") as f:
+            pickle.dump(doc, f)
+            return doc
 
     def load(self, stub):
-        return load_cache(self.cache_path, stub)
-
-
-@bind_extra
-def change_ext(doc, ext):
-    """Change the extention on a doc's output_path, returning a new doc."""
-    updated_path = PurePath(doc.output_path).with_suffix(ext)
-    return replace(doc, output_path=str(updated_path))
+        doc_cache_path = _cache_path(stub.id_path)
+        with open(PurePath(self.cache_path, doc_cache_path), "rb") as f:
+            return pickle.load(f)

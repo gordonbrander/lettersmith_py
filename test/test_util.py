@@ -18,34 +18,6 @@ class test_compose(unittest.TestCase):
         self.assertEqual(s, "_abc")
 
 
-class test_multidispatch(unittest.TestCase):
-    def test_1(self):
-        def dispatch_on_types(*args):
-            return tuple(type(t).__name__ for t in args)
-
-        @util.multidispatch(dispatch_on_types)
-        def floop(a, b):
-            return "default"
-
-        @floop.register(("str", "str"))
-        def floop_string_string(a, b):
-            return "string_string"
-
-        @floop.register(("int", "int"))
-        def floop_int_int(a, b):
-            return "int_int"
-
-        @floop.register(("int", "str"))
-        def floop_int_str(a, b):
-            return "int_str"
-
-        self.assertTrue(callable(floop))
-        self.assertTrue(callable(floop_string_string))
-        self.assertEqual(floop("x", "x"), "string_string")
-        self.assertEqual(floop(1, 1), "int_int")
-        self.assertEqual(floop(1, "x"), "int_str")
-        self.assertEqual(floop("x", 1), "default")
-
 class test_merge(unittest.TestCase):
     def test_merge_value(self):
         d = {"foo": 5, "bar": 10}

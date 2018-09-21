@@ -1,7 +1,5 @@
 from pathlib import PurePath
 
-from lettersmith.util import replace, bind_extra
-
 
 def read_doc_permalink(doc):
     """
@@ -22,7 +20,6 @@ def read_doc_permalink(doc):
     }
 
 
-@bind_extra
 def map_doc_permalink(doc, permalink_templates):
     """
     Given a doc dict and a permalink template, render
@@ -36,6 +33,6 @@ def map_doc_permalink(doc, permalink_templates):
         path_template = permalink_templates[doc.section]
         output_path = path_template.format(**read_doc_permalink(doc))
         output_path = str(PurePath(output_path))
-        return replace(doc, output_path=output_path)
+        return doc._replace(output_path=output_path)
     except KeyError:
         return doc

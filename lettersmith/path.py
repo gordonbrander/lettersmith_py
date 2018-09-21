@@ -10,7 +10,7 @@ STRANGE_CHAR_PATTERN = "[{}]".format(re.escape(_STRANGE_CHARS))
 
 def space_to_dash(text):
     """Replace spaces with dashes."""
-    return re.sub("\s+", "-", text)
+    return re.sub(r"\s+", "-", text)
 
 
 def remove_strange_chars(text):
@@ -72,6 +72,17 @@ def remove_base_slash(any_path):
     return re.sub("^/", "", any_path)
 
 
+def undraft(pathlike):
+    """
+    Remove the leading `_` from a path, if any.
+    """
+    path = PurePath(pathlike)
+    if path.stem.startswith("_"):
+        return path.with_name(re.sub(r'^_', "", path.name))
+    else:
+        return path
+
+
 def to_nice_path(ugly_pathlike):
     """
     Makes an ugly path into a "nice path". Nice paths are paths that end with
@@ -85,6 +96,7 @@ def to_nice_path(ugly_pathlike):
         some/file/index.html
     """
     purepath = PurePath(ugly_pathlike)
+    purepath = undraft(purepath)
     # Don't touch index pages
     if purepath.stem == "index":
         return purepath
@@ -118,14 +130,6 @@ def is_draft(pathlike):
     return PurePath(pathlike).name.startswith("_")
 
 
-def should_pub(pathlike, build_drafts=False):
-    """
-    Should you publish this? This function is just an ergonomic shortcut
-    for filtering out drafts based on build_drafts setting.
-    """
-    return build_drafts or not is_draft(pathlike)
-
-
 def is_dotfile(pathlike):
     return PurePath(pathlike).name.startswith(".")
 
@@ -139,6 +143,18 @@ def is_doc_file(pathlike):
     return (
         is_file_like(pathlike)
         and not is_dotfile(pathlike)
+    )
+
+
+def should_pub(pathlike, build_drafts=False):
+    """
+    Should you publish this? This function is just an ergonomic shortcut
+    for filtering out drafts based on build_drafts setting, as well as
+    filtering out invalid file types.
+    """
+    return (
+        is_doc_file(pathlike) and
+        (build_drafts or not is_draft(pathlike))
     )
 
 
@@ -179,12 +195,12 @@ def is_sibling(path_a, path_b):
         and not is_index(path_b))
 
 
-def has_ext(pathlike, extensions):
+def has_ext(pathlike, *ext):
     """
     Check to see if the extension of the pathlike matches any of the
     extensions in `extensions`.
     """
-    return PurePath(pathlike).suffix in extensions
+    return PurePath(pathlike).suffix in ext
 
 
 def glob_all(pathlike, globs):

@@ -51,39 +51,38 @@ def main():
     data = load_data_files(data_path)
 
     # Grab all markdown, YAML, and JSON files.
-    paths = pathtools.glob_all(input_path, (
-        "**/*.md",
-        "**/*.yaml",
-        "**/*.yml",
-        "**/*.json")
-    )
-    # Filter out drafts
-    paths = (x for x in paths if pathtools.should_pub(x, build_drafts))
-    # Filter out special files
-    paths = (x for x in paths if pathtools.is_doc_file(x))
+    md_paths = input_path.glob("**/*.md")
+    md_paths = (x for x in md_paths if pathtools.should_pub(x, build_drafts))
+    md_docs = (Doc.load(path, relative_to=input_path) for path in md_paths)
+    md_docs = (Doc.parse_frontmatter(doc) for doc in md_docs)
 
-    # Load doc datastructures
+    yaml_paths = input_path.glob("**/*.yaml")
+    yaml_paths = (x for x in yaml_paths if pathtools.should_pub(x, build_drafts))
+    yaml_docs = (Doc.load(path, relative_to=input_path) for path in yaml_paths)
+    yaml_docs = (Doc.parse_yaml(doc) for doc in yaml_docs)
+
+    json_paths = input_path.glob("**/*.json")
+    json_paths = (x for x in json_paths if pathtools.should_pub(x, build_drafts))
+    json_docs = (Doc.load(path, relative_to=input_path) for path in json_paths)
+    json_docs = (Doc.parse_json(doc) for doc in json_docs)
+
+    docs = chain(md_docs, yaml_docs, json_docs)
+
+    docs = (Doc.uplift_meta(doc) for doc in docs)
+    docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
+    docs = (markdowntools.render_doc(doc) for doc in docs)
+    absolutize_doc_urls = absolutize.absolutize(base_url)
+    docs = (absolutize_doc_urls(doc) for doc in docs)
+    docs = (Doc.change_ext(doc, ".html") for doc in docs)
+    docs = (templatetools.add_templates(doc) for doc in docs)
     docs = (
-        Doc.load(path, relative_to=input_path)
-        for path in paths
+        permalink.map_doc_permalink(doc, permalink_templates)
+        for doc in docs
     )
 
     # Create a temporary directory for cache.
     with tempfile.TemporaryDirectory(prefix="lettersmith_") as tmp_dir_path:
         cache = Doc.Cache(tmp_dir_path)
-
-        # Process docs one-by-one... render content, etc.
-        docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
-        docs = (markdowntools.render_doc(doc) for doc in docs)
-        absolutize_doc_urls = absolutize.absolutize(base_url)
-        docs = (absolutize_doc_urls(doc) for doc in docs)
-        docs = (Doc.change_ext(doc, ".html") for doc in docs)
-        docs = (templatetools.add_templates(doc) for doc in docs)
-        docs = (
-            permalink.map_doc_permalink(doc, permalink_templates)
-            for doc in docs
-        )
-
 
         # Pickle processed docs in cache
         docs = tap_each(cache.dump, docs)

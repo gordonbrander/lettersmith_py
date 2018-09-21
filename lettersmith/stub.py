@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import PurePath
 from collections import namedtuple
 import frontmatter
-from lettersmith.util import replace, get, bind_extra
+from lettersmith.util import replace, get
 from lettersmith import path as pathtools
 from lettersmith.date import EPOCH
 from lettersmith.stringtools import truncate, strip_html
@@ -56,7 +56,6 @@ def replace_stub(stub, **kwargs):
     return stub._replace(**kwargs)
 
 
-@bind_extra
 def from_doc(doc, max_len=250, suffix="..."):
     try:
         summary = doc.meta["summary"]
