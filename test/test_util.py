@@ -18,16 +18,6 @@ class test_compose(unittest.TestCase):
         self.assertEqual(s, "_abc")
 
 
-class test_merge(unittest.TestCase):
-    def test_merge_value(self):
-        d = {"foo": 5, "bar": 10}
-        d2 = util.merge(d, {"foo": 0})
-        self.assertIsNot(d, d2)
-        self.assertEqual(d["foo"], 5)
-        self.assertEqual(d2["foo"], 0)
-        self.assertEqual(d2["bar"], 10)
-
-
 class test_get_deep(unittest.TestCase):
     data = {
         "foo": {

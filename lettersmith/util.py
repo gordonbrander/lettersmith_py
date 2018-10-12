@@ -13,14 +13,14 @@ def id(x):
     return x
 
 
-def compose2(f, e):
+def compose2(fb, fa):
     """Compose 2 functions"""
-    return lambda x: f(e(x))
+    return lambda x: fb(fa(x))
 
 
-def compose(fn, *fns):
+def compose(fa, *fn):
     """Compose n functions"""
-    return reduce(compose2, fns, fn)
+    return reduce(compose2, fn, fa)
 
 
 @singledispatch
@@ -83,16 +83,6 @@ def replace_dict(d, **kwargs):
     return e
 
 
-def merge(a, b):
-    """
-    Replace values by keyword on a dict, returning a new dict.
-    """
-    d = {}
-    d.update(a)
-    d.update(b)
-    return d
-
-
 def chunk(iterable, n):
     """
     Split an iterable into chunks of size n.
@@ -133,8 +123,6 @@ def maps_if(predicate):
                 return func(x, *args, **kwargs)
             else:
                 return x
-        wrapped.__predicate__ = predicate
-        wrapped.__wrapped__ = func
         return wrapped
     return wrap
 
