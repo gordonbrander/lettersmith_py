@@ -21,29 +21,34 @@ LINK_TEMPLATE = '<a href="{url}" class="wikilink">{text}</a>'
 NOLINK_TEMPLATE = '<span class="nolink">{text}</span>'
 
 
-def parse_inner(tag_inner):
+def index_slug_to_url(stubs, base_url="/"):
     """
-    Right now this just strips text. It may get fancier if we introduce
-    pipes for vanity naming wikilinks.
+    Reduce an iterator of docs to a slug-to-url index.
     """
-    return tag_inner.strip()
+    return {
+        to_slug(stub.title): to_url(stub.output_path, base=base_url)
+        for stub in stubs
+    }
 
 
-def doc_renderer(wikilink_index,
+def doc_renderer(stubs,
+    base_url="",
     link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE):
     """
-    Given a wikilink index, returns a doc rendering function that will
+    Given a tuple of stubs, returns a doc rendering function that will
     render all `[[wikilinks]]` to HTML links.
 
-    If a `[[wikilink]]` exists in the index, it will be rendered as an
-    HTML link. However, if it doesn't exist, it will be rendered
+    `[[wikilink]]` is replaced with a link to a stub with the same title
+    (case insensitive), using the `link_template`.
+    If no stub exists with that title it will be rendered
     using `nolink_template`.
     """
+    slug_to_url = index_slug_to_url(stubs, base_url)
     def render_inner_match(match):
         inner = match.group(1)
-        text = parse_inner(inner)
+        text = inner.strip()
         try:
-            url = wikilink_index[to_slug(text)]
+            url = slug_to_url[to_slug(text)]
             return link_template.format(url=url, text=text)
         except KeyError:
             return nolink_template.format(text=text)
@@ -85,14 +90,27 @@ def uplift_wikilinks(doc):
     return Doc.replace_meta(doc, wikilinks=slugs)
 
 
-def index_wikilinks(docs, base_url="/"):
+def index_links(stubs):
     """
-    Reduce an iterator of docs to a slug-to-url index.
+    Index all link in an iterable of stubs. This assumes you have
+    already uplifted wikilinks from content with `uplift_wikilinks`.
     """
-    return {
-        to_slug(doc.title): to_url(doc.output_path, base=base_url)
-        for doc in docs
+    # Create an index of `slug: [slugs]`
+    wikilink_index = {
+        to_slug(stub.title): stub
+        for stub in stubs
+        if "wikilinks" in stub.meta
     }
+    link_index = {}
+    for stub in wikilink_index.values():
+        if stub.id_path not in link_index:
+            link_index[stub.id_path] = []
+        for slug in frozenset(stub.meta["wikilinks"]):
+            try:
+                link_index[stub.id_path].append(wikilink_index[slug])
+            except KeyError:
+                pass
+    return link_index
 
 
 def index_backlinks(stubs):
