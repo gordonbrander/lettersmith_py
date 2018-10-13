@@ -54,7 +54,7 @@ def main():
     md_paths = input_path.glob("**/*.md")
     md_paths = (x for x in md_paths if pathtools.should_pub(x, build_drafts))
     md_docs = (Doc.load(path, relative_to=input_path) for path in md_paths)
-    md_docs = (Doc.parse_frontmatter(doc) for doc in md_docs)
+    md_docs = (markdowntools.render_doc(doc) for doc in md_docs)
 
     yaml_paths = input_path.glob("**/*.yaml")
     yaml_paths = (x for x in yaml_paths if pathtools.should_pub(x, build_drafts))
@@ -68,9 +68,7 @@ def main():
 
     docs = chain(md_docs, yaml_docs, json_docs)
 
-    docs = (Doc.uplift_meta(doc) for doc in docs)
     docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
-    docs = (markdowntools.render_doc(doc) for doc in docs)
     absolutize_doc_urls = absolutize.absolutize(base_url)
     docs = (absolutize_doc_urls(doc) for doc in docs)
     docs = (Doc.change_ext(doc, ".html") for doc in docs)
@@ -120,11 +118,7 @@ def main():
         gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
 
         index = {}
-
-        index["wikilink"] = wikilink.index_wikilinks(
-            stubs,
-            base_url=base_url
-        )
+        index["link"] = wikilink.index_links(stubs)
         index["backlink"] = wikilink.index_backlinks(stubs)
         index["taxonomy"] = taxonomy.index_by_taxonomy(stubs, taxonomies)
 
@@ -150,7 +144,7 @@ def main():
         docs = (cache.load(stub) for stub in stubs)
 
         # Map wikilinks, but only those that exist in wikilink_index.
-        render_wikilinks = wikilink.doc_renderer(index["wikilink"])
+        render_wikilinks = wikilink.doc_renderer(stubs, base_url)
         docs = (render_wikilinks(doc) for doc in docs)
 
         # Chain together all doc iterators
