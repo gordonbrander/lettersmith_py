@@ -3,6 +3,7 @@ import json
 import hashlib
 from collections import namedtuple
 import pickle
+from functools import wraps
 
 import frontmatter
 import yaml
@@ -158,12 +159,26 @@ def uplift_meta(doc):
     """
     Reads "magic" fields in the meta and uplifts their values to doc
     properties.
+
+    We use this to uplift title, created, modified fields in the
+    frontmatterm, overriding original or default values on doc.
     """
     return doc._replace(
         title=doc.meta.get("title", doc.title),
         created=to_datetime(doc.meta.get("created", doc.created)),
         modified=to_datetime(doc.meta.get("modified", doc.modified))
     )
+
+
+def uplifts_meta(func):
+    """
+    Decorates a simpler doc parsing function so that it will uplift meta items
+    after running `func`.
+    """
+    @wraps(func)
+    def wrapped(doc, *args, **kwargs):
+        return uplift_meta(func(doc, *args, **kwargs))
+    return wrapped
 
 
 def ext(*exts):
@@ -195,14 +210,15 @@ class DocException(Exception):
     pass
 
 
-def doc_exceptions(func):
+def annotates_exceptions(func):
     """
     Decorates a mapping function for docs, giving it a more useful
     exception message.
     """
-    def map_doc(doc):
+    @wraps(func)
+    def map_doc(doc, *args, **kwargs):
         try:
-            return func(doc)
+            return func(doc, *args, **kwargs)
         except Exception as e:
             msg = (
                 'Error encountered while mapping doc '
@@ -213,11 +229,10 @@ def doc_exceptions(func):
                 module=func.__module__
             )
             raise DocException(msg) from e
-    map_doc.__wrapped__ = func
     return map_doc
 
 
-@doc_exceptions
+@annotates_exceptions
 def parse_frontmatter(doc):
     meta, content = frontmatter.parse(doc.content)
     return doc._replace(
@@ -226,7 +241,29 @@ def parse_frontmatter(doc):
     )
 
 
-@doc_exceptions
+def uplifts_frontmatter(func):
+    """
+    Decorate a doc mapping function so it will `parse_frontmatter` and
+    `uplift_meta` before passing the `doc` to `func`.
+
+    You can decorate simpler markup rendering functions with
+    `uplifts_frontmatter` so that you don't have to deal with parsing
+    and uplifting frontmatter yourself.
+
+    Usage:
+
+        @uplifts_frontmatter
+        def set_title(doc, title=""):
+            return doc._replace(title=title)
+    """
+    @wraps(func)
+    def wrapped(doc, *args, **kwargs):
+        return func(uplift_meta(parse_frontmatter(doc)), *args, **kwargs)
+    return wrapped
+
+
+@uplifts_meta
+@annotates_exceptions
 def parse_yaml(doc):
     """
     Parse YAML in the doc's content property, placing it in meta
@@ -239,7 +276,8 @@ def parse_yaml(doc):
     )
 
 
-@doc_exceptions
+@uplifts_meta
+@annotates_exceptions
 def parse_json(doc):
     """
     Parse JSON in the doc's content property, placing it in meta
