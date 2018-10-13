@@ -2,7 +2,7 @@ from pathlib import PurePath
 from markdown import markdown
 from mdx_gfm import GithubFlavoredMarkdownExtension
 
-from lettersmith.doc import maps_if_ext
+from lettersmith import doc as Doc
 
 
 MD_LANG_EXTENSIONS=(GithubFlavoredMarkdownExtension(),)
@@ -16,7 +16,8 @@ def house_markdown(s):
     return markdown(s, extensions=MD_LANG_EXTENSIONS)
 
 
-@maps_if_ext(".md", ".markdown", ".mdown", ".txt")
+@Doc.maps_if_ext(".md", ".markdown", ".mdown", ".txt")
+@Doc.uplifts_frontmatter
 def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     """
     Render markdown in content field of doc dictionary.
