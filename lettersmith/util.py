@@ -269,6 +269,12 @@ def sort_by(dicts_iter, key, default=None, reverse=False):
     return sorted(dicts_iter, key=fkey, reverse=reverse)
 
 
+def sort_by_len(dicts_iter, key, reverse=False):
+    """Sort an iterable of dicts via a key path"""
+    fkey = lambda x: len(get_deep(x, key, default=_EMPTY_TUPLE))
+    return sorted(dicts_iter, key=fkey, reverse=reverse)
+
+
 def sort_by_keys(dicts_iter, keys, defaults=_EMPTY_TUPLE, reverse=False):
     """
     Sort an iterable of dicts by multiple key values at once.
