@@ -11,9 +11,10 @@ To render wikilinks, I need:
 import re
 from pathlib import PurePath
 from os import path
+from collections import namedtuple
 from lettersmith import doc as Doc
 from lettersmith.path import to_slug, to_url
-from lettersmith.util import replace
+from lettersmith.util import replace, get
 
 
 WIKILINK = r'\[\[([^\]]+)\]\]'
@@ -21,7 +22,20 @@ LINK_TEMPLATE = '<a href="{url}" class="wikilink">{text}</a>'
 NOLINK_TEMPLATE = '<span class="nolink">{text}</span>'
 
 
-def index_slug_to_url(stubs, base_url="/"):
+Link = namedtuple("Link", ("id_path", "output_path", "title"))
+Link.__doc__ = """
+A namedtuple for representing a link entry — just a title and an id_path.
+"""
+
+@get.register(Link)
+def get_link(link, key, default=None):
+    return getattr(link, key, default)
+
+def link_from_stub(stub):
+    return Link(stub.id_path, stub.output_path, stub.title)
+
+
+def _index_slug_to_url(stubs, base_url="/"):
     """
     Reduce an iterator of docs to a slug-to-url index.
     """
@@ -43,7 +57,7 @@ def doc_renderer(stubs,
     If no stub exists with that title it will be rendered
     using `nolink_template`.
     """
-    slug_to_url = index_slug_to_url(stubs, base_url)
+    slug_to_url = _index_slug_to_url(stubs, base_url)
     def render_inner_match(match):
         inner = match.group(1)
         text = inner.strip()
@@ -90,48 +104,54 @@ def uplift_wikilinks(doc):
     return Doc.replace_meta(doc, wikilinks=slugs)
 
 
-def index_links(stubs):
-    """
-    Index all link in an iterable of stubs. This assumes you have
-    already uplifted wikilinks from content with `uplift_wikilinks`.
-    """
-    # Create an index of `slug: [slugs]`
-    wikilink_index = {
-        to_slug(stub.title): stub
-        for stub in stubs
-        if "wikilinks" in stub.meta
-    }
-    link_index = {}
-    for stub in wikilink_index.values():
-        if stub.id_path not in link_index:
-            link_index[stub.id_path] = []
-        for slug in frozenset(stub.meta["wikilinks"]):
-            try:
-                link_index[stub.id_path].append(wikilink_index[slug])
-            except KeyError:
-                pass
-    return link_index
-
-
-def index_backlinks(stubs):
+def _index_backlinks(slug_index):
     """
     Index all backlinks in an iterable of docs. This assumes you have
     already uplifted wikilinks from content with `uplift_wikilinks`.
     """
-    # Create an index of `slug: [slugs]`
-    wikilink_index = {
-        to_slug(stub.title): stub
-        for stub in stubs
-        if "wikilinks" in stub.meta
-    }
     backlink_index = {}
-    for stub in wikilink_index.values():
+    for stub in slug_index.values():
         for slug in frozenset(stub.meta["wikilinks"]):
             try:
-                to_path = wikilink_index[slug].id_path
-                if to_path not in backlink_index:
-                    backlink_index[to_path] = []
-                backlink_index[to_path].append(stub)
+                id_path = slug_index[slug].id_path
+                if id_path not in backlink_index:
+                    backlink_index[id_path] = []
+                backlink_index[id_path].append(stub)
             except KeyError:
                 pass
     return backlink_index
+
+
+def collate_links(stubs):
+    """
+    Annotate stubs with links and backlinks. This assumes your stubs
+    have uplifted wikilinks to meta with `uplift_wikilinks`.
+
+    Returns an iterator for new stubs.
+    Meta will have 2 new fields: `links` and `backlinks`, each containing
+    a tuple of `Link` namedtuples.
+    """
+    slug_index = {
+        to_slug(stub.title): stub
+        for stub in stubs
+    }
+    backlink_index = _index_backlinks(slug_index)
+    for stub in stubs:
+        backlinks = tuple(
+            link_from_stub(backlink_stub)
+            for backlink_stub in backlink_index.get(stub.id_path, tuple())
+        )
+        slugs = frozenset(stub.meta["wikilinks"])
+        links = tuple(
+            link_from_stub(slug_index[slug])
+            for slug in slugs
+            if slug in slug_index
+        )
+        yield replace(
+            stub,
+            meta=replace(
+                stub.meta,
+                links=links,
+                backlinks=backlinks
+            )
+        )
