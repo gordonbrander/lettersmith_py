@@ -3,9 +3,8 @@ from datetime import datetime
 from pathlib import PurePath, Path
 from itertools import chain
 from subprocess import CalledProcessError
-import tempfile
 
-from lettersmith.util import get_deep, tap_each, replace
+from lettersmith.util import get_deep, replace
 from lettersmith.argparser import lettersmith_argparser
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
@@ -79,12 +78,8 @@ def main():
     )
 
     # Create a temporary directory for cache.
-    with tempfile.TemporaryDirectory(prefix="lettersmith_") as tmp_dir_path:
-        cache = Doc.Cache(tmp_dir_path)
-
-        # Pickle processed docs in cache
-        docs = tap_each(cache.dump, docs)
-
+    with Doc.DocCacheDir(docs) as cache:
+        docs = cache.load_all()
         # Strip special syntax before converting docs to stubs
         docs = (wikilink.strip_doc_wikilinks(doc) for doc in docs)
 
@@ -117,9 +112,9 @@ def main():
         gen_docs = paging_docs + rss_docs + (sitemap_doc,)
         gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
 
+        stubs = tuple(wikilink.collate_links(stubs))
+
         index = {}
-        index["link"] = wikilink.index_links(stubs)
-        index["backlink"] = wikilink.index_backlinks(stubs)
         index["taxonomy"] = taxonomy.index_by_taxonomy(stubs, taxonomies)
 
         # Create dict index for ad-hoc stub access in templates.
@@ -141,7 +136,7 @@ def main():
 
         # The previous doc generator has been exhausted, so load docs from
         # cache again.
-        docs = (cache.load(stub) for stub in stubs)
+        docs = cache.load_all()
 
         # Map wikilinks, but only those that exist in wikilink_index.
         render_wikilinks = wikilink.doc_renderer(stubs, base_url)
