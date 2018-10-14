@@ -172,69 +172,86 @@ def has_key(x, key):
     return get_deep(x, key) != None
 
 
-def where(dicts, key, value):
+def select(dicts, *keys):
+    for d in dicts:
+        yield tuple(get_deep(d, key) for key in keys)
+
+
+def _compare_where(compare):
     """
     Query an iterable of dictionaries for keys matching value.
     `key` may be an iterable of keys representing a key path.
     """
-    return (x for x in dicts if (get_deep(x, key) == value))
+    @wraps(compare)
+    def where(dicts, key, value):
+        for x in dicts:
+            if compare(get_deep(x, key), value):
+                yield x
+    return where
 
 
-def where_not(dicts, key, value):
-    """
-    Query an iterable of dictionaries for keys NOT matching value.
-    `key` may be an iterable of keys representing a key path.
-    """
-    return (x for x in dicts if (get_deep(x, key) != value))
+@_compare_where
+def where(a, b):
+    return a == b
 
 
-def where_key(dicts, key):
-    """
-    Query an iterable of dictionaries that have `key`.
-    `key` may be an iterable of keys representing a key path.
-    """
-    return (x for x in dicts if has_key(x, key))
+@_compare_where
+def where_not(a, b):
+    return a != b
 
 
-def where_not_key(dicts, key):
-    """
-    Query an iterable of dictionaries that do NOT have `key`.
-    `key` may be an iterable of keys representing a key path.
-    """
-    return (x for x in dicts if not has_key(x, key))
+@_compare_where
+def where_gt(a, b):
+    return a > b
 
 
-def where_contains(dicts, key, value):
-    """
-    Query an iterable of dictionaries by determining if a `value` is in
-    a data structure at `key`. This would be for checking the presence of
-    a value within an list that exists at `key`, for example.
-
-    `key` may be an iterable of keys representing a key path.
-    """
-    return (x for x in dicts if contains(x, key, value))
+@_compare_where
+def where_lt(a, b):
+    return a < b
 
 
-def where_contains_any(dicts, key, terms):
-    """
-    Given a list of stubs (or docs), yields any stubs that contain
-    any of the terms.
-    """
-    return (
-        x
-        for x in dicts
-        if any_in(get_deep(x, key, _EMPTY_TUPLE), terms)
-    )
+@_compare_where
+def where_len(a, b):
+    return len(a) == b
 
 
-def where_matches(dicts, key, glob):
-    """
-    Query an iterable of dictionaries, matching the value against a
-    Unix glob-style pattern.
+@_compare_where
+def where_len_gt(a, b):
+    return len(a) > b
 
-    Returns an iterable of matching dictionaries.
-    """
-    return (x for x in dicts if fnmatch(get_deep(x, key), glob))
+
+@_compare_where
+def where_len_lt(a, b):
+    return len(a) < b
+
+
+@_compare_where
+def where_in(a, b):
+    try:
+        return b in a
+    except TypeError:
+        return False
+
+
+@_compare_where
+def where_not_in(a, b):
+    try:
+        return b not in a
+    except TypeError:
+        return True
+
+
+@_compare_where
+def where_any_in(a, b):
+    try:
+        return any_in(a, b)
+    except TypeError:
+        return False
+
+
+@_compare_where
+def where_matches(value, glob):
+    return fnmatch(value, glob)
 
 
 def lift_iter(f):

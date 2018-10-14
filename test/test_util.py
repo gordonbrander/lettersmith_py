@@ -110,6 +110,136 @@ class test_where(unittest.TestCase):
         self.assertEqual(len(tuple_res), 2)
 
 
+class test_where_not(unittest.TestCase):
+    data = [
+        {"id": 1, "section": "foo"},
+        {"id": 2, "section": "bar"},
+        {"id": 3, "section": "bar"},
+        {"id": 4, "section": "foo"},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_not(self.data, "section", "foo"))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 2)
+
+
+class test_where_gt(unittest.TestCase):
+    data = [
+        {"id": 1, "value": 1},
+        {"id": 2, "value": 2},
+        {"id": 3, "value": 3},
+        {"id": 4, "value": 4},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_gt(self.data, "value", 2))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 3)
+
+
+class test_where_lt(unittest.TestCase):
+    data = [
+        {"id": 1, "value": 1},
+        {"id": 2, "value": 2},
+        {"id": 3, "value": 3},
+        {"id": 4, "value": 4},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_lt(self.data, "value", 3))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 1)
+
+
+class test_where_len(unittest.TestCase):
+    data = [
+        {"id": 1, "value": [1, 2, 3]},
+        {"id": 2, "value": [2, 3]},
+        {"id": 3, "value": [3, 4, 5]},
+        {"id": 4, "value": [4, 5]},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_len(self.data, "value", 3))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 1)
+
+
+class test_where_len_gt(unittest.TestCase):
+    data = [
+        {"id": 1, "value": [1, 2, 3]},
+        {"id": 2, "value": [2, 3]},
+        {"id": 3, "value": [3, 4, 5]},
+        {"id": 4, "value": [4, 5]},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_len_gt(self.data, "value", 2))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 1)
+
+
+class test_where_len_lt(unittest.TestCase):
+    data = [
+        {"id": 1, "value": [1, 2, 3]},
+        {"id": 2, "value": [2, 3]},
+        {"id": 3, "value": [3, 4, 5]},
+        {"id": 4, "value": [4, 5]},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_len_lt(self.data, "value", 3))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 2)
+
+
+class where_in(unittest.TestCase):
+    data = [
+        {"id": 1, "value": [1, 2, 3]},
+        {"id": 2, "value": [2, 3]},
+        {"id": 3, "value": [3, 4, 5]},
+        {"id": 4, "value": [4, 5]},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_in(self.data, "value", 5))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 3)
+
+    def test_2(self):
+        res = tuple(util.where_in(self.data, "id", 5))
+        self.assertEqual(len(res), 0)
+
+
+class where_not_in(unittest.TestCase):
+    data = [
+        {"id": 1, "value": [1, 2, 3]},
+        {"id": 2, "value": [2, 3]},
+        {"id": 3, "value": [3, 4, 5]},
+        {"id": 4, "value": [4, 5]},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_not_in(self.data, "value", 5))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 1)
+
+
+class where_any_in(unittest.TestCase):
+    data = [
+        {"id": 1, "value": [1, 2, 3]},
+        {"id": 2, "value": [2, 3]},
+        {"id": 3, "value": [3, 4, 5]},
+        {"id": 4, "value": [4, 5]},
+    ]
+
+    def test_1(self):
+        res = tuple(util.where_any_in(self.data, "value", (1, 2)))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0]["id"], 1)
+
+
 class test_where_matches(unittest.TestCase):
     data = [
         {"id_path": "foo/bar/baz/somefile.md"},
