@@ -14,7 +14,7 @@ def truncate(text, max_len=250, suffix="..."):
     trimmed = text.strip()
     if len(trimmed) < max_len:
         return trimmed
-    elif re.match("\s", trimmed[max_len + 1]):
+    elif re.match("\s", trimmed[max_len]):
         return re.sub("\s+$", "", trimmed[0:max_len]) + suffix
     else:
         return re.sub("\s+\S+?$", "", trimmed[0:max_len]) + suffix
