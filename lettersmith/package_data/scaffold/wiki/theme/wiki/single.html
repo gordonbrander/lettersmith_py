@@ -8,13 +8,13 @@
       {{doc.content}}
     </div>
   </article>
-  {% if index.backlink[doc.id_path] | len %}
+  {% if index.id_path[doc.id_path].meta.backlinks %}
   <aside class="barlist width-constrain mar-v">
     <h2 class="barlist-title">Who links here?</h2>
     <ul class="barlist-ul">
-    {% for li in index.backlink[doc.id_path] | islice(100) %}
+    {% for stub in index.id_path[doc.id_path].meta.backlinks | islice(100) %}
       <li class="li">
-        <a class="li-title" class="wikilink" href="{{ li.output_path | to_url(base_url) }}">{{li.title}}</a>
+        <a class="li-title" class="wikilink" href="{{ stub.output_path | to_url(base_url) }}">{{stub.title}}</a>
       </li>
     {% endfor %}
     </ul>
