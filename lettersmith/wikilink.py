@@ -45,6 +45,46 @@ def _index_slug_to_url(stubs, base_url="/"):
     }
 
 
+def parse_wikilink(wikilink_str):
+    """
+    Given a `[[WikiLink]]` or a `[[wikilink | Title]]`, return a
+    tuple of `(wikilink, Title)`.
+
+    Supports both piped and non-piped forms.
+    """
+    inner = wikilink_str.strip('[] ')
+    try:
+        _slug, _text = inner.split("|")
+        slug = to_slug(_slug.strip())
+        text = _text.strip()
+    except ValueError:
+        text = inner.strip()
+        slug = to_slug(text)
+    return (slug, text)
+
+
+def find_wikilinks(s):
+    """
+    Find all wikilinks in a string (if any)
+    Returns an iterator of 2-tuples for slug, title.
+    """
+    for match in re.finditer(WIKILINK, s):
+        yield parse_wikilink(match.group(0))
+
+
+def _render_strip_wikilink(match):
+    slug, text = parse_wikilink(match.group(0))
+    return text
+
+
+def strip_wikilinks(s):
+    """
+    Find all wikilinks in a string (if any)
+    and strips them, replacing them with their plaintext equivalent.
+    """
+    return re.sub(WIKILINK, _render_strip_wikilink, s)
+
+
 def doc_renderer(stubs,
     base_url="",
     link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE):
@@ -59,10 +99,9 @@ def doc_renderer(stubs,
     """
     slug_to_url = _index_slug_to_url(stubs, base_url)
     def render_inner_match(match):
-        inner = match.group(1)
-        text = inner.strip()
+        slug, text = parse_wikilink(match.group(0))
         try:
-            url = slug_to_url[to_slug(text)]
+            url = slug_to_url[slug]
             return link_template.format(url=url, text=text)
         except KeyError:
             return nolink_template.format(text=text)
@@ -90,7 +129,7 @@ def strip_doc_wikilinks(doc):
     Strip wikilinks from doc content field.
     Useful for making stubs with a clean summary.
     """
-    content = re.sub(WIKILINK, r'\1', doc.content)
+    content = strip_wikilinks(doc.content)
     return replace(doc, content=content)
 
 
@@ -98,9 +137,8 @@ def uplift_wikilinks(doc):
     """
     Find all wikilinks in doc and assign them to a wikilinks property of doc.
     """
-    matches = re.finditer(WIKILINK, doc.content)
-    wikilinks = (match.group(1) for match in matches)
-    slugs = tuple(to_slug(wikilink) for wikilink in wikilinks)
+    wikilinks = find_wikilinks(doc.content)
+    slugs = tuple(slug for slug, title in wikilinks)
     return Doc.replace_meta(doc, wikilinks=slugs)
 
 
