@@ -77,82 +77,77 @@ def main():
         for doc in docs
     )
 
-    # Create a temporary directory for cache.
-    with Doc.DocCacheDir(docs) as cache:
-        docs = cache.load_all()
-        # Strip special syntax before converting docs to stubs
-        docs = (wikilink.strip_doc_wikilinks(doc) for doc in docs)
+    # Collect all docs in memory, so we can consume them > once.
+    docs = tuple(docs)
 
-        # Convert to stubs in memory
-        stubs = tuple(Stub.from_doc(doc) for doc in docs)
+    # Strip special syntax before converting docs to stubs
+    stub_docs = (wikilink.strip_doc_wikilinks(doc) for doc in docs)
 
-        # Gen paging groups and then flatten iterable of iterables.
-        paging_doc_iters = paging.gen_paging(stubs, paging_config)
-        paging_docs = tuple(chain.from_iterable(paging_doc_iters))
+    # Convert to stubs in memory
+    stubs = tuple(Stub.from_doc(doc) for doc in stub_docs)
 
-        # Gen rss feed docs. Then collect into a tuple, because we'll be going
-        # over this iterator more than once.
-        RSS_DEFAULTS = {
-            "last_build_date": now,
-            "base_url": base_url,
-            "title": site_title,
-            "description": site_description,
-            "author": site_author
-        }
-        rss_docs_iter = rss.gen_rss_feed(stubs, {
-            glob: replace(RSS_DEFAULTS, **group_kwargs)
-            for glob, group_kwargs
-            in rss_config.items()
-        })
-        rss_docs = tuple(rss_docs_iter)
+    # Gen paging groups and then flatten iterable of iterables.
+    paging_doc_iters = paging.gen_paging(stubs, paging_config)
+    paging_docs = tuple(chain.from_iterable(paging_doc_iters))
 
-        sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
+    # Gen rss feed docs. Then collect into a tuple, because we'll be going
+    # over this iterator more than once.
+    RSS_DEFAULTS = {
+        "last_build_date": now,
+        "base_url": base_url,
+        "title": site_title,
+        "description": site_description,
+        "author": site_author
+    }
+    rss_docs_iter = rss.gen_rss_feed(stubs, {
+        glob: replace(RSS_DEFAULTS, **group_kwargs)
+        for glob, group_kwargs
+        in rss_config.items()
+    })
+    rss_docs = tuple(rss_docs_iter)
 
-        # Add generated docs to stubs
-        gen_docs = paging_docs + rss_docs + (sitemap_doc,)
-        gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
+    sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
 
-        stubs = tuple(wikilink.collate_links(stubs))
+    # Add generated docs to stubs
+    gen_docs = paging_docs + rss_docs + (sitemap_doc,)
+    gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
 
-        index = {}
-        index["taxonomy"] = taxonomy.index_by_taxonomy(stubs, taxonomies)
+    stubs = tuple(wikilink.collate_links(stubs))
 
-        # Create dict index for ad-hoc stub access in templates.
-        index["id_path"] = {
-            stub.id_path: stub
-            for stub in (stubs + gen_stubs)
-        }
+    index = {}
+    index["taxonomy"] = taxonomy.index_by_taxonomy(stubs, taxonomies)
 
-        # Set up template globals
-        context = {
-            "load_cache": cache.load,
-            "rss_docs": rss_docs,
-            "index": index,
-            "site": config.get("site", {}),
-            "data": data,
-            "base_url": base_url,
-            "now": now
-        }
+    # Create dict index for ad-hoc stub access in templates.
+    index["id_path"] = {
+        stub.id_path: stub
+        for stub in (stubs + gen_stubs)
+    }
 
-        # The previous doc generator has been exhausted, so load docs from
-        # cache again.
-        docs = cache.load_all()
+    # Set up template globals
+    context = {
+        "rss_docs": rss_docs,
+        "index": index,
+        "site": config.get("site", {}),
+        "data": data,
+        "base_url": base_url,
+        "now": now
+    }
 
-        # Map wikilinks, but only those that exist in wikilink_index.
-        render_wikilinks = wikilink.doc_renderer(stubs, base_url)
-        docs = (render_wikilinks(doc) for doc in docs)
+    # Map wikilinks, but only those that exist in wikilink_index.
+    render_wikilinks = wikilink.doc_renderer(stubs, base_url)
+    docs = (render_wikilinks(doc) for doc in docs)
 
-        # Chain together all doc iterators
-        docs = chain(docs, gen_docs)
+    # Chain together all doc iterators
+    docs = chain(docs, gen_docs)
 
-        # Create a render function
-        render_jinja = jinjatools.lettersmith_doc_renderer(
-            theme_path,
-            context=context
-        )
-        docs = (render_jinja(doc) for doc in docs)
+    # Create a render function
+    render_jinja = jinjatools.lettersmith_doc_renderer(
+        theme_path,
+        context=context
+    )
+    docs = (render_jinja(doc) for doc in docs)
 
-        stats = Docs.write(docs, output_path=output_path)
+    stats = Docs.write(docs, output_path=output_path)
 
     try:
         static_paths = config.get("static_paths", [])
