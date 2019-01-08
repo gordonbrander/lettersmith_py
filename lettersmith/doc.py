@@ -1,10 +1,7 @@
 from pathlib import PurePath, Path
 import json
-import hashlib
 from collections import namedtuple
-import pickle
 from functools import wraps
-from tempfile import TemporaryDirectory
 
 import frontmatter
 import yaml
@@ -289,89 +286,3 @@ def parse_json(doc):
         meta=meta,
         content=""
     )
-
-
-def _hashstr(s):
-    return hashlib.md5(str(s).encode()).hexdigest()
-
-
-def _cache_path(id_path):
-    """
-    Read a doc ID path
-    """
-    return PurePath(_hashstr(id_path)).with_suffix('.pkl')
-
-
-class DocCache:
-    """
-    DocCache - allows you to dump or load docs to disk.
-
-    This lets us support loading a larger total number of docs, since
-    not all of them need to be in memory at once.
-
-    For convenience, you might want to use `DocCacheDir` instead of `DocCache`,
-    because `DocCacheDir` automatically creates a temporary cache directory
-    and will clean it up when you're done with it.
-    """
-    def __init__(self, cache_path):
-        self.cache_path = Path(cache_path)
-
-    def dump(self, doc):
-        """
-        Dump a doc into cache
-        """
-        doc_cache_path = _cache_path(doc.id_path)
-        with open(PurePath(self.cache_path, doc_cache_path), "wb") as f:
-            pickle.dump(doc, f)
-            return doc
-
-    def load(self, id_path):
-        """
-        Load a doc from cache by `id_path`
-        """
-        doc_cache_path = _cache_path(id_path)
-        with open(PurePath(self.cache_path, doc_cache_path), "rb") as f:
-            return pickle.load(f)
-
-    def dump_each(self, docs):
-        for doc in docs:
-            self.dump(doc)
-            yield doc
-
-    def dump_all(self, docs):
-        for doc in docs:
-            self.dump(doc)
-
-    def load_all(self):
-        for file_path in self.cache_path.glob("*.pkl"):
-            with open(file_path, "rb") as f:
-                yield pickle.load(f)
-
-
-class DocCacheDir:
-    """
-    Cache context manager that
-    1. Creates a temporary directory
-    2. Passes you an instance of DocCache to work with
-
-    Note this is meant to be used as a context manager, with the `with`
-    statement. The context manager will automatically clean up
-    the temporary directory when `with` context exits.
-
-    Usage:
-
-        with DocCacheDir() as cache:
-            cache.dump(doc)
-            ...
-            cache.load(some_id_path)
-    """
-    def __init__(self, docs=_EMPTY_TUPLE):
-        self.__temporary_directory = TemporaryDirectory(prefix="lettersmith_")
-        self.__cache = DocCache(self.__temporary_directory.name)
-        self.__cache.dump_all(docs)
-
-    def __enter__(self):
-        return self.__cache
-
-    def __exit__(self, *args):
-        self.__temporary_directory.__exit__(*args)
