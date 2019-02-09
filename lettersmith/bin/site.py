@@ -86,25 +86,16 @@ def main():
     # Convert to stubs in memory
     stubs = tuple(Stub.from_doc(doc) for doc in stub_docs)
 
-    # Gen paging groups and then flatten iterable of iterables.
-    paging_doc_iters = paging.gen_paging(stubs, paging_config)
-    paging_docs = tuple(chain.from_iterable(paging_doc_iters))
+    # Generate paging docs
+    paging_docs = tuple(paging.gen_paging(docs, paging_config))
 
-    # Gen rss feed docs. Then collect into a tuple, because we'll be going
-    # over this iterator more than once.
-    RSS_DEFAULTS = {
-        "last_build_date": now,
-        "base_url": base_url,
-        "title": site_title,
-        "description": site_description,
-        "author": site_author
-    }
-    rss_docs_iter = rss.gen_rss_feed(stubs, {
-        glob: replace(RSS_DEFAULTS, **group_kwargs)
-        for glob, group_kwargs
-        in rss_config.items()
-    })
-    rss_docs = tuple(rss_docs_iter)
+    rss_docs = tuple(rss.gen_rss_feed(
+        docs,
+        rss_config,
+        last_build_date=now,
+        base_url=base_url,
+        author=site_author
+    ))
 
     sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
 

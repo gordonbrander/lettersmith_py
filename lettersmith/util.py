@@ -98,17 +98,21 @@ def chunk(iterable, n):
         yield chunk
 
 
-def matches_id_path(doc, match):
+def matches_id_path(doc, glob):
     """
     Predicate function that tests whether the id_path of a thing
     (as determined by `get`) matches a glob pattern.
     """
     # We fast-path for "everything" matches.
-    return fnmatch(get(doc, "id_path"), match) if match != "*" else True
+    return fnmatch(get(doc, "id_path"), glob) if glob != "*" else True
 
 
-def matching_id_path(match):
-    return partial(matches_id_path, match=match)
+def matching_id_path(glob):
+    return lambda doc: matches_id_path(doc, glob)
+
+
+def filter_id_path(docs, glob):
+    return filter(matching_id_path(glob), docs)
 
 
 def maps_if(predicate):
@@ -127,24 +131,6 @@ def maps_if(predicate):
     return wrap
 
 
-def decorate_group_matching(predicate):
-    def decorate_f(f):
-        def f_match_group(iter, groups, defaults={}):
-            items = tuple(iter)
-            for pattern, kwargs in groups.items():
-                matches = tuple(item for item in items if predicate(item, pattern))
-                yield f(matches, **replace(defaults, **kwargs))
-        f_match_group.inner = f
-        return f_match_group
-    return decorate_f
-
-
-decorate_group_matching_id_path = decorate_group_matching(matches_id_path)
-
-
-_EMPTY_TUPLE = tuple()
-
-
 def any_in(collection, values):
     """
     Check if any of a collection of values is in `collection`.
@@ -154,6 +140,9 @@ def any_in(collection, values):
         if value in collection:
             return True
     return False
+
+
+_EMPTY_TUPLE = tuple()
 
 
 def contains(x, key, value):
@@ -330,3 +319,14 @@ def tap_each(f, iter):
     for x in iter:
         f(x)
         yield x
+
+
+def expand(f, iter):
+    """
+    Expand each item in `iter` using function `f`.
+    `f` is expected to return an iterator itself... it "expands"
+    each item.
+    """
+    for x in iter:
+        for y in f(x)
+            yield y

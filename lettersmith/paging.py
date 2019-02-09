@@ -4,54 +4,30 @@ Tools for building pagination.
 
 from math import ceil
 from itertools import islice, chain
-from lettersmith.util import chunk, decorate_group_matching_id_path
+from lettersmith.util import chunk, filter_id_path
 from lettersmith import doc as Doc
 
 
 TEMPLATES = ("list.html", "default.html")
 OUTPUT_PATH_TEMPLATE = "page/{n}/index.html"
+_EMPTY_TUPLE = (,)
 
 
-def count_pages(length, per_page):
-    """
-    Find the number of pages in a list of `length`.
-    """
-    # Note it's important that we cast to float before division, otherwise
-    # we lose floating point precision and get a rounded int.
-    return int(ceil(float(length) / float(per_page)))
-
-
-def slice_page(iterable, page_i, per_page):
-    """Slice a page for an iterable"""
-    page_start = page_i * per_page
-    page_end = page_start + per_page
-    return islice(iterable, page_start, page_end)
-
-
-def prev_i(i):
-    return max(i - 1, 0)
-
-
-def next_i(i, length):
-    return min(i + 1, length - 1)
-
-
-@decorate_group_matching_id_path
-def gen_paging(stubs,
-    template=None,
-    output_path_template=None,
+def paginate(docs,
+    templates=_EMPTY_TUPLE,
+    output_path_template=OUTPUT_PATH_TEMPLATE,
     per_page=10):
     """
     Generate paging docs from stubs
     """
-    paged = tuple(chunk(stubs, per_page))
+    paged = tuple(chunk(docs, per_page))
     page_count = len(paged)
-    templates = (template,) + TEMPLATES if template is not None else TEMPLATES
+    templates = tuple(templates) + TEMPLATES
     n = 0
-    for stubs in paged:
+    for page in paged:
         n = n + 1
-        output_path = (output_path_template or OUTPUT_PATH_TEMPLATE).format(n=n)
-        page_list = tuple(stub for stub in stubs)
+        output_path = output_path_template.format(n=n)
+        page_list = tuple(doc for doc in page)
         meta = {
             "page_n": n,
             "per_page": per_page,
@@ -65,3 +41,16 @@ def gen_paging(stubs,
             meta=meta,
             templates=templates
         )
+
+
+def gen_paging(docs, options):
+    """
+    Generate paging docs from an iterable of docs, and dictionary
+    of options. Each key of the dictionary represents a group of options
+    for a set of pages that should be produced.
+    """
+    def _gen_paging(pair):
+        glob, options = pair
+        matching_docs = filter_id_path(docs, glob)
+        return paginate(docs, **options)
+    return expand(_gen_paging, options.items())
