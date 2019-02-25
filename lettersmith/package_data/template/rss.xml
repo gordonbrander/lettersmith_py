@@ -7,23 +7,18 @@
   <lastBuildDate>
     {{last_build_date.strftime("%a, %d %b %Y %H:%M:%S %Z")}}
   </lastBuildDate>
-  {% for stub in stubs %}
+  {% for doc in docs %}
   <item>
-    <title>{{stub.title}}</title>
-    <link>{{stub.output_path | to_url(base_url)}}</link>
-    <guid>{{stub.output_path | to_url(base_url)}}</guid>
-    <description>{{stub.summary | escape}}</description>
-    {% if stub.summary %}
+    <title>{{doc.title}}</title>
+    <link>{{doc.output_path | to_url(base_url)}}</link>
+    <guid>{{doc.output_path | to_url(base_url)}}</guid>
+    <description>{{doc | summary | escape}}</description>
     <content:encoded><![CDATA[
-      {{stub.summary}}
-      <p>
-        <a href="{{stub.output_path | to_url(base_url) }}">{{read_more}}</a>
-      </p>
+      {{doc.content}}
     ]]></content:encoded>
-    {% endif %}
-    <pubDate>{{stub.created.strftime("%a, %d %b %Y %H:%M:%S %Z")}}</pubDate>
-    {% if stub.meta.author %}
-      <author>{{stub.meta.author | escape}}</author>
+    <pubDate>{{doc.created.strftime("%a, %d %b %Y %H:%M:%S %Z")}}</pubDate>
+    {% if doc.meta.author %}
+      <author>{{doc.meta.author | escape}}</author>
     {% elif author %}
       <author>{{author | escape}}</author>
     {% endif %}

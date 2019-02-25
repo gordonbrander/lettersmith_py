@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  {% for stub in stubs %}
+  {% for doc in docs %}
   <url>
-    <loc>{{ stub.output_path | to_url(base_url) }}</loc>
-    <lastmod>{{ stub.modified.isoformat() }}</lastmod>
+    <loc>{{ doc.output_path | to_url(base_url) }}</loc>
+    <lastmod>{{ doc.modified.isoformat() }}</lastmod>
   </url>
   {% endfor %}
 </urlset>

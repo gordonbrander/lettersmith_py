@@ -13,7 +13,7 @@ FILTERS = {
 }
 
 
-def render_sitemap(stubs,
+def render_sitemap(docs,
   base_url="/", last_build_date=None,
   title="Feed", description="", author=""):
   context = {"base_url": base_url}
@@ -23,19 +23,19 @@ def render_sitemap(stubs,
     filters=FILTERS
   )
   template = env.get_template("sitemap.xml")
-  return template.render({"stubs": stubs})
+  return template.render({"docs": docs})
 
 
-def gen_sitemap(stubs, base_url="/"):
+def gen_sitemap(docs, base_url="/"):
   """
   Returns a sitemap doc
   """
   # The sitemap spec limits each sitemap to 50k entries.
   # https://www.sitemaps.org/protocol.html
-  stubs_50k = islice(stubs, 50000)
+  docs_50k = islice(docs, 50000)
   output_path = "sitemap.xml"
   now = datetime.now()
-  content = render_sitemap(stubs_50k, base_url=base_url)
+  content = render_sitemap(docs_50k, base_url=base_url)
   return Doc.doc(
     id_path=output_path,
     output_path=output_path,
