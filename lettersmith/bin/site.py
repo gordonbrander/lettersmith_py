@@ -97,7 +97,7 @@ def main():
         author=site_author
     ))
 
-    sitemap_doc = sitemap.gen_sitemap(stubs, base_url=base_url)
+    sitemap_doc = sitemap.gen_sitemap(docs, base_url=base_url)
 
     # Add generated docs to stubs
     gen_docs = paging_docs + rss_docs + (sitemap_doc,)
