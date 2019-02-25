@@ -98,7 +98,7 @@ def chunk(iterable, n):
         yield chunk
 
 
-def matches_id_path(doc, glob):
+def is_id_path_match(doc, glob):
     """
     Predicate function that tests whether the id_path of a thing
     (as determined by `get`) matches a glob pattern.
@@ -107,12 +107,8 @@ def matches_id_path(doc, glob):
     return fnmatch(get(doc, "id_path"), glob) if glob != "*" else True
 
 
-def matching_id_path(glob):
-    return lambda doc: matches_id_path(doc, glob)
-
-
 def filter_id_path(docs, glob):
-    return filter(matching_id_path(glob), docs)
+    return filter(lambda doc: is_id_path_match(doc, glob), docs)
 
 
 def maps_if(predicate):
@@ -310,17 +306,6 @@ def join(words, sep="", template="{word}"):
     return sep.join(template.format(word=word) for word in words)
 
 
-def tap_each(f, iter):
-    """
-    Perform a side-effect on each item of an iterable.
-    Returns an iterable that must be consumed to perform the
-    side-effect.
-    """
-    for x in iter:
-        f(x)
-        yield x
-
-
 def expand(f, iter):
     """
     Expand each item in `iter` using function `f`.
@@ -328,5 +313,5 @@ def expand(f, iter):
     each item.
     """
     for x in iter:
-        for y in f(x)
+        for y in f(x):
             yield y
