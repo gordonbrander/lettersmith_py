@@ -4,13 +4,13 @@ Tools for building pagination.
 
 from math import ceil
 from itertools import islice, chain
-from lettersmith.util import chunk, filter_id_path
+from lettersmith.util import chunk, filter_id_path, expand
 from lettersmith import doc as Doc
 
 
 TEMPLATES = ("list.html", "default.html")
 OUTPUT_PATH_TEMPLATE = "page/{n}/index.html"
-_EMPTY_TUPLE = (,)
+_EMPTY_TUPLE = tuple()
 
 
 def paginate(docs,
