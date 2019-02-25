@@ -43,14 +43,23 @@ def paginate(docs,
         )
 
 
-def gen_paging(docs, options):
+def gen_paging(docs, groups):
     """
     Generate paging docs from an iterable of docs, and dictionary
     of options. Each key of the dictionary represents a group of options
     for a set of pages that should be produced.
     """
-    def _gen_paging(pair):
-        glob, options = pair
+    def _expand_pair(pair):
+        glob, group = pair
         matching_docs = filter_id_path(docs, glob)
-        return paginate(docs, **options)
-    return expand(_gen_paging, options.items())
+        output_path_template = group.get(
+            "output_path_template",
+            OUTPUT_PATH_TEMPLATE
+        )
+        return paginate(
+            docs,
+            templates=group.get("templates", _EMPTY_TUPLE),
+            output_path_template=output_path_template,
+            per_page=group.get("per_page", 10)
+        )
+    return expand(_expand_pair, groups.items())
