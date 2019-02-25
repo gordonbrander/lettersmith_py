@@ -1,8 +1,10 @@
 """
 Tools for working with collections of docs
 """
+from itertools import islice
 from lettersmith.path import is_draft, is_index, is_doc_file
 from lettersmith import doc as Doc
+from lettersmith.util import sort_by
 
 
 def load(file_paths, relative_to=""):
@@ -53,3 +55,7 @@ def filter_siblings(docs, id_path):
     return (
         doc for doc in docs
         if pathtools.is_sibling(id_path, doc.id_path))
+
+
+def most_recent(docs, nitems, reverse=True):
+    return islice(sort_by(docs, "created", reverse), nitems)
