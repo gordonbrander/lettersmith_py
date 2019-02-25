@@ -10,6 +10,7 @@ from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
 from lettersmith.util import replace, get, maps_if
+from lettersmith.stringtools import truncate, strip_html
 
 
 _EMPTY_TUPLE = tuple()
@@ -202,6 +203,17 @@ def change_ext(doc, ext):
     """Change the extention on a doc's output_path, returning a new doc."""
     updated_path = PurePath(doc.output_path).with_suffix(ext)
     return doc._replace(output_path=str(updated_path))
+
+
+def summary(doc, max_len=250, suffix="..."):
+    """
+    Get summary for doc. Uses "summary" meta field if it exists.
+    Otherwise, generates a summary by truncating doc content.
+    """
+    try:
+        return strip_html(doc.meta["summary"])
+    except KeyError:
+        return truncate(strip_html(doc.content), max_len, suffix)
 
 
 class DocException(Exception):
