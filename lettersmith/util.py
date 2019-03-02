@@ -306,12 +306,22 @@ def join(words, sep="", template="{word}"):
     return sep.join(template.format(word=word) for word in words)
 
 
-def expand(f, iter):
+def expand(f, iter, *args, **kwargs):
     """
     Expand each item in `iter` using function `f`.
     `f` is expected to return an iterator itself... it "expands"
     each item.
     """
     for x in iter:
-        for y in f(x):
+        for y in f(x, *args, **kwargs):
             yield y
+
+
+def index_many(items):
+    index = {}
+    for key, value in items:
+        try:
+            index[key].append(value)
+        except KeyError:
+            index[key] = [value]
+    return index
