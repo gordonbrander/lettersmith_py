@@ -9,7 +9,6 @@ from lettersmith.argparser import lettersmith_argparser
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
 from lettersmith import doc as Doc
-from lettersmith import stub as Stub
 from lettersmith import markdowntools
 from lettersmith import wikilink
 from lettersmith import absolutize
@@ -67,7 +66,6 @@ def main():
 
     docs = chain(md_docs, yaml_docs, json_docs)
 
-    docs = (wikilink.uplift_wikilinks(doc) for doc in docs)
     absolutize_doc_urls = absolutize.absolutize(base_url)
     docs = (absolutize_doc_urls(doc) for doc in docs)
     docs = (Doc.change_ext(doc, ".html") for doc in docs)
@@ -76,15 +74,11 @@ def main():
         permalink.map_doc_permalink(doc, permalink_templates)
         for doc in docs
     )
+    docs = wikilink.annotate_links(docs)
+    docs = wikilink.render_wikilinks(docs, base_url)
 
     # Collect all docs in memory, so we can consume them > once.
     docs = tuple(docs)
-
-    # Strip special syntax before converting docs to stubs
-    stub_docs = (wikilink.strip_doc_wikilinks(doc) for doc in docs)
-
-    # Convert to stubs in memory
-    stubs = tuple(Stub.from_doc(doc) for doc in stub_docs)
 
     # Generate paging docs
     paging_docs = tuple(paging.gen_paging(docs, paging_config))
@@ -99,19 +93,16 @@ def main():
 
     sitemap_doc = sitemap.gen_sitemap(docs, base_url=base_url)
 
-    # Add generated docs to stubs
     gen_docs = paging_docs + rss_docs + (sitemap_doc,)
-    gen_stubs = tuple(Stub.from_doc(doc) for doc in gen_docs)
-
-    stubs = tuple(wikilink.collate_links(stubs))
 
     index = {}
-    index["taxonomy"] = taxonomy.index_by_taxonomy(stubs, taxonomies)
+    index["taxonomy"] = taxonomy.index_by_taxonomy(docs, taxonomies)
 
-    # Create dict index for ad-hoc stub access in templates.
+    docs = docs + gen_docs
+
     index["id_path"] = {
-        stub.id_path: stub
-        for stub in (stubs + gen_stubs)
+        doc.id_path: doc
+        for doc in docs
     }
 
     # Set up template globals
@@ -124,12 +115,6 @@ def main():
         "now": now
     }
 
-    # Map wikilinks, but only those that exist in wikilink_index.
-    render_wikilinks = wikilink.doc_renderer(stubs, base_url)
-    docs = (render_wikilinks(doc) for doc in docs)
-
-    # Chain together all doc iterators
-    docs = chain(docs, gen_docs)
 
     # Create a render function
     render_jinja = jinjatools.lettersmith_doc_renderer(

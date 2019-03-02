@@ -14,7 +14,7 @@ from os import path
 from collections import namedtuple
 from lettersmith import doc as Doc
 from lettersmith.path import to_slug, to_url
-from lettersmith.util import replace, get
+from lettersmith.util import replace, get, index_many, expand
 
 
 WIKILINK = r'\[\[([^\]]+)\]\]'
@@ -27,12 +27,16 @@ Link.__doc__ = """
 A namedtuple for representing a link entry — just a title and an id_path.
 """
 
+
+Edge = namedtuple("Edge", ("tail", "head"))
+Edge.__doc__ = """
+A directed edge that points from one link to another.
+"""
+
+
 @get.register(Link)
 def get_link(link, key, default=None):
     return getattr(link, key, default)
-
-def link_from_stub(stub):
-    return Link(stub.id_path, stub.output_path, stub.title)
 
 
 def _index_slug_to_url(stubs, base_url="/"):
@@ -85,111 +89,91 @@ def strip_wikilinks(s):
     return re.sub(WIKILINK, _render_strip_wikilink, s)
 
 
-def doc_renderer(stubs,
-    base_url="",
-    link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE):
+def render_wikilinks(
+    docs,
+    base_url="/",
+    link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE
+):
     """
-    Given a tuple of stubs, returns a doc rendering function that will
-    render all `[[wikilinks]]` to HTML links.
-
     `[[wikilink]]` is replaced with a link to a stub with the same title
     (case insensitive), using the `link_template`.
     If no stub exists with that title it will be rendered
     using `nolink_template`.
     """
-    slug_to_url = _index_slug_to_url(stubs, base_url)
+    docs = tuple(docs)
+    slug_to_link = index_slugs(docs)
+
     def render_inner_match(match):
         slug, text = parse_wikilink(match.group(0))
         try:
-            url = slug_to_url[slug]
+            link = slug_to_link[slug]
+            url = to_url(link.output_path, base=base_url)
             return link_template.format(url=url, text=text)
         except KeyError:
             return nolink_template.format(text=text)
 
-    def render_doc(doc):
-        """
-        Render a doc's wikilinks to HTML links.
-
-        If a `[[wikilink]]` exists in the index, it will be rendered as an
-        HTML link. However, if it doesn't exist, it will be rendered
-        using `nolink_template`.
-        """
+    for doc in docs:
         content = re.sub(
             WIKILINK,
             render_inner_match,
             doc.content
         )
-        return replace(doc, content=content)
-
-    return render_doc
+        yield replace(doc, content=content)
 
 
-def strip_doc_wikilinks(doc):
-    """
-    Strip wikilinks from doc content field.
-    Useful for making stubs with a clean summary.
-    """
-    content = strip_wikilinks(doc.content)
-    return replace(doc, content=content)
-
-
-def uplift_wikilinks(doc):
-    """
-    Find all wikilinks in doc and assign them to a wikilinks property of doc.
-    """
-    wikilinks = find_wikilinks(doc.content)
-    slugs = tuple(slug for slug, title in wikilinks)
-    return Doc.replace_meta(doc, wikilinks=slugs)
-
-
-def _index_backlinks(slug_index):
-    """
-    Index all backlinks in an iterable of docs. This assumes you have
-    already uplifted wikilinks from content with `uplift_wikilinks`.
-    """
-    backlink_index = {}
-    for stub in slug_index.values():
-        for slug in frozenset(stub.meta["wikilinks"]):
-            try:
-                id_path = slug_index[slug].id_path
-                if id_path not in backlink_index:
-                    backlink_index[id_path] = []
-                backlink_index[id_path].append(stub)
-            except KeyError:
-                pass
-    return backlink_index
-
-
-def collate_links(stubs):
-    """
-    Annotate stubs with links and backlinks. This assumes your stubs
-    have uplifted wikilinks to meta with `uplift_wikilinks`.
-
-    Returns an iterator for new stubs.
-    Meta will have 2 new fields: `links` and `backlinks`, each containing
-    a tuple of `Link` namedtuples.
-    """
-    slug_index = {
-        to_slug(stub.title): stub
-        for stub in stubs
+def index_slugs(docs):
+    return {
+        to_slug(doc.title): Link(doc.id_path, doc.output_path, doc.title)
+        for doc in docs
     }
-    backlink_index = _index_backlinks(slug_index)
-    for stub in stubs:
-        backlinks = tuple(
-            link_from_stub(backlink_stub)
-            for backlink_stub in backlink_index.get(stub.id_path, tuple())
-        )
-        slugs = frozenset(stub.meta["wikilinks"])
-        links = tuple(
-            link_from_stub(slug_index[slug])
-            for slug in slugs
-            if slug in slug_index
-        )
-        yield replace(
-            stub,
-            meta=replace(
-                stub.meta,
-                links=links,
-                backlinks=backlinks
-            )
+
+
+def _extract_links(content, slug_to_link):
+    wikilinks = frozenset(find_wikilinks(content))
+    for slug, title in wikilinks:
+        try:
+            yield slug_to_link[slug]
+        except KeyError:
+            pass
+
+
+def _expand_edges(doc, slug_to_link):
+    tail = Link(doc.id_path, doc.output_path, doc.title)
+    for head in _extract_links(doc.content, slug_to_link):
+        yield Edge(tail, head)
+
+
+def collect_edges(docs):
+    docs = tuple(docs)
+    slug_to_link = index_slugs(docs)
+    return expand(_expand_edges, docs, slug_to_link)
+
+
+def _index_by_link(edge):
+    return edge.tail.id_path, edge.head
+
+
+def _index_by_backlink(edge):
+    return edge.head.id_path, edge.tail
+
+
+_EMPTY_TUPLE = tuple()
+
+
+def annotate_links(docs):
+    """
+    Annotate docs with links and backlinks.
+
+    Returns an iterator for docs with 2 new meta fields: links and backlinks.
+    Each contains a tuple of `Link` namedtuples.
+    """
+    docs = tuple(docs)
+    edges = tuple(collect_edges(docs))
+    link_index = index_many(_index_by_link(edge) for edge in edges)
+    backlink_index = index_many(_index_by_backlink(edge) for edge in edges)
+    for doc in docs:
+        yield Doc.replace_meta(
+            doc,
+            links=tuple(link_index.get(doc.id_path, _EMPTY_TUPLE)),
+            backlinks=tuple(backlink_index.get(doc.id_path, _EMPTY_TUPLE))
         )
