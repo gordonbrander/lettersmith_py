@@ -39,16 +39,6 @@ def get_link(link, key, default=None):
     return getattr(link, key, default)
 
 
-def _index_slug_to_url(stubs, base_url="/"):
-    """
-    Reduce an iterator of docs to a slug-to-url index.
-    """
-    return {
-        to_slug(stub.title): to_url(stub.output_path, base=base_url)
-        for stub in stubs
-    }
-
-
 def parse_wikilink(wikilink_str):
     """
     Given a `[[WikiLink]]` or a `[[wikilink | Title]]`, return a
