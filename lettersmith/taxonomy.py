@@ -21,16 +21,16 @@ def items_with_keys(d, keys):
             yield key, value
 
 
-def gen_taxonomy_archives(stubs,
+def gen_taxonomy_archives(docs,
     output_path_template=None,
     taxonomies=None, templates=_EMPTY_TUPLE):
     """
     Creates a full archive page for each taxonomy term. One page per term.
     """
     output_path_template = output_path_template or ARCHIVE_PATH_TEMPLATE
-    tax_index = index_by_taxonomy(stubs, taxonomies)
+    tax_index = index_by_taxonomy(docs, taxonomies)
     for taxonomy, terms in tax_index.items():
-        for term, stubs in terms.items():
+        for term, docs in terms.items():
             output_path = output_path_template.format(
                 taxonomy=pathtools.to_slug(taxonomy),
                 term=pathtools.to_slug(term)
@@ -42,7 +42,7 @@ def gen_taxonomy_archives(stubs,
                 "taxonomy/list.html",
                 "list.html"
             )
-            meta = {"stubs": stubs}
+            meta = {"docs": docs}
             yield doc(
                 id_path=output_path,
                 output_path=output_path,
@@ -55,7 +55,7 @@ def gen_taxonomy_archives(stubs,
             )
 
 
-def index_by_taxonomy(stubs, taxonomies=None):
+def index_by_taxonomy(docs, taxonomies=DEFAULT_TAXONOMIES):
     """
     Create a new index by taxonomy.
     `taxonomies` is an indexable whitelist of meta keys that should
@@ -65,19 +65,18 @@ def index_by_taxonomy(stubs, taxonomies=None):
 
         {
             "tags": {
-                "term_a": [stub, ...],
-                "term_b": [stub, ...]
+                "term_a": [doc, ...],
+                "term_b": [doc, ...]
             }
         }
     """
-    taxonomies = taxonomies or DEFAULT_TAXONOMIES
     tax_index = {}
-    for stub in stubs:
-        for tax, terms in items_with_keys(stub.meta, taxonomies):
+    for doc in docs:
+        for tax, terms in items_with_keys(doc.meta, taxonomies):
             if not tax_index.get(tax):
                 tax_index[tax] = {}
             for term in terms:
                 if not tax_index[tax].get(term):
                     tax_index[tax][term] = []
-                tax_index[tax][term].append(stub)
+                tax_index[tax][term].append(doc)
     return tax_index
