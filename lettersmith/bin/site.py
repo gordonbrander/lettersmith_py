@@ -95,14 +95,18 @@ def main():
 
     gen_docs = paging_docs + rss_docs + (sitemap_doc,)
 
-    index = {}
-    index["taxonomy"] = taxonomy.index_by_taxonomy(docs, taxonomies)
+    taxonomy_index = taxonomy.index_by_taxonomy(docs, taxonomies)
 
     docs = docs + gen_docs
 
-    index["id_path"] = {
+    id_path_index = {
         doc.id_path: doc
         for doc in docs
+    }
+
+    index = {
+        "taxonomy": taxonomy_index,
+        "id_path": id_path_index
     }
 
     # Set up template globals
