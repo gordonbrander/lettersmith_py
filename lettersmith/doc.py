@@ -15,6 +15,7 @@ from lettersmith.stringtools import truncate, strip_html
 
 _EMPTY_TUPLE = tuple()
 
+
 Doc = namedtuple("Doc", (
     "id_path", "output_path", "input_path", "created", "modified",
     "title", "content", "section", "meta", "templates"
@@ -23,15 +24,8 @@ Doc.__doc__ = """
 Docs are namedtuples that represent a document to be transformed,
 and eventually written to disk.
 
-Docs contain a content field — usually the whole contents of a
-file. Since this can take up quite a bit of memory, it's typical to avoid
-collecting all docs into memory. We usually load and transform them in
-generator functions so that only one is in memory at a time.
-
-For collecting many in memory, and cross-referencing, we use Stubs.
-Stubs are meant to be stub docs. They contain just meta information
-about the doc. You can turn a doc into a stub with
-`lettersmith.stub.from_doc(doc)`.
+Docs contain a content field. This is a string that typically contains the
+contents of the file.
 """
 
 
@@ -102,26 +96,6 @@ def load(pathlike, relative_to=""):
         section=section,
         meta={},
         content=content
-    )
-
-
-def from_stub(stub):
-    """
-    Create a doc dictionary from an stub dictionary.
-    This doc dictionary will have an empty "content" field.
-
-    If you want to load a doc from a file stub with an `input_path`,
-    use `load_doc` instead.
-    """
-    return doc(
-        id_path=stub.id_path,
-        output_path=stub.output_path,
-        input_path=stub.input_path,
-        created=stub.created,
-        modified=stub.modified,
-        title=stub.title,
-        section=stub.section,
-        meta=stub.meta
     )
 
 
