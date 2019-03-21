@@ -20,10 +20,11 @@ setup(
     ],
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=[
-        "PyYAML",
+        "PyYAML>=3.13",
         "py-gfm>=0.1.3",
         "python-frontmatter>=0.3.1",
         "Jinja2>=2.7",
+        "schema>=0.7.0"
         # TODO
         # "watchdog>=0.6.0"
     ],
