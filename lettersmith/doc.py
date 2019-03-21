@@ -9,7 +9,7 @@ import yaml
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
-from lettersmith.util import replace, get, maps_if
+from lettersmith.util import replace, get
 from lettersmith.stringtools import truncate, strip_html
 
 
@@ -154,6 +154,13 @@ def uplifts_meta(func):
     return wrapped
 
 
+def has_ext(doc, *exts):
+    """
+    Check if a doc has an extension.
+    """
+    return pathtools.has_ext(doc.id_path, *exts)
+
+
 def ext(*exts):
     """
     Create an extension predicate function.
@@ -162,15 +169,6 @@ def ext(*exts):
         return pathtools.has_ext(doc.id_path, *exts)
     return has_ext
 
-
-def maps_if_ext(*exts):
-    """
-    Decorate a doc mapping function so it will only map a doc if the
-    doc's `id_path` has one of the extensions listed in the `*ext` args.
-    If the doc does not have any of those extensions, it is left
-    untouched.
-    """
-    return maps_if(ext(*exts))
 
 
 def change_ext(doc, ext):
