@@ -1,4 +1,5 @@
 from pathlib import PurePath
+from lettersmith import util
 
 
 def read_doc_permalink(doc):
@@ -20,7 +21,7 @@ def read_doc_permalink(doc):
     }
 
 
-def map_doc_permalink(doc, permalink_templates):
+def replace_doc_permalink(doc, permalink_templates):
     """
     Given a doc dict and a permalink template, render
     the output_path field of the doc.
@@ -36,3 +37,6 @@ def map_doc_permalink(doc, permalink_templates):
         return doc._replace(output_path=output_path)
     except KeyError:
         return doc
+
+
+replace_permalinks = util.mapping(replace_doc_permalink)
