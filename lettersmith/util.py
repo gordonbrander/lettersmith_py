@@ -111,22 +111,6 @@ def filter_id_path(docs, glob):
     return filter(lambda doc: is_id_path_match(doc, glob), docs)
 
 
-def maps_if(predicate):
-    """
-    Decorate a function so that it only touches value if value
-    passes predicate test.
-    """
-    def wrap(func):
-        @wraps(func)
-        def wrapped(x, *args, **kwargs):
-            if predicate(x):
-                return func(x, *args, **kwargs)
-            else:
-                return x
-        return wrapped
-    return wrap
-
-
 def any_in(collection, values):
     """
     Check if any of a collection of values is in `collection`.
@@ -239,13 +223,18 @@ def where_matches(value, glob):
     return fnmatch(value, glob)
 
 
-def lift_iter(f):
+def mapping(f):
     """
-    Lift a function to consume an iterator instead of single values.
+    Lift a function to consume an iterator instead of a single value.
+    The first argument is assumed to be the "main" argument.
+    The transformed function will instead consume an iterator as the
+    first argument.
     """
-    def f_iter(iter, *args, **kwargs):
-        return (f(x, *args, **kwargs) for x in iter)
-    return f_iter
+    @wraps(f)
+    def mappingf(iter, *args, **kwargs):
+        for x in iter:
+            yield f(x, *args, **kwargs)
+    return mappingf
 
 
 def sort_by(dicts_iter, key, default=None, reverse=False):
