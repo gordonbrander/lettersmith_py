@@ -13,14 +13,14 @@ def id(x):
     return x
 
 
-def compose2(fb, fa):
+def compose2(b, a):
     """Compose 2 functions"""
-    return lambda x: fb(fa(x))
+    return lambda x: b(a(x))
 
 
-def compose(fa, *fn):
+def compose(fz, *fn):
     """Compose n functions"""
-    return reduce(compose2, fn, fa)
+    return reduce(compose2, fn, fz)
 
 
 @singledispatch
