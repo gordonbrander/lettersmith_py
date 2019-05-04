@@ -91,7 +91,7 @@ TEMPLATE_FUNCTIONS = {
     "remove_id_path": Docs.remove_id_path,
     "filter_siblings": Docs.filter_siblings,
     "to_slug": pathtools.to_slug,
-    "to_slugs": util.lift_iter(pathtools.to_slug),
+    "to_slugs": util.mapping(pathtools.to_slug),
     "tuple": tuple,
     "json_dumps": json.dumps
 }
@@ -132,21 +132,23 @@ def doc_renderer(env):
         if should_template(doc):
             template = env.select_template(doc.templates)
             rendered = template.render({"doc": doc})
-            return util.replace(doc, content=rendered)
+            return doc._replace(content=rendered)
         else:
             return doc
     return render_doc
 
 
-def lettersmith_doc_renderer(templates_path="theme", context={}, filters={}):
+def render(docs, templates_path="theme", context={}, filters={}):
     """
     Wraps up the gory details of creating a Jinja renderer.
     Returns a render function that takes a doc and returns a rendered doc.
     Template comes preloaded with Jinja default filters, and
     Lettersmith default filters and globals.
     """
-    return doc_renderer(LettersmithEnvironment(
+    render = doc_renderer(LettersmithEnvironment(
         templates_path,
         filters=filters,
         context=context
     ))
+    for doc in docs:
+        yield render(doc)
