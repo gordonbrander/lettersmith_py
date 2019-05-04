@@ -78,10 +78,19 @@ To transform many files, you can load them into an iterable, then use list compr
 ```python
 # Get all markdown paths under source/
 paths = Path("source").glob("*.md")
-# Load them as Python dicts
-docs = (Doc.load(path) for path in paths)
-# Transform them with your function
-docs = (my_plugin(doc) for doc in docs)
+# Load them as doc namedtuples
+docs = Docs.load(paths)
+# Transform them with your function.
+docs = my_plugin(docs)
+```
+
+"Plugins" are just generator functions that take an iterator of docs and
+yield transformed docs.
+
+```python
+def my_plugin(docs)
+    for doc in docs:
+	    yield do_something(doc)
 ```
 
 When you're done transforming things, you can pass the iterable to `Docs.write`, which takes care of writing out the files to an output directory.
@@ -92,4 +101,4 @@ Docs.write(docs, output_path=output_path)
 
 That's it!
 
-Lettersmith comes with a swiss army knife of helpful mapping/filtering tools, for things like Markdown, templates, drafts, tags, wikilinks, and more — and if you see something missing it's easy to write your own functions.
+Lettersmith comes with a swiss army knife of helpful tools for things like Markdown, templates, drafts, tags, wikilinks, and more — and if you see something missing it's easy to write your own functions.
