@@ -90,7 +90,7 @@ yield transformed docs.
 ```python
 def my_plugin(docs)
     for doc in docs:
-	    yield do_something(doc)
+        yield do_something(doc)
 ```
 
 When you're done transforming things, you can pass the iterable to `Docs.write`, which takes care of writing out the files to an output directory.
