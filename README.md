@@ -71,7 +71,7 @@ Doc(
 
 ## Plugins
 
-Plugins are just functions that transform namedtuples.
+Plugins are just functions that transform doc namedtuples.
 
 To transform many files, you can load them into an iterable, then use list comprehensions, generator expressions, and map, filter, reduce:
 
@@ -84,8 +84,7 @@ docs = Docs.load(paths)
 docs = my_plugin(docs)
 ```
 
-"Plugins" are just generator functions that take an iterator of docs and
-yield transformed docs.
+To write a plugin, all you need to do is define a generator function that takes an iterator of docs and yields transformed docs.
 
 ```python
 def my_plugin(docs)
