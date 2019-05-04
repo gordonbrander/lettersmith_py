@@ -1,7 +1,7 @@
 from pathlib import PurePath
 
 from lettersmith import path as pathtools
-from lettersmith.util import replace
+from lettersmith import util
 
 
 SECTION_TEMPLATE = "section/{section}/{basename}"
@@ -32,7 +32,7 @@ def read_affiliated_templates(pathlike):
     return templates
 
 
-def add_templates(doc):
+def add_doc_templates(doc):
     """
     Read potential templates for doc
 
@@ -57,4 +57,8 @@ def add_templates(doc):
         templates.extend(doc.templates)
     except KeyError:
         pass
-    return replace(doc, templates=tuple(templates))
+    return doc._replace(templates=tuple(templates))
+
+
+# Plugin version that adds templates to an iterable of docs.
+add_templates = util.mapping(add_doc_templates)
