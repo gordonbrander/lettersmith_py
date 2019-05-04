@@ -13,9 +13,6 @@ from lettersmith.util import replace, get
 from lettersmith.stringtools import truncate, strip_html
 
 
-_EMPTY_TUPLE = tuple()
-
-
 Doc = namedtuple("Doc", (
     "id_path", "output_path", "input_path", "created", "modified",
     "title", "content", "section", "meta", "templates"
@@ -45,7 +42,7 @@ def doc(id_path, output_path,
         content=str(content),
         section=str(section),
         meta=meta if meta is not None else {},
-        templates=templates if templates is not None else _EMPTY_TUPLE
+        templates=templates if templates is not None else tuple()
     )
 
 
@@ -67,7 +64,7 @@ def replace_meta(doc, **kwargs):
     Put a value into a doc's meta dictionary.
     Returns a new doc.
     """
-    return replace(doc, meta=replace(doc.meta, **kwargs))
+    return doc._replace(meta={**doc.meta, **kwargs})
 
 
 def load(pathlike, relative_to=""):
