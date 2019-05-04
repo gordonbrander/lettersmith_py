@@ -16,7 +16,6 @@ def house_markdown(s):
     return markdown(s, extensions=MD_LANG_EXTENSIONS)
 
 
-@Doc.maps_if_ext(".md", ".markdown", ".mdown", ".txt")
 @Doc.uplifts_frontmatter
 def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     """
@@ -30,3 +29,14 @@ def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
         content=content,
         output_path=str(output_path)
     )
+
+
+def parse_markdown(docs, extensions=MD_LANG_EXTENSIONS):
+    """
+    Markdown rendering plugin
+    """
+    for doc in docs:
+        if Doc.has_ext(doc, ".md", ".markdown", ".mdown", ".txt"):
+            yield render_doc(doc, extensions)
+        else:
+            yield doc
