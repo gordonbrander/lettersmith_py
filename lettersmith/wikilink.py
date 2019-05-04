@@ -11,32 +11,15 @@ To render wikilinks, I need:
 import re
 from pathlib import PurePath
 from os import path
-from collections import namedtuple
 from lettersmith import doc as Doc
 from lettersmith.path import to_slug, to_url
-from lettersmith.util import replace, get, index_many, expand
+from lettersmith.util import replace, index_many, expand
+from lettersmith.link import Link, Edge
 
 
 WIKILINK = r'\[\[([^\]]+)\]\]'
 LINK_TEMPLATE = '<a href="{url}" class="wikilink">{text}</a>'
 NOLINK_TEMPLATE = '<span class="nolink">{text}</span>'
-
-
-Link = namedtuple("Link", ("id_path", "output_path", "title"))
-Link.__doc__ = """
-A namedtuple for representing a link entry — just a title and an id_path.
-"""
-
-
-Edge = namedtuple("Edge", ("tail", "head"))
-Edge.__doc__ = """
-A directed edge that points from one link to another.
-"""
-
-
-@get.register(Link)
-def get_link(link, key, default=None):
-    return getattr(link, key, default)
 
 
 def parse_wikilink(wikilink_str):
@@ -85,9 +68,9 @@ def render_wikilinks(
     link_template=LINK_TEMPLATE, nolink_template=NOLINK_TEMPLATE
 ):
     """
-    `[[wikilink]]` is replaced with a link to a stub with the same title
+    `[[wikilink]]` is replaced with a link to a doc with the same title
     (case insensitive), using the `link_template`.
-    If no stub exists with that title it will be rendered
+    If no doc exists with that title it will be rendered
     using `nolink_template`.
     """
     docs = tuple(docs)
