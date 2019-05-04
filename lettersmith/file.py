@@ -2,8 +2,8 @@
 File utilities
 """
 from os import path, makedirs
-import subprocess
-from pathlib import Path
+import shutil
+from pathlib import Path, PurePath
 
 
 def write_file_deep(pathlike, content):
@@ -16,43 +16,12 @@ def write_file_deep(pathlike, content):
         f.write(content)
 
 
-def _copy_dir(input_path, output_path, recursive=True, content=True):
+def copy_dirs(directory_paths, output_directory_path):
     """
-    Copies a directory at `input_path` to `output_path`.
+    Recursively copy an iterable of directory paths to `output_directory_path`.
     """
-    input_path = Path(input_path)
-    input_path_str = str(input_path) + "/" if content else str(input_path)
-    if recursive:
-        cmd = ("rsync", "-r", input_path_str, str(output_path))
-    else:
-        cmd = ("rsync", input_path_str, str(output_path))
-    return subprocess.check_call(cmd)
-
-
-def copy(input_path, output_path, recursive=True, content=False):
-    """
-    Copies a file or directory to `output_path`. Uses `cp` under the hood.
-
-    If `input_path` is a directory and `recursive` is True, will copy
-    recursively.
-
-    If `input_path` is a directory and ends with a trailing slash, content
-    will be copied, rather than directory itself.
-    """
-    input_path = Path(input_path)
-    if input_path.is_dir():
-        return _copy_dir(
-            input_path, output_path,
-            recursive=recursive, content=content)
-    else:
-        cmd = ("cp", str(input_path), str(output_path))
-        return subprocess.check_call(cmd)
-
-
-def copy_all(input_paths, output_path, recursive=True):
-    """
-    Copy an iterable of file and/or directory paths to `output_path`.
-    If `recursive` is True, will copy directory content recursively.
-    """
-    for input_path in input_paths:
-        copy(input_path, output_path, recursive)
+    for directory_path in directory_paths:
+        input_path = PurePath(directory_path)
+        output_path = PurePath(output_directory_path, input_path.name)
+        shutil.rmtree(output_path, ignore_errors=True)
+        shutil.copytree(input_path, output_path)

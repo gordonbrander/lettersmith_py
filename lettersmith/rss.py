@@ -1,29 +1,48 @@
 from pathlib import Path
 from datetime import datetime
-from lettersmith.util import sort_by, filter_id_path
+from voluptuous import Schema, Optional
+from lettersmith.util import sort_by, filter_id_path, compose
 from lettersmith.jinjatools import FileSystemEnvironment
 from lettersmith.path import to_url, to_slug
 from lettersmith import doc as Doc
 from lettersmith.docs import most_recent
 
+
 MODULE_PATH = Path(__file__).parent
 TEMPLATE_PATH = Path(MODULE_PATH, "package_data", "template")
+
 
 FILTERS = {
     "summary": Doc.summary,
     "to_url": to_url
 }
 
+
+group_schema = Schema({
+    "match": str,
+    "output_path": str,
+    Optional("title", default="Feed"): str,
+    Optional("description", default=""): str,
+    Optional("author", default=""): str,
+    Optional("nitems", default=24): int
+})
+
+
+schema = Schema({
+    "base_url": str,
+    Optional("groups", default=[]): [group_schema]
+})
+
+
 def render_rss(docs,
-    base_url, last_build_date, title, description, author, read_more):
+    base_url, last_build_date, title, description, author):
     context = {
         "generator": "Lettersmith",
         "base_url": base_url,
         "title": title,
         "description": description,
         "author": author,
-        "last_build_date": last_build_date,
-        "read_more": read_more
+        "last_build_date": last_build_date
     }
     env = FileSystemEnvironment(
         str(TEMPLATE_PATH),
@@ -36,10 +55,13 @@ def render_rss(docs,
     })
 
 
-def create_rss_feed(docs, output_path,
-    base_url="/", last_build_date=None,
-    title="RSS Feed", description="", author="",
-    read_more="Read more&hellip;", nitems=24):
+def create_rss_feed(
+    docs,
+    output_path,
+    base_url, last_build_date,
+    title, description, author,
+    nitems
+):
     """
     Given an iterable of docs and some details, returns an
     RSS doc.
@@ -56,8 +78,7 @@ def create_rss_feed(docs, output_path,
         last_build_date=last_build_date,
         title=title,
         description=description,
-        author=author,
-        read_more=read_more
+        author=author
     )
     return Doc.doc(
         id_path=output_path,
@@ -69,23 +90,19 @@ def create_rss_feed(docs, output_path,
     )
 
 
-def gen_rss_feed(docs, groups,
-    base_url="/", last_build_date=None,
-    read_more="Read more&hellip;", nitems=24,
-    title="RSS Feed", description="", author=""
-):
-    def _map_items(pair):
-        glob, group = pair
-        matching_docs = filter_id_path(docs, glob)
+def gen_rss_feed(docs, config):
+    docs = tuple(docs)
+    base_url = config["base_url"]
+    def _group_to_feed(group):
+        matching_docs = filter_id_path(docs, group["match"])
         return create_rss_feed(
             matching_docs,
+            last_build_date=datetime.now(),
+            base_url=config["base_url"],
             output_path=group["output_path"],
-            base_url=base_url,
-            last_build_date=last_build_date,
-            read_more=read_more,
-            nitems=nitems,
-            title=group.get("title", title),
-            description=group.get("description", description),
-            author=group.get("author", author)
+            nitems=group["nitems"],
+            title=group["title"],
+            description=group["description"],
+            author=group["author"]
         )
-    return map(_map_items, groups.items())
+    return map(_group_to_feed, config["groups"])

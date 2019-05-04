@@ -3,13 +3,16 @@ Tools for indexing docs by tag (taxonomy).
 """
 from lettersmith import util
 from datetime import datetime
+from voluptuous import Schema, Optional
 from lettersmith import path as pathtools
 from lettersmith.doc import doc
 
 
-_EMPTY_TUPLE = tuple()
-DEFAULT_TAXONOMIES = ("tags",)
-ARCHIVE_PATH_TEMPLATE = "{taxonomy}/{term}/all/index.html"
+schema = Schema({
+    Optional("keys", default=["tags"]): [str],
+    Optional("templates", default=[]): [str],
+    Optional("output_path_template", default="{taxonomy}/{term}/all/index.html"): str
+})
 
 
 def items_with_keys(d, keys):
@@ -21,17 +24,15 @@ def items_with_keys(d, keys):
             yield key, value
 
 
-def gen_taxonomy_archives(docs,
-    output_path_template=None,
-    taxonomies=None, templates=_EMPTY_TUPLE):
+def gen_taxonomy_archives(docs, config):
     """
     Creates a full archive page for each taxonomy term. One page per term.
     """
-    output_path_template = output_path_template or ARCHIVE_PATH_TEMPLATE
-    tax_index = index_by_taxonomy(docs, taxonomies)
+    templates = tuple(config["templates"])
+    tax_index = index_by_taxonomy(docs, config["keys"])
     for taxonomy, terms in tax_index.items():
         for term, docs in terms.items():
-            output_path = output_path_template.format(
+            output_path = config["output_path_template"].format(
                 taxonomy=pathtools.to_slug(taxonomy),
                 term=pathtools.to_slug(term)
             )
@@ -55,7 +56,7 @@ def gen_taxonomy_archives(docs,
             )
 
 
-def index_by_taxonomy(docs, taxonomies=DEFAULT_TAXONOMIES):
+def index_by_taxonomy(docs, config):
     """
     Create a new index by taxonomy.
     `taxonomies` is an indexable whitelist of meta keys that should
@@ -72,7 +73,7 @@ def index_by_taxonomy(docs, taxonomies=DEFAULT_TAXONOMIES):
     """
     tax_index = {}
     for doc in docs:
-        for tax, terms in items_with_keys(doc.meta, taxonomies):
+        for tax, terms in items_with_keys(doc.meta, config["keys"]):
             if not tax_index.get(tax):
                 tax_index[tax] = {}
             for term in terms:

@@ -1,5 +1,12 @@
 from pathlib import PurePath
+from voluptuous import Schema, Optional
 from lettersmith import util
+
+
+schema = Schema({str: str})
+schema.__doc__ = """
+dictionary, where keys are doc sections, and values are permalink templates.
+"""
 
 
 def read_doc_permalink(doc):
@@ -39,4 +46,12 @@ def replace_doc_permalink(doc, permalink_templates):
         return doc
 
 
-replace_permalinks = util.mapping(replace_doc_permalink)
+def replace_permalinks(docs, config):
+    """
+    Update permalinks on docs.
+
+    `config` is a dictionary, where keys are doc sections, and values
+    are permalink templates.
+    """
+    for doc in docs:
+        yield replace_doc_permalink(doc, config)
