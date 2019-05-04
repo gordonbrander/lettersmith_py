@@ -42,11 +42,13 @@ data_path: "data"
 build_drafts: False
 
 # Headmatter fields that should be treated as taxonomies
-# taxonomies:
-# - tag
+# taxonomy:
+#   keys:
+#   - tag
 
 # Settings for pagination
 # paging:
+# - match: "section/*.md"
 #   # How many list items per page?
 #   per_page: 10
 #   # The template used to generate output paths for paging
