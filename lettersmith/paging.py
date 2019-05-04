@@ -51,7 +51,7 @@ def paginate(docs, templates, output_path_template, per_page):
         )
 
 
-def paging(docs, config):
+def paging(docs, groups):
     """
     Generate paging docs from an iterable of docs, and dictionaries
     of options. Each key of a dictionary represents a group of options
@@ -66,4 +66,4 @@ def paging(docs, config):
             output_path_template=group["output_path_template"],
             per_page=group["per_page"]
         )
-    return expand(_expand_group, config["groups"])
+    return expand(_expand_group, groups)

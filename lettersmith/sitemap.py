@@ -26,7 +26,7 @@ def render_sitemap(docs,
     return template.render({"docs": docs})
 
 
-def gen_sitemap(docs, base_url="/"):
+def gen_sitemap(docs, base_url):
     """
     Returns a sitemap doc
     """

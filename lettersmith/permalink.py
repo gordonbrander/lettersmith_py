@@ -3,10 +3,15 @@ from voluptuous import Schema, Optional
 from lettersmith import util
 
 
-schema = Schema({str: str})
-schema.__doc__ = """
+permalink_templates_schema = Schema({str: str})
+permalink_templates_schema.__doc__ = """
 dictionary, where keys are doc sections, and values are permalink templates.
 """
+
+
+schema = Schema({
+    Optional("permalink_templates", default={}): permalink_templates_schema
+})
 
 
 def read_doc_permalink(doc):
@@ -46,7 +51,7 @@ def replace_doc_permalink(doc, permalink_templates):
         return doc
 
 
-def replace_permalinks(docs, config):
+def replace_permalinks(docs, permalink_templates):
     """
     Update permalinks on docs.
 
@@ -54,4 +59,4 @@ def replace_permalinks(docs, config):
     are permalink templates.
     """
     for doc in docs:
-        yield replace_doc_permalink(doc, config)
+        yield replace_doc_permalink(doc, permalink_templates)

@@ -56,7 +56,7 @@ def gen_taxonomy_archives(docs, config):
             )
 
 
-def index_by_taxonomy(docs, config):
+def index_by_taxonomy(docs, keys):
     """
     Create a new index by taxonomy.
     `taxonomies` is an indexable whitelist of meta keys that should
@@ -73,7 +73,7 @@ def index_by_taxonomy(docs, config):
     """
     tax_index = {}
     for doc in docs:
-        for tax, terms in items_with_keys(doc.meta, config["keys"]):
+        for tax, terms in items_with_keys(doc.meta, keys):
             if not tax_index.get(tax):
                 tax_index[tax] = {}
             for term in terms:

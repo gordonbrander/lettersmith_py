@@ -5,10 +5,8 @@ from pathlib import PurePath, Path
 from itertools import chain
 from voluptuous import Optional
 from lettersmith import config
-from lettersmith.argparser import lettersmith_argparser
 from lettersmith import path as pathtools
 from lettersmith import docs as Docs
-from lettersmith import doc as Doc
 from lettersmith import markdowntools
 from lettersmith import wikilink
 from lettersmith import absolutize
@@ -68,25 +66,18 @@ def main():
     docs = absolutize.absolutize(docs, config["base_url"])
     docs = Docs.change_ext(docs, ".html")
     docs = templatetools.add_templates(docs)
-
-    docs = permalink.replace_permalinks(docs, config["permalink"])
-
+    docs = permalink.replace_permalinks(docs, **config["permalink"])
     docs = wikilink.annotate_links(docs)
     docs = wikilink.render_wikilinks(docs, config["base_url"])
 
     # Collect all docs in memory, so we can consume them > once.
     docs = tuple(docs)
 
-    taxonomy_index = taxonomy.index_by_taxonomy(docs, config["taxonomy"])
+    taxonomy_index = taxonomy.index_by_taxonomy(docs, config["taxonomy"]["keys"])
 
-    sitemap_doc = sitemap.gen_sitemap(docs, base_url=config["base_url"])
-
-    paging_docs = paging.paging(docs, config["paging"])
-
-    rss_docs = rss.gen_rss_feed(docs, {
-        **config["rss"],
-        "base_url": config["base_url"]    
-    })
+    sitemap_doc = sitemap.gen_sitemap(docs, config["base_url"])
+    paging_docs = paging.paging(docs, **config["paging"])
+    rss_docs = rss.gen_rss_feed(docs, config["base_url"], **config["rss"])
 
     docs = docs + (sitemap_doc, *paging_docs, *rss_docs)
 

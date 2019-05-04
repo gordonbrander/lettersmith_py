@@ -29,7 +29,6 @@ group_schema = Schema({
 
 
 schema = Schema({
-    "base_url": str,
     Optional("groups", default=[]): [group_schema]
 })
 
@@ -90,19 +89,18 @@ def create_rss_feed(
     )
 
 
-def gen_rss_feed(docs, config):
+def gen_rss_feed(docs, base_url, groups):
     docs = tuple(docs)
-    base_url = config["base_url"]
     def _group_to_feed(group):
         matching_docs = filter_id_path(docs, group["match"])
         return create_rss_feed(
             matching_docs,
             last_build_date=datetime.now(),
-            base_url=config["base_url"],
+            base_url=base_url,
             output_path=group["output_path"],
             nitems=group["nitems"],
             title=group["title"],
             description=group["description"],
             author=group["author"]
         )
-    return map(_group_to_feed, config["groups"])
+    return map(_group_to_feed, groups)
