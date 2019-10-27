@@ -1,6 +1,7 @@
 import random
 import itertools
 import json
+from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -109,7 +110,9 @@ class LettersmithEnvironment(FileSystemEnvironment):
             filters=TEMPLATE_FUNCTIONS,
             context=TEMPLATE_FUNCTIONS
         )
+        now = datetime.now()
         self.filters.update(filters)
+        self.globals.update({"now": now})
         self.globals.update(context)
 
 
