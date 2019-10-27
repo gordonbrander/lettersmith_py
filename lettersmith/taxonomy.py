@@ -3,16 +3,8 @@ Tools for indexing docs by tag (taxonomy).
 """
 from lettersmith import util
 from datetime import datetime
-from voluptuous import Schema, Optional
 from lettersmith import path as pathtools
 from lettersmith.doc import doc
-
-
-schema = Schema({
-    Optional("keys", default=["tags"]): [str],
-    Optional("templates", default=[]): [str],
-    Optional("output_path_template", default="{taxonomy}/{term}/all/index.html"): str
-})
 
 
 def items_with_keys(d, keys):
@@ -24,15 +16,19 @@ def items_with_keys(d, keys):
             yield key, value
 
 
-def gen_taxonomy_archives(docs, config):
+def gen_taxonomy_archives(
+    docs,
+    keys=("tags",),
+    templates=tuple(),
+    output_path_template="{taxonomy}/{term}/all/index.html"
+):
     """
     Creates a full archive page for each taxonomy term. One page per term.
     """
-    templates = tuple(config["templates"])
-    tax_index = index_by_taxonomy(docs, config["keys"])
+    tax_index = index_by_taxonomy(docs, keys)
     for taxonomy, terms in tax_index.items():
         for term, docs in terms.items():
-            output_path = config["output_path_template"].format(
+            output_path = output_path_template.format(
                 taxonomy=pathtools.to_slug(taxonomy),
                 term=pathtools.to_slug(term)
             )
@@ -44,14 +40,15 @@ def gen_taxonomy_archives(docs, config):
                 "list.html"
             )
             meta = {"docs": docs}
+            now = datetime.now()
             yield doc(
                 id_path=output_path,
                 output_path=output_path,
-                created=datetime.now(),
-                modified=datetime.now(),
+                created=now,
+                modified=now,
                 title=term,
                 section=taxonomy,
-                templates=templates + tax_templates,
+                templates=(*templates, *tax_templates),
                 meta=meta
             )
 

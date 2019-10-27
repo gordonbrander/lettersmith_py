@@ -98,19 +98,6 @@ def chunk(iterable, n):
         yield chunk
 
 
-def is_id_path_match(doc, glob):
-    """
-    Predicate function that tests whether the id_path of a thing
-    (as determined by `get`) matches a glob pattern.
-    """
-    # We fast-path for "everything" matches.
-    return fnmatch(get(doc, "id_path"), glob) if glob != "*" else True
-
-
-def filter_id_path(docs, glob):
-    return filter(lambda doc: is_id_path_match(doc, glob), docs)
-
-
 def any_in(collection, values):
     """
     Check if any of a collection of values is in `collection`.
