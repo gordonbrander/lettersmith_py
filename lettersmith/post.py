@@ -1,5 +1,5 @@
 """
-Wraps up a handful of smaller plugins into a 
+Performs typical transformations for a blog post or page.
 """
 from lettersmith import markdowntools
 from lettersmith import absolutize
