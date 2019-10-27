@@ -31,8 +31,7 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "lettersmith_site=lettersmith.bin.site:main",
-            "lettersmith_scaffold=lettersmith.bin.scaffold:main",
+            "lettersmith_scaffold=lettersmith.cli.scaffold:main",
         ]
     }
 )

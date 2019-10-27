@@ -14,7 +14,7 @@ parser.add_argument("project_path",
     type=Path,
     help="Path to your project directory")
 parser.add_argument("-t", "--type",
-    type=str, default='wiki', choices=["wiki"],
+    type=str, default='blog', choices=["blog"],
     help="The type of project to scaffold")
 args = parser.parse_args()
 
