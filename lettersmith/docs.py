@@ -1,6 +1,7 @@
 """
 Tools for working with collections of docs
 """
+from pathlib import Path
 from itertools import islice
 from lettersmith.path import is_draft, is_index, is_doc_file
 from lettersmith import doc as Doc
@@ -15,6 +16,16 @@ def load(file_paths, relative_to=""):
     for path in file_paths:
         if is_doc_file(path):
             yield Doc.load(path, relative_to=relative_to)
+
+def load_matching(input_path, glob):
+    """
+    Load all docs under input path that match a glob pattern.
+
+    Example:
+
+        Docs.glob("posts", "*.md")
+    """
+    return load(Path(input_path).glob(glob), relative_to=input_path)
 
 
 def write(docs, output_path="public"):
