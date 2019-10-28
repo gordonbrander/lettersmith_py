@@ -6,7 +6,7 @@ A blog-aware Lettersmith build script. Modify it to your heart's content.
 from lettersmith import *
 
 # Configuration
-base_url = "//yourwebsite.com"
+base_url = "http://yourwebsite.com"
 post_path = "posts"
 page_path = "pages"
 data_path = "data"
@@ -23,18 +23,19 @@ template_data = data.load_data_files(data_path)
 
 # Load posts
 posts = docs.load_matching(post_path, "*.md")
-posts = post.render_post(posts)
+posts = post.render_posts(posts, base_url=base_url)
 posts = permalink.replace_permalinks(posts, post_permalink_template)
 
 # Load pages
 pages = docs.load_matching(page_path, "**/*.md")
-pages = post.render_post(pages)
+pages = post.render_posts(pages, base_url=base_url)
 
-# Collect all docs in memory, so we can iterate over them > once.
 all_docs = (*posts, *pages)
-
 all_docs = wikilink.annotate_links(all_docs)
 all_docs = wikilink.render_wikilinks(all_docs, base_url)
+
+# Collect all docs in memory, so we can iterate over them > once.
+all_docs = tuple(all_docs)
 
 taxonomy_index = taxonomy.index_by_taxonomy(all_docs, keys=("tags",))
 
