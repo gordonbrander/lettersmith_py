@@ -3,6 +3,7 @@ Tools for working with collections of docs
 """
 from pathlib import Path
 from itertools import islice
+from fnmatch import fnmatch
 from lettersmith.path import is_draft, is_index, is_doc_file
 from lettersmith import doc as Doc
 from lettersmith import util
@@ -48,6 +49,16 @@ def remove_id_path(docs, id_path):
     Remove docs with a given id_path.
     """
     return (doc for doc in docs if doc.id_path != id_path)
+
+
+def matching(docs, glob):
+    """
+    Filter an iterator of docs to only those docs whos id_path
+    matches a unix-style glob pattern.
+    """
+    for doc in docs:
+        if fnmatch(doc.id_path, glob):
+            yield doc
 
 
 def remove_index(docs):
