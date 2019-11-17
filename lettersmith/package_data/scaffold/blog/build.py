@@ -14,8 +14,8 @@ site_author = "A very cool person"
 # Load data directory
 template_data = data.find("data")
 
-posts = pipe(doc.find("posts", "*.md"), blog.post(base_url), tuple)
-pages = pipe(doc.find("pages", "*.md"), blog.page(base_url))
+posts = pipe(doc.find("posts", "*.md"), blog.markdown_post(base_url), tuple)
+pages = pipe(doc.find("pages", "*.md"), blog.markdown_page(base_url))
 
 posts_rss_doc = pipe(posts, rss.rss(
     base_url=base_url,
