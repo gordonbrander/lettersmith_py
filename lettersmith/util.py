@@ -23,6 +23,41 @@ def compose(fz, *fn):
     return reduce(compose2, fn, fz)
 
 
+def composable(func):
+    """
+    Decorator to transform a function into a composable function
+    that consumes all of its "rest" arguments, then returns a bound
+    function taking one argument (the first argument).
+    """
+    @wraps(func)
+    def composable_func(*args, **kwargs):
+        return lambda first: func(first, *args, **kwargs)
+    return composable_func
+
+
+def rest(func, *args, **kwargs):
+    """
+    Binds "rest" arguments, then returns a bound
+    function taking one argument (the first argument).
+    """
+    return lambda first: func(first, *args, **kwargs)
+
+
+def over(value, func):
+    """
+    Apply function over value. If you want to pipe value through more
+    than one function, use pipe.
+    """
+    return func(value)
+
+
+def pipe(value, *funcs):
+    """
+    Pipe value through functions in sequence.
+    """
+    return reduce(over, funcs, value)
+
+
 @singledispatch
 def get(x, key, default=None):
     """
