@@ -9,9 +9,9 @@ import yaml
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
+from lettersmith.html import strip_html
+from lettersmith.stringtools import first_sentence
 from lettersmith.util import replace, get
-from lettersmith.stringtools import truncate, strip_html
-
 
 Doc = namedtuple("Doc", (
     "id_path", "output_path", "input_path", "created", "modified",
@@ -80,12 +80,11 @@ def load(pathlike, relative_to=""):
         content = f.read()
     input_path = PurePath(pathlike)
     id_path = input_path.relative_to(relative_to)
-    output_path = pathtools.to_nice_path(id_path)
     section = pathtools.tld(id_path)
     title = pathtools.to_title(input_path)
     return doc(
         id_path=id_path,
-        output_path=output_path,
+        output_path=id_path,
         input_path=input_path,
         created=file_created,
         modified=file_modified,
@@ -140,17 +139,6 @@ def uplift_meta(doc):
     )
 
 
-def uplifts_meta(func):
-    """
-    Decorates a simpler doc parsing function so that it will uplift meta items
-    after running `func`.
-    """
-    @wraps(func)
-    def wrapped(doc, *args, **kwargs):
-        return uplift_meta(func(doc, *args, **kwargs))
-    return wrapped
-
-
 def has_ext(doc, *exts):
     """
     Check if a doc has an extension.
@@ -158,17 +146,7 @@ def has_ext(doc, *exts):
     return pathtools.has_ext(doc.id_path, *exts)
 
 
-def ext(*exts):
-    """
-    Create an extension predicate function.
-    """
-    def has_ext(doc):
-        return pathtools.has_ext(doc.id_path, *exts)
-    return has_ext
-
-
-
-def change_ext(doc, ext):
+def with_ext(doc, ext):
     """Change the extention on a doc's output_path, returning a new doc."""
     updated_path = PurePath(doc.output_path).with_suffix(ext)
     return doc._replace(output_path=str(updated_path))
@@ -182,7 +160,7 @@ def summary(doc, max_len=250, suffix="..."):
     try:
         return strip_html(doc.meta["summary"])
     except KeyError:
-        return truncate(strip_html(doc.content), max_len, suffix)
+        return first_sentence(strip_html(doc.content))
 
 
 class DocException(Exception):
@@ -220,50 +198,8 @@ def parse_frontmatter(doc):
     )
 
 
-def uplifts_frontmatter(func):
+def uplift_frontmatter(doc):
     """
-    Decorate a doc mapping function so it will `parse_frontmatter` and
-    `uplift_meta` before passing the `doc` to `func`.
-
-    You can decorate simpler markup rendering functions with
-    `uplifts_frontmatter` so that you don't have to deal with parsing
-    and uplifting frontmatter yourself.
-
-    Usage:
-
-        @uplifts_frontmatter
-        def set_title(doc, title=""):
-            return doc._replace(title=title)
+    Parse frontmatter and uplift meta to meta fields.
     """
-    @wraps(func)
-    def wrapped(doc, *args, **kwargs):
-        return func(uplift_meta(parse_frontmatter(doc)), *args, **kwargs)
-    return wrapped
-
-
-@uplifts_meta
-@annotates_exceptions
-def parse_yaml(doc):
-    """
-    Parse YAML in the doc's content property, placing it in meta
-    and replacing content property with an empty string.
-    """
-    meta = yaml.load(doc.content)
-    return doc._replace(
-        meta=meta,
-        content=""
-    )
-
-
-@uplifts_meta
-@annotates_exceptions
-def parse_json(doc):
-    """
-    Parse JSON in the doc's content property, placing it in meta
-    and replacing content property with an empty string.
-    """
-    meta = json.loads(doc.content)
-    return doc._replace(
-        meta=meta,
-        content=""
-    )
+    return uplift_meta(parse_frontmatter(doc))
