@@ -28,24 +28,24 @@ read_summary_markdown = compose(
 )
 
 
-def _annotate_summary(read_summary):
+def _summary(read_summary):
     """
     Render a summary from content using `read_summary` and set it on
     `doc.meta["summary"]`.
 
     If doc already has a `doc.meta["summary"]` it will leave it alone.
     """
-    def annotate_summary(docs):
+    def summary(docs):
         for doc in docs:
             if doc.meta.get("summary"):
                 yield doc
             else:
                 yield Doc.replace_meta(doc, summary=read_summary(doc.content))
-    return annotate_summary
+    return summary
 
 
-annotate_summary_html = _annotate_summary(read_summary_html)
-annotate_summary_markdown = _annotate_summary(read_summary_markdown)
+summary_html = _summary(read_summary_html)
+summary_markdown = _summary(read_summary_markdown)
 
 
 def _index_slugs(docs):
@@ -115,7 +115,7 @@ _TRANSCLUDE_TEMPLATE = '''<aside class="transclude">
 
 
 @composable
-def render_wikilinks(
+def content_wikilinks(
     docs,
     base_url,
     link_template=_LINK_TEMPLATE,
@@ -159,7 +159,7 @@ def render_wikilinks(
         yield doc._replace(content=content)
 
 
-def render_docs_markdown(
+def content_markdown(
     base_url,
     link_template=_LINK_TEMPLATE,
     nolink_template=_NOLINK_TEMPLATE,
@@ -174,19 +174,19 @@ def render_docs_markdown(
     - A list of links and backlinks.
     """
     return compose(
-        markdowntools.render_docs,
-        render_wikilinks(
+        markdowntools.content,
+        content_wikilinks(
             base_url,
             link_template,
             nolink_template,
             transclude_template
         ),
         annotate_links,
-        annotate_summary_markdown
+        summary_markdown
     )
 
 
-def render_docs_html(
+def content_html(
     base_url,
     link_template=_LINK_TEMPLATE,
     nolink_template=_NOLINK_TEMPLATE,
@@ -223,13 +223,13 @@ def render_docs_html(
 
     """
     return compose(
-        html.render_docs,
-        render_wikilinks(
+        html.content,
+        content_wikilinks(
             base_url,
             link_template,
             nolink_template,
             transclude_template
         ),
         annotate_links,
-        annotate_summary_html
+        summary_html
     )
