@@ -3,11 +3,13 @@ Tools for building pagination.
 """
 from lettersmith.util import chunk, expand
 from lettersmith import doc as Doc
+from lettersmith.util import composable
 
 
 TEMPLATES = ("list.html", "default.html")
 
 
+@composable
 def paginate(docs,
     templates=tuple(),
     output_path_template="page/{n}/index.html",
