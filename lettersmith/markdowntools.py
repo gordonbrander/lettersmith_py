@@ -34,7 +34,7 @@ def render_doc(doc):
     )
 
 
-def render_docs(docs):
+def content(docs):
     """
     Markdown rendering plugin
     """
