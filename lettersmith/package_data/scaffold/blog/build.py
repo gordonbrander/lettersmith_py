@@ -14,16 +14,8 @@ site_author = "A very cool person"
 # Load data directory
 template_data = data.find("data")
 
-posts = pipe(
-    doc.find("posts", "*.md"),
-    blog.post(base_url),
-    tuple
-)
-
-pages = pipe(
-    doc.find("pages", "*.md"),
-    blog.page(base_url)
-)
+posts = pipe(doc.find("posts", "*.md"), blog.post(base_url), tuple)
+pages = pipe(doc.find("pages", "*.md"), blog.page(base_url))
 
 posts_rss_doc = pipe(posts, rss.rss(
     base_url=base_url,
@@ -39,7 +31,7 @@ posts_and_pages = (*posts, *pages)
 
 sitemap_doc = pipe(posts_and_pages, sitemap.sitemap(base_url))
 
-all_docs = (sitemap_doc, posts_rss_doc, *all_docs)
+all_docs = (sitemap_doc, posts_rss_doc, *posts_and_pages)
 
 id_path_index = {doc.id_path: doc for doc in all_docs}
 
