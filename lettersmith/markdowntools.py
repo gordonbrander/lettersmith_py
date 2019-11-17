@@ -1,29 +1,32 @@
 from pathlib import PurePath
-from markdown import markdown
+from markdown import markdown as md
 from mdx_gfm import GithubFlavoredMarkdownExtension
-
-from lettersmith import doc as Doc
-
-
-MD_LANG_EXTENSIONS=(GithubFlavoredMarkdownExtension(),)
+from lettersmith.html import strip_html
 
 
-def house_markdown(s):
+def markdown(s):
     """
     Just a wrapper for our house flavor of markdown.
     We use Github-flavored markdown as a base.
     """
-    return markdown(s, extensions=MD_LANG_EXTENSIONS)
+    return md(s, extensions=(GithubFlavoredMarkdownExtension(),))
 
 
-@Doc.uplifts_frontmatter
-def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
+def strip_markdown(s):
+    """
+    Strip markdown, returning a bare string. This is useful for
+    generating summaries of markdown docs.
+    """
+    return strip_html(markdown(s))
+
+
+def render_doc(doc):
     """
     Render markdown in content field of doc dictionary.
     Updates the output path to .html.
     Returns a new doc.
     """
-    content = markdown(doc.content, extensions=extensions)
+    content = markdown(doc.content)
     output_path = PurePath(doc.output_path).with_suffix(".html")
     return doc._replace(
         content=content,
@@ -31,12 +34,9 @@ def render_doc(doc, extensions=MD_LANG_EXTENSIONS):
     )
 
 
-def parse_markdown(docs, extensions=MD_LANG_EXTENSIONS):
+def render_docs(docs):
     """
     Markdown rendering plugin
     """
     for doc in docs:
-        if Doc.has_ext(doc, ".md", ".markdown", ".mdown", ".txt"):
-            yield render_doc(doc, extensions)
-        else:
-            yield doc
+        yield render_doc(doc)
