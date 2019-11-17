@@ -7,7 +7,7 @@ from lettersmith.util import pipe
 
 # Configuration
 base_url = "http://yourwebsite.com"
-site_title= "My very cool website"
+site_title = "My very cool website"
 site_description = "A very cool website"
 site_author = "A very cool person"
 
