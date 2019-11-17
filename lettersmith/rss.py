@@ -4,6 +4,7 @@ from lettersmith.jinjatools import FileSystemEnvironment
 from lettersmith.path import to_url
 from lettersmith import doc as Doc
 from lettersmith.docs import most_recent
+from lettersmith.util import composable
 
 
 MODULE_PATH = Path(__file__).parent
@@ -42,7 +43,8 @@ def render_rss(
     })
 
 
-def create_rss_feed(
+@composable
+def rss(
     docs,
     base_url,
     title,
