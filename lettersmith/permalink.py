@@ -1,5 +1,7 @@
 from pathlib import PurePath
-from lettersmith import util
+from lettersmith.docs import ext_html
+from lettersmith.util import composable, compose
+from lettersmith import path as pathtools
 
 
 def read_doc_permalink(doc):
@@ -39,7 +41,23 @@ def replace_doc_permalink(doc, permalink_templates):
         return doc
 
 
-def replace_permalinks(docs, permalink_template):
+def nice_path(docs):
+    """
+    Change document paths to nice paths.
+
+    E.g. "foo.html" becomes "foo/index.html" so you have nice URLS.
+
+    This is a simple kind of permalink transform. If you want more
+    control over permalink output, use replace_permalinks.
+    """
+    for doc in docs:
+        yield doc._replace(
+            output_path=pathtools.to_nice_path(doc.output_path)
+        )
+
+
+@composable
+def permalink(docs, permalink_template):
     """
     Update permalinks on docs.
 
@@ -48,3 +66,8 @@ def replace_permalinks(docs, permalink_template):
     """
     for doc in docs:
         yield replace_doc_permalink(doc, permalink_templates)
+
+
+post_permalink = permalink("{yyyy}/{mm}/{dd}/{name}/index.html")
+page_permalink = compose(ext_html, nice_path)
+
