@@ -15,13 +15,13 @@ def markdown_doc(base_url):
     """
     return compose(
         absolutize.absolutize(base_url),
-        wikidoc.render_docs_markdown(base_url),
+        wikidoc.content_markdown(base_url),
         templatetools.add_templates,
         docs.uplift_frontmatter
     )
 
 
-def page(base_url):
+def markdown_page(base_url):
     """
     Performs typical transformations for a page.
 
@@ -37,11 +37,12 @@ def page(base_url):
     )
 
 
-def post(base_url):
+def markdown_post(base_url):
     """
     Performs typical transformations for a blog post.
 
     - Markdown
+    - Wikilinks
     - Absolutizes post links
     - Changes file extensions
     - Sets date-based permalink
@@ -49,5 +50,51 @@ def post(base_url):
     """
     return compose(
         markdown_doc(base_url),
+        permalink.post_permalink
+    )
+
+
+def html_doc(base_url):
+    """
+    Handle typical transformations for a generic html doc.
+    """
+    return compose(
+        absolutize.absolutize(base_url),
+        wikidoc.content_html(base_url),
+        templatetools.add_templates,
+        docs.uplift_frontmatter
+    )
+
+
+def html_page(base_url):
+    """
+    Performs typical transformations for a page.
+
+    - Wrap non-HTML lines with paragraph tags.
+    - Wikilinks
+    - Absolutizes post links
+    - Changes file extensions
+    - Sets nice permalink
+    - Adds templates in prep for Jinja rendering later
+    """
+    return compose(
+        html_doc(base_url),
+        permalink.page_permalink
+    )
+
+
+def html_post(base_url):
+    """
+    Performs typical transformations for a blog post.
+
+    - Wrap non-HTML lines with paragraph tags.
+    - Wikilinks
+    - Absolutizes post links
+    - Changes file extensions
+    - Sets date-based permalink
+    - Adds templates in prep for Jinja rendering later
+    """
+    return compose(
+        html_doc(base_url),
         permalink.post_permalink
     )
