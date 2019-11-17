@@ -88,30 +88,5 @@ class test_parse_json(unittest.TestCase):
         self.assertEqual(self.doc.meta["title"], "Doc title")
 
 
-class test_ext(unittest.TestCase):
-    def test_1(self):
-        doc_1 = Doc.doc(
-            id_path="fake_1.md",
-            output_path="fake_1.html"
-        )
-        doc_2 = Doc.doc(
-            id_path="fake_2.markdown",
-            output_path="fake_1.html"
-        )
-        doc_3 = Doc.doc(
-            id_path="fake_1.json",
-            output_path="fake_1.html"
-        )
-
-        is_md = Doc.ext(".md", ".mdown", ".markdown")
-
-        self.assertTrue(is_md(doc_1), "Matches by extension")
-        self.assertTrue(is_md(doc_2), "Matches by extension")
-        self.assertFalse(
-            is_md(doc_3),
-            "Does not return true for extensions that don't match."
-        )
-
-
 if __name__ == '__main__':
     unittest.main()
