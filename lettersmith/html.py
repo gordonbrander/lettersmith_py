@@ -78,9 +78,9 @@ def render_html(text):
     return "\n".join(_render_token(token) for token in _tokenize(lines))
 
 
-def render_docs(docs):
+def content(docs):
     """
     Render HTML markup in docs
     """
     for doc in docs:
-        return doc._replace(content=render_html(doc.content))
+        yield doc._replace(content=render_html(doc.content))
