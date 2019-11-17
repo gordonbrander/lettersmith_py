@@ -2,13 +2,14 @@
 Tools for making relative URLs absolute in doc content.
 """
 import re
-from lettersmith.util import replace
+from lettersmith.util import composable
 from lettersmith import path as pathtools
 
 
 URL_ATTR = r"""(src|href)=["'](.*?)["']"""
 
 
+@composable
 def absolutize(docs, base_url="/"):
     """
     Absolutize URLs in content. Replaces any relative URLs in content
