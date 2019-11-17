@@ -1,29 +1,5 @@
 """
-Wiki HTML -- a very simple markup language for wikilinks.
-
-Example:
-
-    Bare lines are wrapped in paragraphs.
-
-    Blank spaces are ignored.
-
-    You can use HTML like <b>bold</b>, or <i>italic</i> text.
-
-    Lines with <div>block els</div> will not get wrapped.
-
-        <div>
-            If you indent a line, it will not get wrapped
-            in a paragraph
-        </div>
-
-    [[Wikilinks]] also work. It's up to you to do something with them by
-    implementing a function for the compiler.
-
-    [[Transclusion wikilink]]
-
-    A bare wikilink on a single line, like the one above is treated
-    as a transclude. You can render something fancier here, like a
-    `<portal>`.
+Tools for rendering wikilinks in content.
 """
 import re
 from collections import namedtuple
@@ -72,7 +48,7 @@ annotate_summary_html = _annotate_summary(read_summary_html)
 annotate_summary_markdown = _annotate_summary(read_summary_markdown)
 
 
-def index_slugs(docs):
+def _index_slugs(docs):
     return {
         to_slug(doc.title): Link.from_doc(doc)
         for doc in docs
@@ -96,7 +72,7 @@ def _expand_edges(doc, slug_to_link):
 
 def _collect_edges(docs):
     docs = tuple(docs)
-    slug_to_link = index_slugs(docs)
+    slug_to_link = _index_slugs(docs)
     return expand(_expand_edges, docs, slug_to_link)
 
 
@@ -149,11 +125,12 @@ def render_wikilinks(
     """
     `[[wikilink]]` is replaced with a link to a doc with the same title
     (case insensitive), using the `link_template`.
+
     If no doc exists with that title it will be rendered
     using `nolink_template`.
     """
     docs = tuple(docs)
-    slug_to_link = index_slugs(docs)
+    slug_to_link = _index_slugs(docs)
 
     def render_wikilink(slug, title, type):
         if type is "transclude":
@@ -188,6 +165,14 @@ def render_docs_markdown(
     nolink_template=_NOLINK_TEMPLATE,
     transclude_template=_TRANSCLUDE_TEMPLATE
 ):
+    """
+    Render markdown and wikilinks.
+
+    Also annotates doc meta with:
+
+    - A summary
+    - A list of links and backlinks.
+    """
     return compose(
         markdowntools.render_docs,
         render_wikilinks(
@@ -207,6 +192,36 @@ def render_docs_html(
     nolink_template=_NOLINK_TEMPLATE,
     transclude_template=_TRANSCLUDE_TEMPLATE
 ):
+    """
+    Render html (wrap bare lines with paragraphs) and wikilinks.
+
+    Also annotates doc meta with:
+
+    - A summary
+    - A list of links and backlinks.
+
+    Example:
+
+        Bare lines are wrapped in paragraphs.
+
+        Blank spaces are ignored.
+
+        You can use HTML like <b>bold</b>, or <i>italic</i> text.
+
+        Lines with <div>block els</div> will not get wrapped.
+
+            <div>
+                If you indent a line, it will not get wrapped
+                in a paragraph
+            </div>
+
+        [[Wikilinks]] also work. They will be rendered as <a class="wikilink">Wikilinks</a>.
+
+        [[Transclusion wikilink]]
+
+        If you put a wikilink on it's own line, as above, it will be rendered as a rich snippet (transclude).
+
+    """
     return compose(
         html.render_docs,
         render_wikilinks(
