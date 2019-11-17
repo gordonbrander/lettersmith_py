@@ -5,10 +5,11 @@ from lettersmith import docs
 from lettersmith import file
 from lettersmith import jinjatools
 from lettersmith import markdowntools
+from lettersmith import html
+from lettersmith import wikidoc
 from lettersmith import paging
 from lettersmith import permalink
-from lettersmith import post
+from lettersmith import blog
 from lettersmith import rss
 from lettersmith import sitemap
 from lettersmith import taxonomy
-from lettersmith import wikilink
