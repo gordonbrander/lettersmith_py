@@ -60,5 +60,9 @@ def add_doc_templates(doc):
     return doc._replace(templates=tuple(templates))
 
 
-# Plugin version that adds templates to an iterable of docs.
-add_templates = util.mapping(add_doc_templates)
+def add_templates(docs):
+    """
+    Plugin that adds templates to each doc
+    """
+    for doc in docs:
+        yield add_doc_templates(doc)
