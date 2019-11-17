@@ -27,7 +27,7 @@ def _smart_read_data_file(file_path):
             raise ValueError("Unsupported file type: {}".format(ext))
 
 
-def load_data_files(dir_path):
+def find(dir_path):
     """
     Create a data dictionary for the template. Each file in the list
     will be loaded (supported types include JSON, YAML). The structured
