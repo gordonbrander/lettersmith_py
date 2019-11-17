@@ -152,7 +152,7 @@ def with_ext(doc, ext):
     return doc._replace(output_path=str(updated_path))
 
 
-def summary(doc, max_len=250, suffix="..."):
+def get_summary(doc):
     """
     Get summary for doc. Uses "summary" meta field if it exists.
     Otherwise, generates a summary by truncating doc content.

@@ -12,7 +12,7 @@
     <title>{{doc.title}}</title>
     <link>{{doc.output_path | to_url(base_url)}}</link>
     <guid>{{doc.output_path | to_url(base_url)}}</guid>
-    <description>{{doc | summary | escape}}</description>
+    <description>{{doc | get_summary | escape}}</description>
     <content:encoded><![CDATA[
       {{doc.content}}
     ]]></content:encoded>

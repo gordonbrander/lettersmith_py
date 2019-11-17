@@ -12,7 +12,7 @@ TEMPLATE_PATH = Path(MODULE_PATH, "package_data", "template")
 
 
 FILTERS = {
-    "summary": Doc.summary,
+    "get_summary": Doc.get_summary,
     "to_url": to_url
 }
 
