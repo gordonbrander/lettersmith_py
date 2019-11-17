@@ -16,12 +16,12 @@ def write_file_deep(pathlike, content):
         f.write(content)
 
 
-def copy_dirs(directory_paths, output_directory_path):
+def copy_dirs(directory_paths, output_path):
     """
-    Recursively copy an iterable of directory paths to `output_directory_path`.
+    Recursively copy an iterable of directory paths to `output_path`.
     """
     for directory_path in directory_paths:
         input_path = PurePath(directory_path)
-        output_path = PurePath(output_directory_path, input_path.name)
+        output_path = PurePath(output_path, input_path.name)
         shutil.rmtree(output_path, ignore_errors=True)
         shutil.copytree(input_path, output_path)
