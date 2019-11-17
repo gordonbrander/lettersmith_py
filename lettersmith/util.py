@@ -245,20 +245,6 @@ def where_matches(value, glob):
     return fnmatch(value, glob)
 
 
-def mapping(f):
-    """
-    Lift a function to consume an iterator instead of a single value.
-    The first argument is assumed to be the "main" argument.
-    The transformed function will instead consume an iterator as the
-    first argument.
-    """
-    @wraps(f)
-    def mappingf(iter, *args, **kwargs):
-        for x in iter:
-            yield f(x, *args, **kwargs)
-    return mappingf
-
-
 def sort_by(dicts_iter, key, default=None, reverse=False):
     """Sort an iterable of dicts via a key path"""
     fkey = lambda x: get_deep(x, key, default=default)

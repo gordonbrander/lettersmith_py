@@ -8,10 +8,8 @@ from jinja2 import Environment, FileSystemLoader
 from lettersmith import util
 from lettersmith import docs as Docs
 from lettersmith import doc as Doc
-from lettersmith import templatetools
 from lettersmith import path as pathtools
-from lettersmith.markdowntools import house_markdown
-from lettersmith import taxonomy
+from lettersmith.markdowntools import markdown
 
 
 def _choice(iterable):
@@ -43,9 +41,9 @@ def _sample(iterable, k):
         return l
 
 
-def permalink(base_url):
+def _permalink(base_url):
     def permalink_bound(output_path):
-        return to_url(output_path, base_url)
+        return pathtools.to_url(output_path, base_url)
     return permalink_bound
 
 
@@ -58,7 +56,7 @@ class FileSystemEnvironment(Environment):
 
 
 TEMPLATE_FUNCTIONS = {
-    "markdown": house_markdown,
+    "markdown": markdown,
     "sorted": sorted,
     "json_dumps": json.dumps,
     "sum": sum,
@@ -92,9 +90,7 @@ TEMPLATE_FUNCTIONS = {
     "remove_id_path": Docs.remove_id_path,
     "filter_siblings": Docs.filter_siblings,
     "to_slug": pathtools.to_slug,
-    "to_slugs": util.mapping(pathtools.to_slug),
-    "tuple": tuple,
-    "json_dumps": json.dumps
+    "tuple": tuple
 }
 
 
@@ -110,9 +106,7 @@ class LettersmithEnvironment(FileSystemEnvironment):
             filters=TEMPLATE_FUNCTIONS,
             context=TEMPLATE_FUNCTIONS
         )
-        now = datetime.now()
         self.filters.update(filters)
-        self.globals.update({"now": now})
         self.globals.update(context)
 
 
@@ -123,35 +117,28 @@ def should_template(doc):
     return len(doc.templates) > 0
 
 
-def doc_renderer(env):
-    """
-    Create a render function with a bound environment.
-    Returns a render function that can render docs.
-    """
-    def render_doc(doc):
-        """
-        Render a document with this Jinja environment.
-        """
-        if should_template(doc):
-            template = env.select_template(doc.templates)
-            rendered = template.render({"doc": doc})
-            return doc._replace(content=rendered)
-        else:
-            return doc
-    return render_doc
-
-
-def render(docs, templates_path="theme", context={}, filters={}):
+def jinja(templates_path, base_url, context={}, filters={}):
     """
     Wraps up the gory details of creating a Jinja renderer.
     Returns a render function that takes a doc and returns a rendered doc.
     Template comes preloaded with Jinja default filters, and
     Lettersmith default filters and globals.
     """
-    render = doc_renderer(LettersmithEnvironment(
+    now = datetime.now()
+    env = LettersmithEnvironment(
         templates_path,
-        filters=filters,
-        context=context
-    ))
-    for doc in docs:
-        yield render(doc)
+        filters={"permalink": _permalink(base_url), **filters},
+        context={"now": now, **context}
+    )
+    def render(docs):
+        """
+        Render docs with Jinja templates
+        """
+        for doc in docs:
+            if should_template(doc):
+                template = env.select_template(doc.templates)
+                rendered = template.render({"doc": doc})
+                yield doc._replace(content=rendered)
+            else:
+                yield doc
+    return render
