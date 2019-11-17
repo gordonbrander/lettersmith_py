@@ -19,10 +19,10 @@ pages = pipe(doc.find("pages", "*.md"), blog.page(base_url))
 
 posts_rss_doc = pipe(posts, rss.rss(
     base_url=base_url,
-    title=title,
-    description=description,
-    author=author,
-    output_path=rss_output_path
+    title=site_title,
+    description=site_description,
+    author=site_author,
+    output_path="posts.xml"
 ))
 
 tag_index = taxonomy.index_tags(posts)
