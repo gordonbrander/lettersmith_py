@@ -9,9 +9,7 @@ import yaml
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
-from lettersmith.html import strip_html
-from lettersmith.stringtools import first_sentence
-from lettersmith.util import replace, get
+
 
 Doc = namedtuple("Doc", (
     "id_path", "output_path", "input_path", "created", "modified",
@@ -44,19 +42,6 @@ def doc(id_path, output_path,
         meta=meta if meta is not None else {},
         templates=templates if templates is not None else tuple()
     )
-
-
-@get.register(Doc)
-def get_doc(doc, key, default=None):
-    return getattr(doc, key, default)
-
-
-@replace.register(Doc)
-def replace_doc(doc, **kwargs):
-    """
-    Replace items in a Doc, returning a new Doc.
-    """
-    return doc._replace(**kwargs)
 
 
 def replace_meta(doc, **kwargs):
@@ -152,30 +137,19 @@ def with_ext(doc, ext):
     return doc._replace(output_path=str(updated_path))
 
 
-def get_summary(doc):
-    """
-    Get summary for doc. Uses "summary" meta field if it exists.
-    Otherwise, generates a summary by truncating doc content.
-    """
-    try:
-        return strip_html(doc.meta["summary"])
-    except KeyError:
-        return first_sentence(strip_html(doc.content))
-
-
 class DocException(Exception):
     pass
 
 
-def annotates_exceptions(func):
+def annotate_exceptions(func):
     """
     Decorates a mapping function for docs, giving it a more useful
     exception message.
     """
     @wraps(func)
-    def map_doc(doc, *args, **kwargs):
+    def func_with_annotated_exceptions(doc):
         try:
-            return func(doc, *args, **kwargs)
+            return func(doc)
         except Exception as e:
             msg = (
                 'Error encountered while mapping doc '
@@ -186,10 +160,10 @@ def annotates_exceptions(func):
                 module=func.__module__
             )
             raise DocException(msg) from e
-    return map_doc
+    return func_with_annotated_exceptions
 
 
-@annotates_exceptions
+@annotate_exceptions
 def parse_frontmatter(doc):
     meta, content = frontmatter.parse(doc.content)
     return doc._replace(

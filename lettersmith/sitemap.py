@@ -4,7 +4,7 @@ from itertools import islice
 from lettersmith import doc as Doc
 from lettersmith.jinjatools import FileSystemEnvironment
 from lettersmith.path import to_url
-from lettersmith.util import composable
+from lettersmith.func import composable
 
 MODULE_PATH = Path(__file__).parent
 TEMPLATE_PATH = Path(MODULE_PATH, "package_data", "template")

@@ -1,7 +1,7 @@
 """
 Tools for blogging
 """
-from lettersmith.util import compose
+from lettersmith.func import compose
 from lettersmith import wikidoc
 from lettersmith import absolutize
 from lettersmith import templatetools

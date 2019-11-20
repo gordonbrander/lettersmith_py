@@ -2,7 +2,7 @@
 Tools for making relative URLs absolute in doc content.
 """
 import re
-from lettersmith.util import composable
+from lettersmith.func import composable
 from lettersmith import path as pathtools
 
 

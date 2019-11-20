@@ -1,6 +1,6 @@
 from pathlib import PurePath
 from lettersmith.docs import ext_html
-from lettersmith.util import composable, compose
+from lettersmith.func import composable, compose
 from lettersmith import path as pathtools
 
 

@@ -20,13 +20,24 @@ Example:
 """
 import re
 from collections import namedtuple
-from lettersmith.util import compose
 from lettersmith.stringtools import first_sentence
+from lettersmith.doc import annotate_exceptions
 
 
 def strip_html(html_str):
     """Remove html tags from a string."""
     return re.sub('<[^<]+?>', '', html_str)
+
+
+def get_summary(doc):
+    """
+    Get summary for doc. Uses "summary" meta field if it exists.
+    Otherwise, generates a summary by truncating doc content.
+    """
+    try:
+        return strip_html(doc.meta["summary"])
+    except KeyError:
+        return first_sentence(strip_html(doc.content))
 
 
 class RenderError(Exception):
@@ -78,9 +89,17 @@ def render_html(text):
     return "\n".join(_render_token(token) for token in _tokenize(lines))
 
 
+@annotate_exceptions
+def render_doc(doc):
+    """
+    Render HTML markup in doc content field.
+    """
+    return doc._replace(content=render_html(doc.content))
+
+
 def content(docs):
     """
     Render HTML markup in docs
     """
     for doc in docs:
-        yield doc._replace(content=render_html(doc.content))
+        yield render_doc(doc)

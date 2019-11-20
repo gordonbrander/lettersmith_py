@@ -1,7 +1,6 @@
 """
 Tools for working with link data.
 """
-from lettersmith.util import get
 from collections import namedtuple
 
 
@@ -26,11 +25,6 @@ def from_doc(doc):
         doc.title,
         doc.meta.get("summary", "")
     )
-
-
-@get.register(Link)
-def get_link(link, key, default=None):
-    return getattr(link, key, default)
 
 
 Edge = namedtuple("Edge", ("tail", "head"))

@@ -4,7 +4,9 @@ from lettersmith.jinjatools import FileSystemEnvironment
 from lettersmith.path import to_url
 from lettersmith import doc as Doc
 from lettersmith.docs import most_recent
-from lettersmith.util import composable
+from lettersmith.html import get_summary
+from lettersmith.stringtools import first_sentence
+from lettersmith.func import composable
 
 
 MODULE_PATH = Path(__file__).parent
@@ -12,7 +14,7 @@ TEMPLATE_PATH = Path(MODULE_PATH, "package_data", "template")
 
 
 FILTERS = {
-    "get_summary": Doc.get_summary,
+    "get_summary": get_summary,
     "to_url": to_url
 }
 

@@ -7,9 +7,10 @@ from jinja2 import Environment, FileSystemLoader
 
 from lettersmith import util
 from lettersmith import docs as Docs
-from lettersmith import doc as Doc
+from lettersmith.doc import annotate_exceptions
 from lettersmith import path as pathtools
 from lettersmith.markdowntools import markdown
+from lettersmith import select
 
 
 def _choice(iterable):
@@ -68,23 +69,27 @@ TEMPLATE_FUNCTIONS = {
     "sample": _sample,
     "shuffle": _shuffle,
     "to_url": pathtools.to_url,
-    "get": util.get,
     "sorted": sorted,
-    "sort_by": util.sort_by,
-    "sort_by_len": util.sort_by_len,
-    "sort_by_keys": util.sort_by_keys,
+    "select": select.select,
+    "sort": select.sort,
+    "where": select.where,
+    "attr": select.attr,
+    "key": select.key,
+    "first": select.first,
+    "gt": select.gt,
+    "lt": select.lt,
+    "eq": select.eq,
+    "neq": select.neq,
+    "has": select.has,
+    "has_any": select.has_any,
+    "id_path": select.id_path,
+    "output_path": select.output_path,
+    "title": select.title,
+    "section": select.section,
+    "created": select.created,
+    "modified": select.modified,
+    "meta": select.meta,
     "sort_items_by_key": util.sort_items_by_key,
-    "where": util.where,
-    "where_not": util.where_not,
-    "where_gt": util.where_gt,
-    "where_lt": util.where_lt,
-    "where_len": util.where_len,
-    "where_len_gt": util.where_len_gt,
-    "where_len_lt": util.where_len_lt,
-    "where_in": util.where_in,
-    "where_not_in": util.where_not_in,
-    "where_any_in": util.where_any_in,
-    "where_matches": util.where_matches,
     "join": util.join,
     "remove_index": Docs.remove_index,
     "remove_id_path": Docs.remove_id_path,
@@ -130,15 +135,20 @@ def jinja(templates_path, base_url, context={}, filters={}):
         filters={"permalink": _permalink(base_url), **filters},
         context={"now": now, **context}
     )
+
+    @annotate_exceptions
+    def render_doc(doc):
+        if should_template(doc):
+            template = env.select_template(doc.templates)
+            rendered = template.render({"doc": doc})
+            return doc._replace(content=rendered)
+        else:
+            return doc
+
     def render(docs):
         """
         Render docs with Jinja templates
         """
         for doc in docs:
-            if should_template(doc):
-                template = env.select_template(doc.templates)
-                rendered = template.render({"doc": doc})
-                yield doc._replace(content=rendered)
-            else:
-                yield doc
+            yield render_doc(doc)
     return render

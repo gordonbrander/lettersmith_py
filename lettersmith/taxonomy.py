@@ -2,20 +2,20 @@
 Tools for indexing docs by tag (taxonomy).
 """
 from datetime import datetime
-from lettersmith.util import composable
+from lettersmith.func import composable
 from lettersmith import path as pathtools
 from lettersmith.doc import doc
 
 
 @composable
-def gen_taxonomy_archives(
+def taxonomy_archives(
     docs,
     key,
     templates=tuple(),
     output_path_template="{taxonomy}/{term}/all/index.html"
 ):
     """
-    Creates a full archive page for each taxonomy term. One page per term.
+    Creates an archive page for each taxonomy term. One page per term.
     """
     tax_index = index_by_taxonomy(docs, key)
     for term, docs in tax_index.items():
@@ -43,6 +43,8 @@ def gen_taxonomy_archives(
             meta=meta
         )
 
+
+tag_archives = taxonomy_archives("tags")
 
 
 @composable

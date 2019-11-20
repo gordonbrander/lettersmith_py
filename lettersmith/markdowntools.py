@@ -2,6 +2,7 @@ from pathlib import PurePath
 from markdown import markdown as md
 from mdx_gfm import GithubFlavoredMarkdownExtension
 from lettersmith.html import strip_html
+from lettersmith.doc import annotate_exceptions
 
 
 def markdown(s):
@@ -20,6 +21,7 @@ def strip_markdown(s):
     return strip_html(markdown(s))
 
 
+@annotate_exceptions
 def render_doc(doc):
     """
     Render markdown in content field of doc dictionary.

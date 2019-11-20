@@ -7,7 +7,8 @@ from fnmatch import fnmatch
 import shutil
 from lettersmith.path import is_draft, is_index, is_doc_file
 from lettersmith import doc as Doc
-from lettersmith.util import sort_by, composable
+from lettersmith import select
+from lettersmith.func import composable
 
 
 def load(file_paths, relative_to=""):
@@ -83,8 +84,11 @@ def filter_siblings(docs, id_path):
         if pathtools.is_sibling(id_path, doc.id_path))
 
 
+sort_by_created = select.sortf(select.created)
+
+
 def most_recent(docs, nitems, reverse=True):
-    return islice(sort_by(docs, "created", reverse), nitems)
+    return islice(sort_by_created(docs, reverse=reverse), nitems)
 
 
 def uplift_frontmatter(docs):

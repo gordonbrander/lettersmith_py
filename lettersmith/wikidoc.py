@@ -9,7 +9,8 @@ from lettersmith import html
 from lettersmith import wikimarkup
 from lettersmith import markdowntools
 from lettersmith.path import to_slug, to_url
-from lettersmith.util import index_many, expand, compose, composable
+from lettersmith.util import index_many, expand
+from lettersmith.func import compose, composable
 from lettersmith.stringtools import first_sentence
 
 
