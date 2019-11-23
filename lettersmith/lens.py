@@ -1,12 +1,13 @@
 """
-A minimal implementation of Haskel-style lenses, inspired by Elm
-Focus library.
+A minimal implementation of Haskel-style lenses
 
-Lenses let you create getters and setters for a complex data structure.
+Inspired by Elm's Focus library and Racket's Lenses library.
+
+Lenses let you create getters and setters for complex data structures.
 The combination of a getter and setter is called a lens.
 
 Lenses can be composed to provide a way to do deep reads and deep writes
-to complex data structures.    
+to complex data structures.
 """
 from collections import namedtuple
 from functools import reduce
@@ -14,7 +15,9 @@ from functools import reduce
 
 Lens = namedtuple("Lens", ("get", "put"))
 Lens.__doc__ = """
-Container type for Lenses. A lens is anything with a `get` and `put` method.
+Container type for Lenses.
+A lens is any structure with `get` and `update` functions that
+follow the lens signature.
 """
 
 
@@ -69,6 +72,14 @@ def over(lens, mapping, big):
     return put(lens, big, mapping(get(lens, big)))
 
 
+def update(lens, up, big, msg):
+    """
+    Update `big` through an update function, `up` which takes the
+    current small, and a `msg`, and returns a new small.
+    """
+    return put(lens, big, up(get(lens, big), msg))
+
+
 def key(k, default=None):
     """
     Lens to get and set a key on a dictionary, with default value.
@@ -95,25 +106,34 @@ def key(k, default=None):
     return Lens(get, put)
 
 
-def pick(d, keys):
+def _pick(d, keys):
     return {k: d[k] for k in keys}
 
 
 def keys(*keys):
     """
-    Lens to get and set a key on a dictionary, with default value.
+    Lens to get and set multiple keys on a dictionary. Note that
+    no default values are allowed.
     """
     def get(big):
         """
         Get key from dict
         """
-        return pick(big, keys)
+        return _pick(big, keys)
 
     def put(big, small):
         """
         Put value in key from dict, returning new dict.
         """
-        patch = pick(small, keys)
+        patch = _pick(small, keys)
         return {**big, **patch}
 
     return Lens(get, put)
+
+
+def every(lens, mapping, bigs):
+    """
+    Map functor over an iterable of `big`, yielding transformed `bigs`.
+    """
+    for big in bigs:
+        yield over(lens, mapping, big)
