@@ -21,7 +21,7 @@ Example:
 import re
 from collections import namedtuple
 from lettersmith.stringtools import first_sentence
-from lettersmith.doc import annotate_exceptions
+from lettersmith import docs as Docs
 
 
 def strip_html(html_str):
@@ -89,17 +89,4 @@ def render_html(text):
     return "\n".join(_render_token(token) for token in _tokenize(lines))
 
 
-@annotate_exceptions
-def render_doc(doc):
-    """
-    Render HTML markup in doc content field.
-    """
-    return doc._replace(content=render_html(doc.content))
-
-
-def content(docs):
-    """
-    Render HTML markup in docs
-    """
-    for doc in docs:
-        yield render_doc(doc)
+content = Docs.renderer(render_html)
