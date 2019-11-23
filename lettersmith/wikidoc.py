@@ -4,12 +4,14 @@ Tools for rendering wikilinks in content.
 import re
 from collections import namedtuple
 from lettersmith import doc as Doc
-from lettersmith import link as Link
+from lettersmith import stub as Stub
+from lettersmith import edge as Edge
 from lettersmith import html
 from lettersmith import wikimarkup
 from lettersmith import markdowntools
 from lettersmith.path import to_slug, to_url
 from lettersmith.util import index_many, expand
+from lettersmith import lens
 from lettersmith.func import compose, composable
 from lettersmith.stringtools import first_sentence
 
@@ -38,10 +40,10 @@ def _summary(read_summary):
     """
     def summary(docs):
         for doc in docs:
-            if doc.meta.get("summary"):
+            if lens.get(Doc.meta_summary, doc):
                 yield doc
             else:
-                yield Doc.replace_meta(doc, summary=read_summary(doc.content))
+                yield lens.put(Doc.meta_summary, doc, read_summary(doc.content))
     return summary
 
 
@@ -49,32 +51,32 @@ summary_html = _summary(read_summary_html)
 summary_markdown = _summary(read_summary_markdown)
 
 
-def _index_slugs(docs):
+def _index_by_slug(docs):
     return {
-        to_slug(doc.title): Link.from_doc(doc)
+        to_slug(doc.title): Stub.from_doc(doc)
         for doc in docs
     }
 
 
-def _extract_links(content, slug_to_link):
+def _extract_links(content, slug_to_stub):
     wikilinks = frozenset(wikimarkup.find_wikilinks(content))
     for slug, title in wikilinks:
         try:
-            yield slug_to_link[slug]
+            yield slug_to_stub[slug]
         except KeyError:
             pass
 
 
-def _expand_edges(doc, slug_to_link):
-    tail = Link.from_doc(doc)
-    for head in _extract_links(doc.content, slug_to_link):
-        yield Link.Edge(tail, head)
+def _expand_edges(doc, slug_to_stub):
+    tail = Stub.from_doc(doc)
+    for head in _extract_links(doc.content, slug_to_stub):
+        yield Edge.Edge(tail, head)
 
 
 def _collect_edges(docs):
     docs = tuple(docs)
-    slug_to_link = _index_slugs(docs)
-    return expand(_expand_edges, docs, slug_to_link)
+    slug_to_stub = _index_by_slug(docs)
+    return expand(_expand_edges, docs, slug_to_stub)
 
 
 def _index_by_link(edge):
@@ -85,12 +87,25 @@ def _index_by_backlink(edge):
     return edge.head.id_path, edge.tail
 
 
+_empty = tuple()
+meta_links = lens.compose(Doc.meta, lens.key("links", _empty))
+meta_backlinks = lens.compose(Doc.meta, lens.key("backlinks", _empty))
+
+
+def has_links(doc):
+    return len(lens.get(meta_links, doc)) > 0
+
+
+def has_backlinks(doc):
+    return len(lens.get(meta_backlinks, doc)) > 0
+
+
 def annotate_links(docs):
     """
     Annotate docs with links and backlinks.
 
     Returns an iterator for docs with 2 new meta fields: links and backlinks.
-    Each contains a tuple of `Link` namedtuples.
+    Each contains a tuple of `Stub`s.
     """
     docs = tuple(docs)
     edges = tuple(_collect_edges(docs))
@@ -98,11 +113,10 @@ def annotate_links(docs):
     backlink_index = index_many(_index_by_backlink(edge) for edge in edges)
     empty = tuple()
     for doc in docs:
-        yield Doc.replace_meta(
-            doc,
-            links=tuple(link_index.get(doc.id_path, empty)),
-            backlinks=tuple(backlink_index.get(doc.id_path, empty))
-        )
+        yield Doc.update_meta(doc, {
+            "links": tuple(link_index.get(doc.id_path, empty)),
+            "backlinks": tuple(backlink_index.get(doc.id_path, empty))
+        })
 
 
 _LINK_TEMPLATE = '<a href="{url}" class="wikilink">{title}</a>'
@@ -131,12 +145,12 @@ def content_wikilinks(
     using `nolink_template`.
     """
     docs = tuple(docs)
-    slug_to_link = _index_slugs(docs)
+    slug_to_stub = _index_by_slug(docs)
 
     def render_wikilink(slug, title, type):
         if type is "transclude":
             try:
-                link = slug_to_link[slug]
+                link = slug_to_stub[slug]
                 url = to_url(link.output_path, base=base_url)
                 return transclude_template.format(
                     url=url,
@@ -147,7 +161,7 @@ def content_wikilinks(
                 return ""
         else:
             try:
-                link = slug_to_link[slug]
+                link = slug_to_stub[slug]
                 url = to_url(link.output_path, base=base_url)
                 return link_template.format(url=url, title=title)
             except KeyError:
