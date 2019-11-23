@@ -6,9 +6,13 @@ from functools import wraps
 import frontmatter
 import yaml
 
+from lettersmith.util import mix
 from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
+from lettersmith import lens
+from lettersmith.lens import Lens
+from lettersmith.func import compose
 
 
 Doc = namedtuple("Doc", (
@@ -44,14 +48,6 @@ def doc(id_path, output_path,
     )
 
 
-def replace_meta(doc, **kwargs):
-    """
-    Put a value into a doc's meta dictionary.
-    Returns a new doc.
-    """
-    return doc._replace(meta={**doc.meta, **kwargs})
-
-
 def load(pathlike, relative_to=""):
     """
     Loads a basic doc dictionary from a file path.
@@ -80,6 +76,68 @@ def load(pathlike, relative_to=""):
     )
 
 
+id_path = Lens(
+    lambda doc: doc.id_path,
+    lambda doc, id_path: doc._replace(id_path=id_path)
+)
+
+
+output_path = Lens(
+    lambda doc: doc.output_path,
+    lambda doc, output_path: doc._replace(output_path=output_path)
+)
+
+title = Lens(
+    lambda doc: doc.title,
+    lambda doc, title: doc._replace(title=title)
+)
+
+
+content = Lens(
+    lambda doc: doc.content,
+    lambda doc, content: doc._replace(content=content)
+)
+
+
+section = Lens(
+    lambda doc: doc.section,
+    lambda doc, section: doc._replace(section=section)
+)
+
+created = Lens(
+    lambda doc: doc.created,
+    lambda doc, created: doc._replace(created=created)
+)
+
+
+modified = Lens(
+    lambda doc: doc.modified,
+    lambda doc, modified: doc._replace(modified=modified)
+)
+
+
+meta = Lens(
+    lambda doc: doc.meta,
+    lambda doc, meta: doc._replace(meta=meta)
+)
+
+
+templates = Lens(
+    lambda doc: doc.templates,
+    lambda doc, templates: doc._replace(templates=templates)
+)
+
+
+meta_summary = lens.compose(meta, lens.key("summary", ""))
+
+
+def update_meta(doc, patch):
+    """
+    Mix keys from `patch` into `doc.meta`.
+    """
+    return lens.update(meta, mix, doc, patch)
+
+
 def to_json(doc):
     """
     Serialize a doc as JSON-serializable data
@@ -94,7 +152,6 @@ def to_json(doc):
         "title": doc.title,
         "section": doc.section,
         "content": doc.content,
-        # TODO manually serialize meta?
         "meta": doc.meta,
         "templates": doc.templates
     }
@@ -122,19 +179,6 @@ def uplift_meta(doc):
         created=to_datetime(doc.meta.get("created", doc.created)),
         modified=to_datetime(doc.meta.get("modified", doc.modified))
     )
-
-
-def has_ext(doc, *exts):
-    """
-    Check if a doc has an extension.
-    """
-    return pathtools.has_ext(doc.id_path, *exts)
-
-
-def with_ext(doc, ext):
-    """Change the extention on a doc's output_path, returning a new doc."""
-    updated_path = PurePath(doc.output_path).with_suffix(ext)
-    return doc._replace(output_path=str(updated_path))
 
 
 class DocException(Exception):
@@ -172,8 +216,4 @@ def parse_frontmatter(doc):
     )
 
 
-def uplift_frontmatter(doc):
-    """
-    Parse frontmatter and uplift meta to meta fields.
-    """
-    return uplift_meta(parse_frontmatter(doc))
+uplift_frontmatter = compose(uplift_meta, parse_frontmatter)
