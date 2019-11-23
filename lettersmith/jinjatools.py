@@ -7,10 +7,11 @@ from jinja2 import Environment, FileSystemLoader
 
 from lettersmith import util
 from lettersmith import docs as Docs
-from lettersmith.doc import annotate_exceptions
+from lettersmith import doc as Doc
+from lettersmith import query
+from lettersmith import lens
 from lettersmith import path as pathtools
 from lettersmith.markdowntools import markdown
-from lettersmith import select
 
 
 def _choice(iterable):
@@ -70,26 +71,6 @@ TEMPLATE_FUNCTIONS = {
     "shuffle": _shuffle,
     "to_url": pathtools.to_url,
     "sorted": sorted,
-    "select": select.select,
-    "sort": select.sort,
-    "where": select.where,
-    "attr": select.attr,
-    "key": select.key,
-    "first": select.first,
-    "gt": select.gt,
-    "lt": select.lt,
-    "eq": select.eq,
-    "neq": select.neq,
-    "has": select.has,
-    "has_any": select.has_any,
-    "id_path": select.id_path,
-    "output_path": select.output_path,
-    "title": select.title,
-    "section": select.section,
-    "created": select.created,
-    "modified": select.modified,
-    "meta": select.meta,
-    "sort_items_by_key": util.sort_items_by_key,
     "join": util.join,
     "remove_index": Docs.remove_index,
     "remove_id_path": Docs.remove_id_path,
@@ -136,19 +117,14 @@ def jinja(templates_path, base_url, context={}, filters={}):
         context={"now": now, **context}
     )
 
-    @annotate_exceptions
-    def render_doc(doc):
+    @query.maps
+    @Doc.annotate_exceptions
+    def render(doc):
         if should_template(doc):
             template = env.select_template(doc.templates)
             rendered = template.render({"doc": doc})
-            return doc._replace(content=rendered)
+            return lens.put(Doc.content, doc, rendered)
         else:
             return doc
 
-    def render(docs):
-        """
-        Render docs with Jinja templates
-        """
-        for doc in docs:
-            yield render_doc(doc)
     return render
