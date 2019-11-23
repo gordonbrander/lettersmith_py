@@ -107,6 +107,22 @@ def to_nice_path(ugly_pathlike):
     return nice_path
 
 
+def ext(pathlike, ext):
+    """
+    Set suffix `ext` on a pathlike.
+    Return a path string.
+    """
+    return str(PurePath(pathlike).with_suffix(ext))
+
+
+def ext_html(pathlike):
+    """
+    Set suffix `ext` on a pathlike.
+    Return a path string.
+    """
+    return ext(pathlike, ".html")
+
+
 def to_url(pathlike, base="/"):
     """
     Makes a nice path into a url.
