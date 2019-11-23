@@ -6,7 +6,7 @@ from lettersmith import wikidoc
 from lettersmith import absolutize
 from lettersmith import templatetools
 from lettersmith import permalink
-from lettersmith import docs
+from lettersmith import docs as Docs
 
 
 def markdown_doc(base_url):
@@ -17,7 +17,7 @@ def markdown_doc(base_url):
         absolutize.absolutize(base_url),
         wikidoc.content_markdown(base_url),
         templatetools.add_templates,
-        docs.uplift_frontmatter
+        Docs.uplift_frontmatter
     )
 
 
@@ -62,7 +62,7 @@ def html_doc(base_url):
         absolutize.absolutize(base_url),
         wikidoc.content_html(base_url),
         templatetools.add_templates,
-        docs.uplift_frontmatter
+        Docs.uplift_frontmatter
     )
 
 
