@@ -48,45 +48,5 @@ class test_parse_frontmatter(unittest.TestCase):
         self.assertEqual(self.doc.meta["title"], "Doc title")
 
 
-class test_parse_yaml(unittest.TestCase):
-    def setUp(self):
-        doc_path = fixtures_path.joinpath("doc.yaml")
-        doc = Doc.load(doc_path, relative_to=fixtures_path)
-        doc = Doc.parse_yaml(doc)
-        self.doc = doc
-
-    def test_content(self):
-        self.assertEqual(self.doc.content, "")
-
-    def test_meta(self):
-        """
-        Meta should always be a dict
-        """
-        self.assertIsInstance(self.doc.meta, dict)
-
-    def test_items(self):
-        self.assertEqual(self.doc.meta["title"], "Doc title")
-
-
-class test_parse_json(unittest.TestCase):
-    def setUp(self):
-        doc_path = fixtures_path.joinpath("doc.json")
-        doc = Doc.load(doc_path, relative_to=fixtures_path)
-        doc = Doc.parse_json(doc)
-        self.doc = doc
-
-    def test_content(self):
-        self.assertEqual(self.doc.content, "")
-
-    def test_meta(self):
-        """
-        Meta should always be a dict
-        """
-        self.assertIsInstance(self.doc.meta, dict)
-
-    def test_items(self):
-        self.assertEqual(self.doc.meta["title"], "Doc title")
-
-
 if __name__ == '__main__':
     unittest.main()
