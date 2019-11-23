@@ -45,6 +45,9 @@ def render_rss(
     })
 
 
+_most_recent_24 = most_recent(24)
+
+
 @composable
 def rss(
     docs,
@@ -52,7 +55,6 @@ def rss(
     title,
     description,
     author,
-    nitems=24,
     output_path="rss.xml",
     last_build_date=None
 ):
@@ -65,7 +67,7 @@ def rss(
         if last_build_date is not None
         else datetime.now()
     )
-    recent = most_recent(docs, nitems)
+    recent = _most_recent_24(docs)
     content = render_rss(
         recent,
         base_url=base_url,
