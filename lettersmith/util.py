@@ -4,6 +4,7 @@ Mostly tools for working with dictionaries and iterables.
 """
 from functools import wraps
 from fnmatch import fnmatch
+from collections import OrderedDict
 
 
 def chunk(iterable, n):
@@ -21,19 +22,26 @@ def chunk(iterable, n):
         yield chunk
 
 
+def mix(d, e):
+    """
+    Combine two dicts.
+    Just a function version of the spread operator for dicts.
+    """
+    return {**d, **e}
+
+
 def _first(pair):
     return pair[0]
 
 
-def sort_items_by_key(dict, reverse=False):
+def order_dict_by_keys(d):
     """
-    Sort a dict's items by key, returning a sorted iterable of tuples.
+    Create an OrderedDict, ordered by key asc.
     """
-    return sorted(
-        dict.items(),
-        key=_first,
-        reverse=reverse
-    )
+    return OrderedDict(sorted(
+        d.items(),
+        key=_first
+    ))
 
 
 def join(words, sep="", template="{word}"):
