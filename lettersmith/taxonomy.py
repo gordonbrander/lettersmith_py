@@ -2,9 +2,12 @@
 Tools for indexing docs by tag (taxonomy).
 """
 from datetime import datetime
-from lettersmith.func import composable
+from lettersmith.func import composable, pipe
 from lettersmith import path as pathtools
-from lettersmith.doc import doc
+from lettersmith import stub as Stub
+from lettersmith import doc as Doc
+from lettersmith import docs as Docs
+from lettersmith import lens
 
 
 @composable
@@ -17,7 +20,7 @@ def taxonomy_archives(
     """
     Creates an archive page for each taxonomy term. One page per term.
     """
-    tax_index = index_by_taxonomy(docs, key)
+    tax_index = index_taxonomy(docs, key)
     for term, docs in tax_index.items():
         output_path = output_path_template.format(
             taxonomy=pathtools.to_slug(key),
@@ -32,7 +35,7 @@ def taxonomy_archives(
         )
         meta = {"docs": docs}
         now = datetime.now()
-        yield doc(
+        yield Doc.doc(
             id_path=output_path,
             output_path=output_path,
             created=now,
@@ -47,6 +50,12 @@ def taxonomy_archives(
 tag_archives = taxonomy_archives("tags")
 
 
+def _get_indexes(index, keys):
+    for key in keys:
+        for item in index[key]:
+            yield item
+
+
 @composable
 def index_taxonomy(docs, key):
     """
@@ -57,8 +66,8 @@ def index_taxonomy(docs, key):
     Returns a dict that looks like:
 
         {
-            "term_a": [doc, ...],
-            "term_b": [doc, ...]
+            "term_a": [stub, ...],
+            "term_b": [stub, ...]
         }
     """
     tax_index = {}
@@ -67,9 +76,41 @@ def index_taxonomy(docs, key):
             for term in doc.meta[key]:
                 if term not in tax_index:
                     tax_index[term] = []
-                tax_index[term].append(doc)
+                tax_index[term].append(Stub.from_doc(doc))
     return tax_index
 
 
 index_tags = index_taxonomy("tags")
 
+
+_empty = tuple()
+
+
+meta_related = lens.compose(Doc.meta, lens.key("related", _empty))
+
+
+def related(taxonomy):
+    """
+    Annotate doc meta with a list of related doc stubs.
+
+    A doc is related if it shares any of the same tags in the
+    same taxonomy.
+    """
+    meta_taxonomy = lens.compose(Doc.meta, lens.key(taxonomy, _empty))
+    build_index = index_taxonomy(taxonomy)
+    def add_related(docs):
+        docs = tuple(docs)
+        index = build_index(docs)
+        for doc in docs:
+            tags = lens.get(meta_taxonomy, doc)
+            related = pipe(
+                _get_indexes(index, tags),
+                Docs.dedupe,
+                Docs.remove_id_path(doc.id_path),
+                tuple
+            )
+            yield lens.put(meta_related, doc, related)
+    return add_related
+
+
+related_by_tag = related("tags")
