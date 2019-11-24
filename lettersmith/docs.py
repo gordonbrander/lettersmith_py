@@ -9,28 +9,27 @@ from lettersmith import path as pathtools
 from lettersmith import doc as Doc
 from lettersmith import query
 from lettersmith.func import composable, compose
-from lettersmith.lens import every, over
+from lettersmith.lens import every, over, get, put
 
 
-def load(file_paths, relative_to=""):
+def load(file_paths):
     """
     Given an iterable of file paths, create an iterable of loaded docs.
     Ignores special files.
     """
     for path in file_paths:
-        if pathtools.is_doc_file(path):
-            yield Doc.load(path, relative_to=relative_to)
+        yield Doc.load(path)
 
 
-def find(input_path, glob):
+def find(glob):
     """
     Load all docs under input path that match a glob pattern.
 
     Example:
 
-        Docs.load_matching("posts", "*.md")
+        Docs.find("posts/*.md")
     """
-    return load(Path(input_path).glob(glob), relative_to=input_path)
+    return load(Path(".").glob(glob))
 
 
 def write(docs, output_path="public"):
@@ -102,13 +101,50 @@ def ext_html(docs):
     return every(Doc.output_path, pathtools.ext_html, docs)
 
 
+def put_template(template):
+    """
+    Set template, but only if doc doesn't have one already.
+    """
+    @query.maps
+    def map_template(doc):
+        """
+        Set template, but only if doc doesn't have one already.
+        """
+        if get(Doc.template, doc) != "":
+            return doc
+        else:
+            return put(Doc.template, doc, template)
+    return map_template
+
+
+_as_file_name_html = compose(pathtools.ext_html, pathtools.to_slug)
+
+
+@query.maps
+def autotemplate(doc):
+    """
+    Set template based on doc section name.
+
+    E.g. if section is "posts", template gets set to "posts.html".
+    """
+    if get(Doc.template, doc) != "":
+        return doc
+    else:
+        return put(
+            Doc.template,
+            doc,
+            _as_file_name_html(get(Doc.section, doc))
+        )
+
+
 def renderer(render):
     """
     Create a renderer for docs using a string render function.
 
     Can be used as a decorator.
     """
+    @query.maps
     @Doc.annotate_exceptions
-    def render_doc(doc):
+    def render_docs(doc):
         return over(Doc.content, render, doc)
-    return query.maps(render_doc)
+    return render_docs

@@ -1,6 +1,5 @@
 import random
 import itertools
-import json
 from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader
@@ -58,24 +57,14 @@ class FileSystemEnvironment(Environment):
 
 
 TEMPLATE_FUNCTIONS = {
-    "markdown": markdown,
     "sorted": sorted,
-    "json_dumps": json.dumps,
-    "sum": sum,
     "len": len,
-    "filter": filter,
-    "filterfalse": itertools.filterfalse,
     "islice": itertools.islice,
     "choice": _choice,
     "sample": _sample,
     "shuffle": _shuffle,
     "to_url": pathtools.to_url,
-    "sorted": sorted,
     "join": util.join,
-    "remove_index": Docs.remove_index,
-    "remove_id_path": Docs.remove_id_path,
-    "filter_siblings": Docs.filter_siblings,
-    "to_slug": pathtools.to_slug,
     "tuple": tuple
 }
 
@@ -100,7 +89,7 @@ def should_template(doc):
     """
     Check if a doc should be templated. Returns a bool.
     """
-    return len(doc.templates) > 0
+    return lens.get(Doc.template, doc) is not ""
 
 
 def jinja(templates_path, base_url, context={}, filters={}):
@@ -121,7 +110,7 @@ def jinja(templates_path, base_url, context={}, filters={}):
     @Doc.annotate_exceptions
     def render(doc):
         if should_template(doc):
-            template = env.select_template(doc.templates)
+            template = env.get_template(doc.template)
             rendered = template.render({"doc": doc})
             return lens.put(Doc.content, doc, rendered)
         else:

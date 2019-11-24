@@ -17,7 +17,7 @@ from lettersmith.func import compose
 
 Doc = namedtuple("Doc", (
     "id_path", "output_path", "input_path", "created", "modified",
-    "title", "content", "section", "meta", "templates"
+    "title", "content", "section", "meta", "template"
 ))
 Doc.__doc__ = """
 Docs are namedtuples that represent a document to be transformed,
@@ -30,7 +30,7 @@ contents of the file.
 
 def doc(id_path, output_path,
     input_path=None, created=EPOCH, modified=EPOCH,
-    title="", content="", section="", meta=None, templates=None):
+    title="", content="", section="", meta=None, template=""):
     """
     Create a Doc tuple, populating it with sensible defaults
     """
@@ -44,11 +44,11 @@ def doc(id_path, output_path,
         content=str(content),
         section=str(section),
         meta=meta if meta is not None else {},
-        templates=templates if templates is not None else tuple()
+        template=str(template)
     )
 
 
-def load(pathlike, relative_to=""):
+def load(pathlike):
     """
     Loads a basic doc dictionary from a file path.
     `content` field will contain contents of file.
@@ -59,14 +59,12 @@ def load(pathlike, relative_to=""):
     file_created, file_modified = read_file_times(pathlike)
     with open(pathlike, 'r') as f:
         content = f.read()
-    input_path = PurePath(pathlike)
-    id_path = input_path.relative_to(relative_to)
-    section = pathtools.tld(id_path)
-    title = pathtools.to_title(input_path)
+    section = pathtools.tld(pathlike)
+    title = pathtools.to_title(pathlike)
     return doc(
-        id_path=id_path,
-        output_path=id_path,
-        input_path=input_path,
+        id_path=pathlike,
+        output_path=pathlike,
+        input_path=pathlike,
         created=file_created,
         modified=file_modified,
         title=title,
@@ -122,9 +120,9 @@ meta = Lens(
 )
 
 
-templates = Lens(
-    lambda doc: doc.templates,
-    lambda doc, templates: doc._replace(templates=templates)
+template = Lens(
+    lambda doc: doc.template,
+    lambda doc, template: doc._replace(template=template)
 )
 
 
@@ -153,7 +151,7 @@ def to_json(doc):
         "section": doc.section,
         "content": doc.content,
         "meta": doc.meta,
-        "templates": doc.templates
+        "template": doc.template
     }
 
 
@@ -171,13 +169,22 @@ def uplift_meta(doc):
     Reads "magic" fields in the meta and uplifts their values to doc
     properties.
 
-    We use this to uplift title, created, modified fields in the
-    frontmatterm, overriding original or default values on doc.
+    We use this to uplift...
+
+    - title
+    - created
+    - modified
+    - permalink
+    - template
+
+    ...in the frontmatter, overriding original or default values on doc.
     """
     return doc._replace(
         title=doc.meta.get("title", doc.title),
         created=to_datetime(doc.meta.get("created", doc.created)),
-        modified=to_datetime(doc.meta.get("modified", doc.modified))
+        modified=to_datetime(doc.meta.get("modified", doc.modified)),
+        output_path=doc.meta.get("permalink", doc.output_path),
+        template=doc.meta.get("template", "")
     )
 
 

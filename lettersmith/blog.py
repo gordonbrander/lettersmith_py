@@ -4,7 +4,6 @@ Tools for blogging
 from lettersmith.func import compose
 from lettersmith import wikidoc
 from lettersmith import absolutize
-from lettersmith import templatetools
 from lettersmith import permalink
 from lettersmith import docs as Docs
 
@@ -16,12 +15,12 @@ def markdown_doc(base_url):
     return compose(
         absolutize.absolutize(base_url),
         wikidoc.content_markdown(base_url),
-        templatetools.add_templates,
+        Docs.autotemplate,
         Docs.uplift_frontmatter
     )
 
 
-def markdown_page(base_url):
+def markdown_page(base_url, relative_to="."):
     """
     Performs typical transformations for a page.
 
@@ -33,7 +32,7 @@ def markdown_page(base_url):
     """
     return compose(
         markdown_doc(base_url),
-        permalink.page_permalink
+        permalink.rel_page_permalink(relative_to)
     )
 
 
@@ -61,12 +60,12 @@ def html_doc(base_url):
     return compose(
         absolutize.absolutize(base_url),
         wikidoc.content_html(base_url),
-        templatetools.add_templates,
+        Docs.autotemplate,
         Docs.uplift_frontmatter
     )
 
 
-def html_page(base_url):
+def html_page(base_url, relative_to="."):
     """
     Performs typical transformations for a page.
 
@@ -79,7 +78,7 @@ def html_page(base_url):
     """
     return compose(
         html_doc(base_url),
-        permalink.page_permalink
+        permalink.rel_page_permalink(relative_to)
     )
 
 

@@ -14,8 +14,8 @@ from lettersmith import lens
 def taxonomy_archives(
     docs,
     key,
-    templates=tuple(),
-    output_path_template="{taxonomy}/{term}/all/index.html"
+    template="taxonomy.html",
+    output_path_template="{taxonomy}/{term}/index.html"
 ):
     """
     Creates an archive page for each taxonomy term. One page per term.
@@ -26,13 +26,6 @@ def taxonomy_archives(
             taxonomy=pathtools.to_slug(key),
             term=pathtools.to_slug(term)
         )
-        tax_templates = (
-            "taxonomy/{}/all.html".format(key),
-            "taxonomy/{}/list.html".format(key),
-            "taxonomy/all.html",
-            "taxonomy/list.html",
-            "list.html"
-        )
         meta = {"docs": docs}
         now = datetime.now()
         yield Doc.doc(
@@ -42,7 +35,7 @@ def taxonomy_archives(
             modified=now,
             title=term,
             section=key,
-            templates=(*templates, *tax_templates),
+            template=template,
             meta=meta
         )
 
