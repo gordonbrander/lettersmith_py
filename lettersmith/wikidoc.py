@@ -11,7 +11,7 @@ from lettersmith import wikimarkup
 from lettersmith import markdowntools
 from lettersmith.path import to_slug, to_url
 from lettersmith.util import index_many, expand
-from lettersmith import lens
+from lettersmith.lens import lens_compose, key, get, put
 from lettersmith.func import compose, composable
 from lettersmith.stringtools import first_sentence
 
@@ -40,10 +40,10 @@ def _summary(read_summary):
     """
     def summary(docs):
         for doc in docs:
-            if lens.get(Doc.meta_summary, doc):
+            if get(Doc.meta_summary, doc):
                 yield doc
             else:
-                yield lens.put(Doc.meta_summary, doc, read_summary(doc.content))
+                yield put(Doc.meta_summary, doc, read_summary(doc.content))
     return summary
 
 
@@ -88,16 +88,16 @@ def _index_by_backlink(edge):
 
 
 _empty = tuple()
-meta_links = lens.compose(Doc.meta, lens.key("links", _empty))
-meta_backlinks = lens.compose(Doc.meta, lens.key("backlinks", _empty))
+meta_links = lens_compose(Doc.meta, key("links", _empty))
+meta_backlinks = lens_compose(Doc.meta, key("backlinks", _empty))
 
 
 def has_links(doc):
-    return len(lens.get(meta_links, doc)) > 0
+    return len(get(meta_links, doc)) > 0
 
 
 def has_backlinks(doc):
-    return len(lens.get(meta_backlinks, doc)) > 0
+    return len(get(meta_backlinks, doc)) > 0
 
 
 def annotate_links(docs):
