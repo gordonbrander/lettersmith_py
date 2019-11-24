@@ -2,6 +2,8 @@ from pathlib import PurePath
 from lettersmith.docs import ext_html
 from lettersmith.func import composable, compose
 from lettersmith import path as pathtools
+from lettersmith.lens import every
+from lettersmith import doc as Doc
 
 
 def read_doc_permalink(doc):
@@ -23,22 +25,26 @@ def read_doc_permalink(doc):
     }
 
 
-def replace_doc_permalink(doc, permalink_templates):
+def replace_doc_permalink(doc, permalink_template):
     """
     Given a doc dict and a permalink template, render
     the output_path field of the doc.
-
-    `permalink_templates` is a dictionary of section/template pairs, where
-    any doc with a given section will be mapped with the associated
-    permalink template.
     """
     try:
-        path_template = permalink_templates[doc.section]
-        output_path = path_template.format(**read_doc_permalink(doc))
+        output_path = permalink_template.format(**read_doc_permalink(doc))
         output_path = str(PurePath(output_path))
         return doc._replace(output_path=output_path)
     except KeyError:
         return doc
+
+
+def relative_to(tlds):
+    """
+    Create a function that maps doc output path to be relative
+    to some top-level path.
+    """
+    relative_to_tlds = pathtools.relative_to(tlds)
+    return lambda docs: every(Doc.output_path, relative_to_tlds, docs)
 
 
 def nice_path(docs):
@@ -50,10 +56,7 @@ def nice_path(docs):
     This is a simple kind of permalink transform. If you want more
     control over permalink output, use replace_permalinks.
     """
-    for doc in docs:
-        yield doc._replace(
-            output_path=pathtools.to_nice_path(doc.output_path)
-        )
+    return every(Doc.output_path, pathtools.to_nice_path, docs)
 
 
 @composable
@@ -65,9 +68,11 @@ def permalink(docs, permalink_template):
     are permalink templates.
     """
     for doc in docs:
-        yield replace_doc_permalink(doc, permalink_templates)
+        yield replace_doc_permalink(doc, permalink_template)
 
 
 post_permalink = permalink("{yyyy}/{mm}/{dd}/{name}/index.html")
 page_permalink = compose(ext_html, nice_path)
 
+def rel_page_permalink(tlds):
+    return compose(ext_html, nice_path, relative_to(tlds))
