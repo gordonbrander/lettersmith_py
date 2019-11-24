@@ -8,7 +8,7 @@ from lettersmith import util
 from lettersmith import docs as Docs
 from lettersmith import doc as Doc
 from lettersmith import query
-from lettersmith import lens
+from lettersmith.lens import get, put
 from lettersmith import path as pathtools
 from lettersmith.markdowntools import markdown
 
@@ -89,7 +89,7 @@ def should_template(doc):
     """
     Check if a doc should be templated. Returns a bool.
     """
-    return lens.get(Doc.template, doc) is not ""
+    return get(Doc.template, doc) is not ""
 
 
 def jinja(templates_path, base_url, context={}, filters={}):
@@ -112,7 +112,7 @@ def jinja(templates_path, base_url, context={}, filters={}):
         if should_template(doc):
             template = env.get_template(doc.template)
             rendered = template.render({"doc": doc})
-            return lens.put(Doc.content, doc, rendered)
+            return put(Doc.content, doc, rendered)
         else:
             return doc
 
