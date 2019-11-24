@@ -4,6 +4,7 @@ Tools for working with collections of docs
 from pathlib import Path
 from itertools import islice
 from fnmatch import fnmatch
+from functools import wraps
 import shutil
 from lettersmith import path as pathtools
 from lettersmith import doc as Doc
@@ -85,6 +86,7 @@ uplift_frontmatter = query.maps(Doc.uplift_frontmatter)
 sort_by_created = query.sorts(Doc.created.get, reverse=True)
 sort_by_modified = query.sorts(Doc.modified.get, reverse=True)
 sort_by_title = query.sorts(Doc.title.get)
+autotemplate = query.maps(Doc.autotemplate)
 
 
 def most_recent(n):
@@ -117,34 +119,18 @@ def put_template(template):
     return map_template
 
 
-_as_file_name_html = compose(pathtools.ext_html, pathtools.to_slug)
-
-
-@query.maps
-def autotemplate(doc):
-    """
-    Set template based on doc section name.
-
-    E.g. if section is "posts", template gets set to "posts.html".
-    """
-    if get(Doc.template, doc) != "":
-        return doc
-    else:
-        return put(
-            Doc.template,
-            doc,
-            _as_file_name_html(get(Doc.section, doc))
-        )
-
-
 def renderer(render):
     """
     Create a renderer for docs using a string render function.
 
     Can be used as a decorator.
     """
-    @query.maps
+    @wraps(render)
     @Doc.annotate_exceptions
-    def render_docs(doc):
-        return over(Doc.content, render, doc)
+    def render_docs(docs):
+        """
+        Render docs
+        """
+        for doc in docs:
+            yield over(Doc.content, render, doc)
     return render_docs

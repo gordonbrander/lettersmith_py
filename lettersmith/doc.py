@@ -136,6 +136,25 @@ def update_meta(doc, patch):
     return lens.update(meta, mix, doc, patch)
 
 
+_as_file_name_html = compose(pathtools.ext_html, pathtools.to_slug)
+
+
+def autotemplate(doc):
+    """
+    Set template based on doc section name.
+
+    E.g. if section is "posts", template gets set to "posts.html".
+    """
+    if lens.get(template, doc) != "":
+        return doc
+    else:
+        return lens.put(
+            template,
+            doc,
+            _as_file_name_html(lens.get(section, doc))
+        )
+
+
 def to_json(doc):
     """
     Serialize a doc as JSON-serializable data
