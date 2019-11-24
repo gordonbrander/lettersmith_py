@@ -18,7 +18,7 @@ class test_compose(unittest.TestCase):
         self.assertEqual(s, "_abc")
 
 
-class test_compose_ltr(unittest.TestCase):
+class test_thrush(unittest.TestCase):
     def test_1(self):
         def a(s):
             return s + "a"
@@ -29,7 +29,7 @@ class test_compose_ltr(unittest.TestCase):
         def c(s):
             return s + "c"
 
-        abc = compose_ltr(a, b, c)
+        abc = thrush(a, b, c)
         s = abc("_")
         self.assertEqual(s, "_abc")
 

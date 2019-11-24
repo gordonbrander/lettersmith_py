@@ -21,8 +21,21 @@ def compose(*funcs):
     return reduce(compose2, funcs, id)
 
 
-def compose_ltr(*funcs):
-    """Compose n functions from left to right"""
+def thrush(*funcs):
+    """
+    Compose n functions from left to right.
+
+    This is the same as compose, but using left-to-right application
+    instead of right-to-left application.
+
+    What's with the name?
+
+    Following on Racket's naming convention
+    https://docs.racket-lang.org/point-free/index.html
+
+    It's named after
+    https://en.wikipedia.org/wiki/To_Mock_a_Mockingbird
+    """
     return reduce(compose2, reversed(funcs), id)
 
 
