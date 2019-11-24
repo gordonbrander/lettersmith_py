@@ -10,7 +10,7 @@ from lettersmith import path as pathtools
 from lettersmith import doc as Doc
 from lettersmith import query
 from lettersmith.func import composable, compose
-from lettersmith.lens import every, over, get, put
+from lettersmith.lens import get, put
 
 
 def load(file_paths):
@@ -87,6 +87,7 @@ sort_by_created = query.sorts(Doc.created.get, reverse=True)
 sort_by_modified = query.sorts(Doc.modified.get, reverse=True)
 sort_by_title = query.sorts(Doc.title.get)
 autotemplate = query.maps(Doc.autotemplate)
+with_ext_html = query.maps(Doc.with_ext_html)
 
 
 def most_recent(n):
@@ -99,24 +100,11 @@ def most_recent(n):
     )
 
 
-def ext_html(docs):
-    return every(Doc.output_path, pathtools.ext_html, docs)
-
-
-def put_template(template):
+def with_template(template):
     """
     Set template, but only if doc doesn't have one already.
     """
-    @query.maps
-    def map_template(doc):
-        """
-        Set template, but only if doc doesn't have one already.
-        """
-        if get(Doc.template, doc) != "":
-            return doc
-        else:
-            return put(Doc.template, doc, template)
-    return map_template
+    return query.maps(Doc.with_template(template))
 
 
 def renderer(render):
@@ -125,12 +113,4 @@ def renderer(render):
 
     Can be used as a decorator.
     """
-    @wraps(render)
-    @Doc.annotate_exceptions
-    def render_docs(docs):
-        """
-        Render docs
-        """
-        for doc in docs:
-            yield over(Doc.content, render, doc)
-    return render_docs
+    return query.maps(Doc.renderer(render))

@@ -1,9 +1,10 @@
 from pathlib import PurePath
-from lettersmith.docs import ext_html
+from lettersmith.docs import with_ext_html
 from lettersmith.func import composable, compose
 from lettersmith import path as pathtools
-from lettersmith.lens import every
+from lettersmith.lens import over_with
 from lettersmith import doc as Doc
+from lettersmith import query
 
 
 def read_doc_permalink(doc):
@@ -43,20 +44,13 @@ def relative_to(tlds):
     Create a function that maps doc output path to be relative
     to some top-level path.
     """
-    relative_to_tlds = pathtools.relative_to(tlds)
-    return lambda docs: every(Doc.output_path, relative_to_tlds, docs)
+    rel_to_tlds = pathtools.relative_to(tlds)
+    return query.maps(over_with(Doc.output_path, rel_to_tlds))
 
 
-def nice_path(docs):
-    """
-    Change document paths to nice paths.
-
-    E.g. "foo.html" becomes "foo/index.html" so you have nice URLS.
-
-    This is a simple kind of permalink transform. If you want more
-    control over permalink output, use replace_permalinks.
-    """
-    return every(Doc.output_path, pathtools.to_nice_path, docs)
+nice_path = query.maps(
+    over_with(Doc.output_path, pathtools.to_nice_path)
+)
 
 
 @composable
@@ -72,7 +66,7 @@ def permalink(docs, permalink_template):
 
 
 post_permalink = permalink("{yyyy}/{mm}/{dd}/{name}/index.html")
-page_permalink = compose(ext_html, nice_path)
+page_permalink = compose(with_ext_html, nice_path)
 
 def rel_page_permalink(tlds):
-    return compose(ext_html, nice_path, relative_to(tlds))
+    return compose(with_ext_html, nice_path, relative_to(tlds))

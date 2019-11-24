@@ -11,7 +11,9 @@ from lettersmith.date import read_file_times, EPOCH, to_datetime
 from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
 from lettersmith import lens
-from lettersmith.lens import Lens
+from lettersmith.lens import (
+    Lens, lens_compose, get, put, key, over_with, update
+)
 from lettersmith.func import compose
 
 
@@ -74,6 +76,15 @@ def load(pathlike):
     )
 
 
+def write(doc, output_dir):
+    """
+    Write a doc to the filesystem.
+
+    Uses `doc.output_path` and `output_dir` to construct the output path.
+    """
+    write_file_deep(PurePath(output_dir).joinpath(doc.output_path), doc.content)
+
+
 id_path = Lens(
     lambda doc: doc.id_path,
     lambda doc, id_path: doc._replace(id_path=id_path)
@@ -84,6 +95,8 @@ output_path = Lens(
     lambda doc: doc.output_path,
     lambda doc, output_path: doc._replace(output_path=output_path)
 )
+
+ext = lens_compose(output_path, pathtools.ext)
 
 title = Lens(
     lambda doc: doc.title,
@@ -126,14 +139,21 @@ template = Lens(
 )
 
 
-meta_summary = lens.compose(meta, lens.key("summary", ""))
+meta_summary = lens_compose(meta, key("summary", ""))
 
 
 def update_meta(doc, patch):
     """
     Mix keys from `patch` into `doc.meta`.
     """
-    return lens.update(meta, mix, doc, patch)
+    return update(meta, mix, doc, patch)
+
+
+def with_ext_html(doc):
+    """
+    Set doc extension to ".html"
+    """
+    return put(ext, doc, ".html")
 
 
 _as_file_name_html = compose(pathtools.ext_html, pathtools.to_slug)
@@ -145,14 +165,26 @@ def autotemplate(doc):
 
     E.g. if section is "posts", template gets set to "posts.html".
     """
-    if lens.get(template, doc) != "":
+    if get(template, doc) != "":
         return doc
     else:
-        return lens.put(
+        return put(
             template,
             doc,
-            _as_file_name_html(lens.get(section, doc))
+            _as_file_name_html(get(section, doc))
         )
+
+
+def with_template(t):
+    """
+    Set template `t`, but only if doc doesn't have one already.
+    """
+    def with_template_on_doc(doc):
+        if get(template, doc) != "":
+            return doc
+        else:
+            return put(template, doc, t)
+    return with_template_on_doc
 
 
 def to_json(doc):
@@ -172,15 +204,6 @@ def to_json(doc):
         "meta": doc.meta,
         "template": doc.template
     }
-
-
-def write(doc, output_dir):
-    """
-    Write a doc to the filesystem.
-
-    Uses `doc.output_path` and `output_dir` to construct the output path.
-    """
-    write_file_deep(PurePath(output_dir).joinpath(doc.output_path), doc.content)
 
 
 def uplift_meta(doc):
@@ -243,3 +266,16 @@ def parse_frontmatter(doc):
 
 
 uplift_frontmatter = compose(uplift_meta, parse_frontmatter)
+
+
+def renderer(render):
+    """
+    Create a renderer for doc content using a string rendering function.
+
+    Will also annotate any exceptions that happen during rendering,
+    transforming them into DocExceptions that will record the doc's
+    id_path and the render function where exception occurred.
+
+    Can be used as a decorator.
+    """
+    return annotate_exceptions(over_with(content, render))
