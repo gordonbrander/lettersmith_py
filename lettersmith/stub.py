@@ -3,7 +3,7 @@ Stubs are summary details for a document.
 """
 from collections import namedtuple
 from lettersmith import doc as Doc
-from lettersmith import lens
+from lettersmith.lens import get
 from lettersmith import query
 
 
@@ -26,13 +26,13 @@ def from_doc(doc):
     Read stub from doc
     """
     return Stub(
-        lens.get(Doc.id_path, doc),
-        lens.get(Doc.output_path, doc),
-        lens.get(Doc.created, doc),
-        lens.get(Doc.modified, doc),
-        lens.get(Doc.title, doc),
-        lens.get(Doc.meta_summary, doc),
-        lens.get(Doc.section, doc)
+        get(Doc.id_path, doc),
+        get(Doc.output_path, doc),
+        get(Doc.created, doc),
+        get(Doc.modified, doc),
+        get(Doc.title, doc),
+        get(Doc.meta_summary, doc),
+        get(Doc.section, doc)
     )
 
 
