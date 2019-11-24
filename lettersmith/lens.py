@@ -16,12 +16,12 @@ from functools import reduce
 Lens = namedtuple("Lens", ("get", "put"))
 Lens.__doc__ = """
 Container type for Lenses.
-A lens is any structure with `get` and `update` functions that
+A lens is any structure with `get` and `put` functions that
 follow the lens signature.
 """
 
 
-def compose2(big_lens, small_lens):
+def _lens_compose2(big_lens, small_lens):
     """
     Compose 2 lenses. This allows you to create a lens that can
     do a deep get/set.
@@ -44,11 +44,11 @@ def compose2(big_lens, small_lens):
     return Lens(get, put)
 
 
-def compose(big_lens, *smaller_lenses):
+def lens_compose(big_lens, *smaller_lenses):
     """
     Compose many lenses
     """
-    return reduce(compose2, smaller_lenses, big_lens)
+    return reduce(_lens_compose2, smaller_lenses, big_lens)
 
 
 def get(lens, big):
@@ -65,11 +65,15 @@ def put(lens, big, small):
     return lens.put(big, small)
 
 
-def over(lens, mapping, big):
+def over(lens, func, big):
     """
     Map value(s) in `big` using a `mapping` function.
     """
-    return put(lens, big, mapping(get(lens, big)))
+    return put(lens, big, func(get(lens, big)))
+
+
+def over_with(lens, func):
+    return lambda big: over(lens, func, big)
 
 
 def update(lens, up, big, msg):
@@ -129,11 +133,3 @@ def keys(*keys):
         return {**big, **patch}
 
     return Lens(get, put)
-
-
-def every(lens, mapping, bigs):
-    """
-    Map functor over an iterable of `big`, yielding transformed `bigs`.
-    """
-    for big in bigs:
-        yield over(lens, mapping, big)
