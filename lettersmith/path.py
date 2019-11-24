@@ -1,29 +1,38 @@
 from urllib.parse import urlparse, urljoin
 from pathlib import Path, PurePath
-from os import sep, listdir, path, walk
 import re
+from lettersmith.func import compose
 
 
 _STRANGE_CHARS = "[](){}<>:^&%$#@!'\"|*~`,"
-STRANGE_CHAR_PATTERN = "[{}]".format(re.escape(_STRANGE_CHARS))
+_STRANGE_CHAR_PATTERN = "[{}]".format(re.escape(_STRANGE_CHARS))
 
 
-def space_to_dash(text):
+def _space_to_dash(text):
     """Replace spaces with dashes."""
     return re.sub(r"\s+", "-", text)
 
 
-def remove_strange_chars(text):
+def _remove_strange_chars(text):
     """Remove funky characters that don't belong in a URL."""
-    return re.sub(STRANGE_CHAR_PATTERN, "", text)
+    return re.sub(_STRANGE_CHAR_PATTERN, "", text)
 
 
-def to_slug(text):
-    """Given some text, return a nice URL"""
-    text = str(text).strip().lower()
-    text = remove_strange_chars(text)
-    text = space_to_dash(text)
-    return text
+def _lower(s):
+    return s.lower()
+
+
+def _strip(s):
+    return s.strip()
+
+
+to_slug = compose(
+    _space_to_dash,
+    _remove_strange_chars,
+    _lower,
+    _strip,
+    str
+)
 
 
 def to_title(pathlike):
@@ -81,6 +90,14 @@ def undraft(pathlike):
         return path.with_name(re.sub(r'^_', "", path.name))
     else:
         return path
+
+
+def relative_to(tlds):
+    """
+    Create a mapping function that will transform pathlike so it is
+    relative to some top-level directories (tlds).
+    """
+    return lambda pathlike: str(PurePath(pathlike).relative_to(tlds))
 
 
 def to_nice_path(ugly_pathlike):
@@ -144,34 +161,6 @@ def to_url(pathlike, base="/"):
 
 def is_draft(pathlike):
     return PurePath(pathlike).name.startswith("_")
-
-
-def is_dotfile(pathlike):
-    return PurePath(pathlike).name.startswith(".")
-
-
-def is_doc_file(pathlike):
-    """
-    Is this path a valid doc-like path?
-
-    
-    """
-    return (
-        is_file_like(pathlike)
-        and not is_dotfile(pathlike)
-    )
-
-
-def should_pub(pathlike, build_drafts=False):
-    """
-    Should you publish this? This function is just an ergonomic shortcut
-    for filtering out drafts based on build_drafts setting, as well as
-    filtering out invalid file types.
-    """
-    return (
-        is_doc_file(pathlike) and
-        (build_drafts or not is_draft(pathlike))
-    )
 
 
 def is_index(pathlike):
