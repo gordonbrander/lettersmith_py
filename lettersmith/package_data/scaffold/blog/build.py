@@ -13,11 +13,19 @@ site_author = "A very cool person"
 # Load data directory
 template_data = data.find("data")
 
-post = blog.markdown_post(base_url)
-posts = tuple(post(doc.find("posts", "*.md")))
+static = doc.find("static/*")
 
-page = blog.markdown_page(base_url)
-pages = page(doc.find("pages", "*.md"))
+posts = pipe(
+    doc.find("post/*.md"),
+    blog.markdown_post(base_url),
+    docs.sort_by_created,
+    tuple
+)
+
+pages = pipe(
+    doc.find("page/*.md"),
+    blog.markdown_page(base_url, relative_to="page")
+)
 
 posts_rss_doc = pipe(posts, rss.rss(
     base_url=base_url,
@@ -27,23 +35,17 @@ posts_rss_doc = pipe(posts, rss.rss(
     output_path="posts.xml"
 ))
 
+archive_doc = pipe(posts, archive.archive("archive/index.html"))
+
 tag_index = taxonomy.index_tags(posts)
 
 posts_and_pages = (*posts, *pages)
 
-create_sitemap = sitemap.sitemap(base_url)
-sitemap_doc = create_sitemap(posts_and_pages)
-
-all_docs = (sitemap_doc, posts_rss_doc, *posts_and_pages)
-
-id_path_index = {doc.id_path: doc for doc in all_docs}
+sitemap_doc = pipe(posts_and_pages, sitemap.sitemap(base_url))
 
 context = {
     "rss_docs": (posts_rss_doc,),
-    "index": {
-        "tags": tag_index,
-        "id_path": id_path_index
-    },
+    "tags": tag_index,
     "site": {
         "title": site_title,
         "description": site_description,
@@ -53,9 +55,11 @@ context = {
     "base_url": base_url
 }
 
-render_template = jinjatools.jinja("theme", base_url, context)
-template_docs = render_template(all_docs)
+rendered_docs = pipe(
+    (sitemap_doc, posts_rss_doc, archive_doc, *posts_and_pages),
+    jinjatools.jinja("theme", base_url, context)
+)
 
-docs.write(template_docs, output_path="public")
+docs.write((*static, *rendered_docs), output_path="public")
 
 print("Done!")
