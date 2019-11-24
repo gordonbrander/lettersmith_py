@@ -2,7 +2,7 @@ from pathlib import PurePath
 from lettersmith.docs import with_ext_html
 from lettersmith.func import composable, compose
 from lettersmith import path as pathtools
-from lettersmith.lens import over_with
+from lettersmith.lens import over_with, put
 from lettersmith import doc as Doc
 from lettersmith import query
 
@@ -26,17 +26,14 @@ def read_doc_permalink(doc):
     }
 
 
-def replace_doc_permalink(doc, permalink_template):
+@composable
+def doc_permalink(doc, permalink_template):
     """
     Given a doc dict and a permalink template, render
     the output_path field of the doc.
     """
-    try:
-        output_path = permalink_template.format(**read_doc_permalink(doc))
-        output_path = str(PurePath(output_path))
-        return doc._replace(output_path=output_path)
-    except KeyError:
-        return doc
+    output_path = permalink_template.format(**read_doc_permalink(doc))
+    return put(Doc.output_path, output_path)
 
 
 def relative_to(tlds):
@@ -53,20 +50,19 @@ nice_path = query.maps(
 )
 
 
-@composable
-def permalink(docs, permalink_template):
+def permalink(permalink_template):
     """
     Update permalinks on docs.
 
     `config` is a dictionary, where keys are doc sections, and values
     are permalink templates.
     """
-    for doc in docs:
-        yield replace_doc_permalink(doc, permalink_template)
+    return query.maps(doc_permalink(permalink_template))
 
 
 post_permalink = permalink("{yyyy}/{mm}/{dd}/{name}/index.html")
 page_permalink = compose(with_ext_html, nice_path)
+
 
 def rel_page_permalink(tlds):
     return compose(with_ext_html, nice_path, relative_to(tlds))
