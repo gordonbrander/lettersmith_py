@@ -2,6 +2,7 @@ from urllib.parse import urlparse, urljoin
 from pathlib import Path, PurePath
 import re
 from lettersmith.func import compose
+from lettersmith.lens import Lens, put
 
 
 _STRANGE_CHARS = "[](){}<>:^&%$#@!'\"|*~`,"
@@ -124,20 +125,23 @@ def to_nice_path(ugly_pathlike):
     return nice_path
 
 
-def ext(pathlike, ext):
-    """
-    Set suffix `ext` on a pathlike.
-    Return a path string.
-    """
+def _get_ext(pathlike):
+    return PurePath(pathlike).suffix
+
+
+def _put_ext(pathlike, ext):
     return str(PurePath(pathlike).with_suffix(ext))
+
+
+ext = Lens(_get_ext, _put_ext)
 
 
 def ext_html(pathlike):
     """
-    Set suffix `ext` on a pathlike.
+    Set suffix `.html` on a pathlike.
     Return a path string.
     """
-    return ext(pathlike, ".html")
+    return put(ext, pathlike, ".html")
 
 
 def to_url(pathlike, base="/"):
@@ -198,14 +202,6 @@ def is_sibling(path_a, path_b):
     return (
         PurePath(path_a).parent == PurePath(path_b).parent
         and not is_index(path_b))
-
-
-def has_ext(pathlike, *ext):
-    """
-    Check to see if the extension of the pathlike matches any of the
-    extensions in `extensions`.
-    """
-    return PurePath(pathlike).suffix in ext
 
 
 def glob_all(pathlike, globs):
