@@ -49,8 +49,13 @@ def over(value, func):
 def pipe(value, *funcs):
     """
     Pipe value through a series of single argument functions.
-
     This is basically a function version of a pipeline operator.
+
+        pipe(value, a, b, c)
+
+    is equivalent to
+
+        c(b(a(value)))
 
     Returns transformed value.
     """
