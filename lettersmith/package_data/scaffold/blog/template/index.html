@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block body %}
+  <article>
+    <h1>{{doc.title}}</h1>
+    <div>{{doc.content}}</div>
+
+    <h2>Recent</h2>
+    {% for stub in recent %}
+      <article>
+        <h1>{{stub.title}}</h1>
+        <div>{{stub.summary}}</div>
+      </article>
+    {% endfor %}
+  </article>
+{% endblock %}

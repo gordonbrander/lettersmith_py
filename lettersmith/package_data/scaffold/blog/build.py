@@ -13,17 +13,17 @@ site_author = "A very cool person"
 # Load data directory
 template_data = data.find("data")
 
-static = doc.find("static/*")
+static = docs.find("static/*")
 
 posts = pipe(
-    doc.find("post/*.md"),
+    docs.find("post/*.md"),
     blog.markdown_post(base_url),
     docs.sort_by_created,
     tuple
 )
 
 pages = pipe(
-    doc.find("page/*.md"),
+    docs.find("page/*.md"),
     blog.markdown_page(base_url, relative_to="page")
 )
 
@@ -36,8 +36,7 @@ posts_rss_doc = pipe(posts, rss.rss(
 ))
 
 archive_doc = pipe(posts, archive.archive("archive/index.html"))
-
-tag_index = taxonomy.index_tags(posts)
+recent_posts = pipe(posts, stub.stubs, query.takes(5))
 
 posts_and_pages = (*posts, *pages)
 
@@ -45,7 +44,7 @@ sitemap_doc = pipe(posts_and_pages, sitemap.sitemap(base_url))
 
 context = {
     "rss_docs": (posts_rss_doc,),
-    "tags": tag_index,
+    "recent": recent_posts,
     "site": {
         "title": site_title,
         "description": site_description,
@@ -57,7 +56,7 @@ context = {
 
 rendered_docs = pipe(
     (sitemap_doc, posts_rss_doc, archive_doc, *posts_and_pages),
-    jinjatools.jinja("theme", base_url, context)
+    jinjatools.jinja("template", base_url, context)
 )
 
 docs.write((*static, *rendered_docs), output_path="public")
