@@ -9,6 +9,11 @@ _WIKILINK = r'\[\[([^\]]+)\]\]'
 _TRANSCLUDE = r'^\[\[([^\]]+)\]\]$'
 
 
+def _sub_wikilink_title(match):
+    slug, title = _parse_wikilink(match.group(0))
+    return title
+
+
 def strip_wikilinks(text):
     """
     Strip markup from text
@@ -16,7 +21,7 @@ def strip_wikilinks(text):
     # Remove transcludes completely
     text = re.sub(_TRANSCLUDE, "", text, flags=re.MULTILINE)
     # Remove inline wikilinks, but leaves bare text
-    text = re.sub(_WIKILINK, r"\1", text)
+    text = re.sub(_WIKILINK, _sub_wikilink_title, text)
     return text
 
 
