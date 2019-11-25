@@ -4,6 +4,7 @@ Tools for rendering wikilinks in content.
 import re
 from collections import namedtuple
 from lettersmith import doc as Doc
+from lettersmith import docs as Docs
 from lettersmith import stub as Stub
 from lettersmith import edge as Edge
 from lettersmith import html
@@ -113,9 +114,11 @@ def annotate_links(docs):
     backlink_index = index_many(_index_by_backlink(edge) for edge in edges)
     empty = tuple()
     for doc in docs:
+        backlinks = tuple(Docs.dedupe(backlink_index.get(doc.id_path, empty)))
+        links = tuple(Docs.dedupe(link_index.get(doc.id_path, empty)))
         yield Doc.update_meta(doc, {
-            "links": tuple(link_index.get(doc.id_path, empty)),
-            "backlinks": tuple(backlink_index.get(doc.id_path, empty))
+            "links": links,
+            "backlinks": backlinks
         })
 
 
