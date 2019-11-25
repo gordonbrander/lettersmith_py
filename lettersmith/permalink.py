@@ -19,10 +19,10 @@ def read_doc_permalink(doc):
         "suffix": id_path.suffix,
         "parents": str(id_path.parent),
         "parent": id_path.parent.stem,
-        "yy": doc.date.strftime("%y"),
-        "yyyy": doc.date.strftime("%Y"),
-        "mm": doc.date.strftime("%m"),
-        "dd": doc.date.strftime("%d")
+        "yy": doc.created.strftime("%y"),
+        "yyyy": doc.created.strftime("%Y"),
+        "mm": doc.created.strftime("%m"),
+        "dd": doc.created.strftime("%d")
     }
 
 
@@ -33,7 +33,7 @@ def doc_permalink(doc, permalink_template):
     the output_path field of the doc.
     """
     output_path = permalink_template.format(**read_doc_permalink(doc))
-    return put(Doc.output_path, output_path)
+    return put(Doc.output_path, doc, output_path)
 
 
 def relative_to(tlds):
@@ -60,7 +60,7 @@ def permalink(permalink_template):
     return query.maps(doc_permalink(permalink_template))
 
 
-post_permalink = permalink("{yyyy}/{mm}/{dd}/{name}/index.html")
+post_permalink = permalink("{yyyy}/{mm}/{dd}/{stem}/index.html")
 page_permalink = compose(with_ext_html, nice_path)
 
 
