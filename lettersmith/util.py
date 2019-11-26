@@ -63,7 +63,31 @@ def expand(f, iter, *args, **kwargs):
             yield y
 
 
+def index_sets(items):
+    """
+    Create a dictionary of sets from an iterable of `(key, value)` pairs.
+
+    Each item is stored in a set at `key`. More than one item with same key
+    means items get appended to same list.
+
+    This means items in indices are unique, but they must be hashable.
+    """
+    index = {}
+    for key, value in items:
+        try:
+            index[key].add(value)
+        except KeyError:
+            index[key] = set((value,))
+    return index
+
+
 def index_many(items):
+    """
+    Create a dictionary of lists from an iterable of `(key, value)` pairs.
+
+    Each item is stored in a list at `key`. More than one item with same key
+    means items get appended to same list.
+    """
     index = {}
     for key, value in items:
         try:
