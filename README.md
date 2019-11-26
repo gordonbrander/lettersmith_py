@@ -29,10 +29,11 @@ lettersmith_site lettersmith.yaml
 You can easily scaffold a site using `lettersmith_scaffold`.
 
 ```bash
-lettersmith_scaffold . --type wiki
+lettersmith_scaffold . --type blog
 ```
 
-This will plop a yaml config file and a theme directory you can customize into your project directory. Right now there is just one type: "wiki", though I hope to add more for common site types (e.g. blog, portfolio, etc).
+This will stub out a directory structure and a build script for a typical blogging setup. You can customize the build script from there.
+
 
 ## What it does
 
@@ -55,7 +56,7 @@ Becomes this:
 Doc(
   id_path='path/to/post.md',
   output_path='path/to/post/index.html',
-  input_path='content/path/to/post.md',
+  input_path='path/to/post.md',
   created=datetime.datetime(2018, 12, 31, 16, 0),
   modified=datetime.datetime(2018, 12, 31, 16, 0),
   title='My post',
@@ -65,7 +66,7 @@ Doc(
     "title": "My post",
     "date": "2018-12-31"
   },
-  templates=()
+  template=""
 )
 ```
 
@@ -76,10 +77,8 @@ Plugins are just functions that transform doc namedtuples.
 To transform many files, you can load them into an iterable, then use list comprehensions, generator expressions, and map, filter, reduce:
 
 ```python
-# Get all markdown paths under source/
-paths = Path("source").glob("*.md")
-# Load them as doc namedtuples
-docs = Docs.load(paths)
+# Get all markdown docs under source/
+docs = docs.find("source/*.md")
 # Transform them with your function.
 docs = my_plugin(docs)
 ```
@@ -95,7 +94,7 @@ def my_plugin(docs)
 When you're done transforming things, you can pass the iterable to `Docs.write`, which takes care of writing out the files to an output directory.
 
 ```python
-Docs.write(docs, output_path=output_path)
+docs.write(docs, output_path=output_path)
 ```
 
 That's it!
