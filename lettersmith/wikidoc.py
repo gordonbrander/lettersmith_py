@@ -190,6 +190,20 @@ def content_markdown(
 
     - A summary
     - A list of links and backlinks.
+
+    Example:
+
+        Write _markdown_ like normal.
+
+        - List item
+        - List item
+        - List item
+
+        [[Wikilinks]] also work. They will be rendered as <a class="wikilink">Wikilinks</a>.
+
+        [[Transclusion wikilink]]
+
+        If you put a wikilink on it's own line, as above, it will be rendered as a rich snippet (transclude).
     """
     return compose(
         markdowntools.content,
