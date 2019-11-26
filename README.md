@@ -89,4 +89,6 @@ docs.write(docs, output_path=output_path)
 
 That's it!
 
+Check out [blog/build.py](/lettersmith/package_data/scaffold/blog/build.py) for an example of a build script that uses some of the built-in plugins to create a typical blogging setup.
+
 Lettersmith comes with a swiss army knife of helpful tools for things like Markdown, templates, drafts, tags, wikilinks, and more — and if you see something missing it's easy to write your own functions.
