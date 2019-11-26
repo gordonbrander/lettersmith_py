@@ -14,16 +14,6 @@ cd lettersmith_py
 pip3 install -e .
 ```
 
-## lettersmith_site
-
-Lettersmith comes bundled with a static site generator `lettersmith_site` that can do most of what Jekyll, et al do.
-
-`lettersmith_site` takes a single argument — a path to a yaml config file.
-
-```bash
-lettersmith_site lettersmith.yaml
-```
-
 ## lettersmith_scaffold
 
 You can easily scaffold a site using `lettersmith_scaffold`.
