@@ -74,9 +74,9 @@ def filter_siblings(docs, id_path):
     yielding only those dicts who's id_path is a sibling to
     `id_path`.
     """
-    return (
-        doc for doc in docs
-        if pathtools.is_sibling(id_path, doc.id_path))
+    for doc in docs:
+        if pathtools.is_sibling(id_path, doc.id_path):
+            yield doc
 
 
 remove_drafts = query.rejects(compose(pathtools.is_draft, Doc.id_path.get))
