@@ -11,7 +11,7 @@ from lettersmith import html
 from lettersmith import wikimarkup
 from lettersmith import markdowntools
 from lettersmith.path import to_slug, to_url
-from lettersmith.util import index_many, expand
+from lettersmith.util import index_sets, expand
 from lettersmith.lens import lens_compose, key, get, put
 from lettersmith.func import compose, composable
 from lettersmith.stringtools import first_sentence
@@ -110,15 +110,15 @@ def annotate_links(docs):
     """
     docs = tuple(docs)
     edges = tuple(_collect_edges(docs))
-    link_index = index_many(_index_by_link(edge) for edge in edges)
-    backlink_index = index_many(_index_by_backlink(edge) for edge in edges)
+    link_index = index_sets(_index_by_link(edge) for edge in edges)
+    backlink_index = index_sets(_index_by_backlink(edge) for edge in edges)
     empty = tuple()
     for doc in docs:
-        backlinks = tuple(Docs.dedupe(backlink_index.get(doc.id_path, empty)))
-        links = tuple(Docs.dedupe(link_index.get(doc.id_path, empty)))
+        backlinks = frozenset(backlink_index.get(doc.id_path, empty))
+        links = frozenset(link_index.get(doc.id_path, empty))
         yield Doc.update_meta(doc, {
             "links": links,
-            "backlinks": backlinks
+            "backlinks": backlinks,
         })
 
 
