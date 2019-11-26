@@ -19,6 +19,9 @@ Stub = namedtuple("Stub", (
 Stub.__doc__ = """
 A namedtuple for representing a stub. A stub is just a container for
 the summary details of a document. No content, no meta, no template.
+
+Only hashable properties, so stubs can be used in sets.
+(Note that datetime objects are immutable and hashable.)
 """
 
 def from_doc(doc):
