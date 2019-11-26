@@ -52,7 +52,7 @@ def doc(id_path, output_path,
 
 def load(pathlike):
     """
-    Loads a basic doc dictionary from a file path.
+    Loads a doc namedtuple from a file path.
     `content` field will contain contents of file.
     Typically, you decorate the doc later with meta and other fields.
 
@@ -258,6 +258,13 @@ def annotate_exceptions(func):
 
 @annotate_exceptions
 def parse_frontmatter(doc):
+    """
+    Parse frontmatter as YAML. Set frontmatter on meta field, and
+    remaining content on content field.
+
+    If there is no frontmatter, will set an empty object on meta field,
+    and leave content as-is.
+    """
     meta, content = frontmatter.parse(doc.content)
     return doc._replace(
         meta=meta,
