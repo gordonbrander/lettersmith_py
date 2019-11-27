@@ -30,7 +30,7 @@ contents of the file.
 """
 
 
-def doc(id_path, output_path,
+def create(id_path, output_path,
     input_path=None, created=EPOCH, modified=EPOCH,
     title="", content="", section="", meta=None, template=""):
     """
@@ -63,7 +63,7 @@ def load(pathlike):
         content = f.read()
     section = pathtools.tld(pathlike)
     title = pathtools.to_title(pathlike)
-    return doc(
+    return create(
         id_path=pathlike,
         output_path=pathlike,
         input_path=pathlike,

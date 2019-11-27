@@ -76,7 +76,7 @@ def rss(
         description=description,
         author=author
     )
-    return Doc.doc(
+    return Doc.create(
         id_path=output_path,
         output_path=output_path,
         created=last_build_date,

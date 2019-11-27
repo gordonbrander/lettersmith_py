@@ -44,7 +44,7 @@ def taxonomy_archives(
         )
         meta = {"docs": docs}
         now = datetime.now()
-        yield Doc.doc(
+        yield Doc.create(
             id_path=output_path,
             output_path=output_path,
             created=now,

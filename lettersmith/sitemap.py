@@ -38,7 +38,7 @@ def sitemap(docs, base_url):
     output_path = "sitemap.xml"
     now = datetime.now()
     content = render_sitemap(docs_50k, base_url=base_url)
-    return Doc.doc(
+    return Doc.create(
         id_path=output_path,
         output_path=output_path,
         created=now,

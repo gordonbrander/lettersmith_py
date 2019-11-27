@@ -17,7 +17,7 @@ def archive(
     Generate an archive doc for a list of docs.
     """
     archive = tuple(Stub.stubs(docs))
-    return Doc.doc(
+    return Doc.create(
         id_path=output_path,
         output_path=output_path,
         title=title,
