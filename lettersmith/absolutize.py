@@ -28,9 +28,5 @@ def absolutize(base_url):
         """
         Absolutize URLs in doc content fields.
         """
-        return re.sub(
-            URL_ATTR,
-            render_inner_match,
-            content
-        )
+        return re.sub(URL_ATTR, render_inner_match, content)
     return render
