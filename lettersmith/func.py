@@ -13,7 +13,9 @@ def id(x):
 
 def compose2(b, a):
     """Compose 2 functions"""
-    return lambda x: b(a(x))
+    def composed(x):
+        return b(a(x))
+    return composed
 
 
 def compose(*funcs):
