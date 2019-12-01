@@ -12,7 +12,7 @@ from lettersmith import wikimarkup
 from lettersmith import markdowntools
 from lettersmith.path import to_slug, to_url
 from lettersmith.util import index_sets, expand
-from lettersmith.lens import lens_compose, key, get, put
+from lettersmith.lens import lens_compose, key, get, put, over
 from lettersmith.func import compose, composable
 from lettersmith.stringtools import first_sentence
 
@@ -173,8 +173,7 @@ def content_wikilinks(
     render_wikilinks = wikimarkup.renderer(render_wikilink)
 
     for doc in docs:
-        content = render_wikilinks(doc.content)
-        yield doc._replace(content=content)
+        yield over(Doc.content, render_wikilinks, doc)
 
 
 def content_markdown(
