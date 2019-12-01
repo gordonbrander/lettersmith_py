@@ -19,7 +19,7 @@ from lettersmith.func import compose
 
 Doc = namedtuple("Doc", (
     "id_path", "output_path", "input_path", "created", "modified",
-    "title", "content", "section", "meta", "template"
+    "title", "content", "meta", "template"
 ))
 Doc.__doc__ = """
 Docs are namedtuples that represent a document to be transformed,
@@ -32,7 +32,7 @@ contents of the file.
 
 def create(id_path, output_path,
     input_path=None, created=EPOCH, modified=EPOCH,
-    title="", content="", section="", meta=None, template=""):
+    title="", content="", meta=None, template=""):
     """
     Create a Doc tuple, populating it with sensible defaults
     """
@@ -44,7 +44,6 @@ def create(id_path, output_path,
         modified=to_datetime(modified),
         title=str(title),
         content=str(content),
-        section=str(section),
         meta=meta if meta is not None else {},
         template=str(template)
     )
@@ -61,7 +60,6 @@ def load(pathlike):
     file_created, file_modified = read_file_times(pathlike)
     with open(pathlike, 'r') as f:
         content = f.read()
-    section = pathtools.tld(pathlike)
     title = pathtools.to_title(pathlike)
     return create(
         id_path=pathlike,
@@ -70,7 +68,6 @@ def load(pathlike):
         created=file_created,
         modified=file_modified,
         title=title,
-        section=section,
         meta={},
         content=content
     )
@@ -109,11 +106,6 @@ content = Lens(
     lambda doc, content: doc._replace(content=content)
 )
 
-
-section = Lens(
-    lambda doc: doc.section,
-    lambda doc, section: doc._replace(section=section)
-)
 
 created = Lens(
     lambda doc: doc.created,
@@ -156,23 +148,28 @@ def with_ext_html(doc):
     return put(ext, doc, ".html")
 
 
-_as_file_name_html = compose(pathtools.ext_html, pathtools.to_slug)
+
+output_tld = compose(pathtools.tld, output_path.get)
+id_tld = compose(pathtools.tld, id_path.get)
+
+
+_infer_template = compose(
+    pathtools.ext_html,
+    pathtools.to_slug,
+    id_tld
+)
 
 
 def autotemplate(doc):
     """
-    Set template based on doc section name.
+    Set template based on top-level directory in doc's id_path.
 
-    E.g. if section is "posts", template gets set to "posts.html".
+    E.g. if top-level-directory is "posts", template gets set to "posts.html".
     """
     if get(template, doc) != "":
         return doc
     else:
-        return put(
-            template,
-            doc,
-            _as_file_name_html(get(section, doc))
-        )
+        return put(template, doc, _infer_template(doc))
 
 
 def with_template(t):
@@ -199,7 +196,6 @@ def to_json(doc):
         "created": doc.created.timestamp(),
         "modified": doc.modified.timestamp(),
         "title": doc.title,
-        "section": doc.section,
         "content": doc.content,
         "meta": doc.meta,
         "template": doc.template

@@ -50,7 +50,6 @@ def taxonomy_archives(
             created=now,
             modified=now,
             title=term,
-            section=key,
             template=template,
             meta=meta
         )

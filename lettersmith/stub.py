@@ -13,8 +13,7 @@ Stub = namedtuple("Stub", (
     "created",
     "modified",
     "title",
-    "summary",
-    "section"
+    "summary"
 ))
 Stub.__doc__ = """
 A namedtuple for representing a stub. A stub is just a container for
@@ -34,8 +33,7 @@ def from_doc(doc):
         get(Doc.created, doc),
         get(Doc.modified, doc),
         get(Doc.title, doc),
-        get(Doc.meta_summary, doc),
-        get(Doc.section, doc)
+        get(Doc.meta_summary, doc)
     )
 
 

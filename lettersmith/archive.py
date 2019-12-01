@@ -22,7 +22,6 @@ def archive(
         output_path=output_path,
         title=title,
         content="",
-        section="archive",
         template=template,
         meta={"archive": archive}
     )

@@ -34,7 +34,7 @@ Lettersmith loads text files as Python namedtuples, so a markdown file like this
 ```markdown
 ---
 title: "My post"
-date: 2018-01-17
+created: 2018-01-17
 ---
 
 Some content
@@ -45,20 +45,20 @@ Becomes this:
 ```python
 Doc(
   id_path='path/to/post.md',
-  output_path='path/to/post/index.html',
+  output_path='path/to/post.md',
   input_path='path/to/post.md',
-  created=datetime.datetime(2018, 12, 31, 16, 0),
-  modified=datetime.datetime(2018, 12, 31, 16, 0),
+  created=datetime.datetime(2018, 1, 17, 0, 0),
+  modified=datetime.datetime(2018, 1, 17, 0, 0),
   title='My post',
   content='Some content',
-  section='path',
   meta={
     "title": "My post",
-    "date": "2018-12-31"
+    "date": "2018-01-17"
   },
   template=""
 )
 ```
+
 
 ## Plugins
 
@@ -79,6 +79,23 @@ To write a plugin, all you need to do is define a generator function that takes 
 def my_plugin(docs)
     for doc in docs:
         yield do_something(doc)
+```
+
+You can pipe docs through many transforming functions using `pipe`.
+
+```python
+docs = pipe(
+  docs.find("source/*.md"),
+  markdown.content,
+  my_plugin,
+  my_other_plugin
+)
+```
+
+Which is equivalent to:
+
+```python
+docs = my_other_plugin(my_plugin(markdown.content(docs.find("source/*.md"))))
 ```
 
 When you're done transforming things, you can pass the iterable to `Docs.write`, which takes care of writing out the files to an output directory.
