@@ -73,6 +73,11 @@ def over(lens, func, big):
 
 
 def over_with(lens, func):
+    """
+    Given a lens and a function, returns a single-argument function
+    that will map over value in `big` using `func`, and returning
+    a new instance of `big`.
+    """
     return lambda big: over(lens, func, big)
 
 
