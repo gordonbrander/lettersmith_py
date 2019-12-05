@@ -45,7 +45,7 @@ def writeable(thing):
             "Don't know how to convert {type} to (path, bytes). "
             "If you are using a custom document type, you can create "
             "your own function that knows how to return (path, bytes). "
-            "Then you can pass that function to writer() to create your "
+            "Then you can pass that function to writer() to create "
             "a custom write function."
         )
         raise ValueError(msg.format(type=type(thing)))
