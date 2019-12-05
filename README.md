@@ -98,10 +98,10 @@ Which is equivalent to:
 docs = my_other_plugin(my_plugin(markdown.content(docs.find("source/*.md"))))
 ```
 
-When you're done transforming things, you can pass the iterable to `Docs.write`, which takes care of writing out the files to an output directory.
+When you're done transforming things, you can pass the iterable to `write`, which takes care of writing out the files to an output directory.
 
 ```python
-docs.write(docs, output_path=output_path)
+write(docs, directory="public")
 ```
 
 That's it!
