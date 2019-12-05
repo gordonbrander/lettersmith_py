@@ -16,3 +16,4 @@ from lettersmith import taxonomy
 from lettersmith import wikidoc
 from lettersmith.write import write
 from lettersmith.func import rest, pipe, compose, thrush
+from itertools import chain
