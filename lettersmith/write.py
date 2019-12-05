@@ -36,10 +36,9 @@ def writeable(thing):
     """
     Write a doc or file to `output_path`.
     """
-    typeof = type(thing)
-    if typeof is Doc.Doc:
+    if isinstance(thing, Doc.Doc):
         return Doc.writeable(thing)
-    elif typeof is File.File:
+    elif isinstance(thing, File.File):
         return File.writeable(thing)
     else:
         msg = (
