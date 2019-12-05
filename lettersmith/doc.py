@@ -1,3 +1,16 @@
+"""
+Tools for working with Doc type.
+
+Docs are namedtuples that represent a file to be transformed.
+The `content` field of a doc contains the file contents, read as a
+Python string with UTF-8 encoding.
+
+Most lettersmith plugins transform Docs or iterables of Docs.
+
+For working with non-text files, images, binary files, or text files
+with other encodings, see `lettersmith.file` which stores the raw bytes
+instead of reading them into a Python string.
+"""
 from pathlib import PurePath, Path
 import json
 from collections import namedtuple
