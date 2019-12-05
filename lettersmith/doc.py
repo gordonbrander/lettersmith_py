@@ -8,7 +8,6 @@ import yaml
 
 from lettersmith.util import mix
 from lettersmith.date import read_file_times, EPOCH, to_datetime
-from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
 from lettersmith import lens
 from lettersmith.lens import (
@@ -73,13 +72,14 @@ def load(pathlike):
     )
 
 
-def write(doc, output_dir):
+def writeable(doc):
     """
-    Write a doc to the filesystem.
+    Return a writeable tuple for doc.
 
-    Uses `doc.output_path` and `output_dir` to construct the output path.
+    writeable tuple is any 2-tuple of `output_path`, `bytes`.
+    `lettersmith.write` knows how to write these tuples to disk.
     """
-    write_file_deep(PurePath(output_dir).joinpath(doc.output_path), doc.content)
+    return doc.output_path, doc.content.encode()
 
 
 id_path = Lens(
@@ -146,7 +146,6 @@ def with_ext_html(doc):
     Set doc extension to ".html"
     """
     return put(ext, doc, ".html")
-
 
 
 output_tld = compose(pathtools.tld, output_path.get)

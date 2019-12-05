@@ -3,6 +3,7 @@ from pathlib import Path, PurePath
 import re
 from lettersmith.func import compose
 from lettersmith.lens import Lens, put
+from lettersmith import query
 
 
 _STRANGE_CHARS = "[](){}<>:^&%$#@!'\"|*~`,"
@@ -202,6 +203,24 @@ def is_sibling(path_a, path_b):
     return (
         PurePath(path_a).parent == PurePath(path_b).parent
         and not is_index(path_b))
+
+
+def filter_files(paths):
+    """
+    Given an iterable of paths, filter paths to just those which are
+    file paths.
+    """
+    for pathlike in paths:
+        path = Path(pathlike)
+        if path.is_file():
+            yield path
+
+
+def glob_files(directory, glob):
+    """
+    Return files matching glob
+    """
+    return filter_files(Path(directory).glob(glob))
 
 
 def glob_all(pathlike, globs):

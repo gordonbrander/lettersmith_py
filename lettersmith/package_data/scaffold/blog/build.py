@@ -13,7 +13,7 @@ site_author = "A very cool person"
 # Load data directory
 template_data = data.find("data")
 
-static = docs.find("static/*")
+static = files.find("static/*")
 
 posts = pipe(
     docs.find("post/*.md"),
@@ -59,6 +59,6 @@ rendered_docs = pipe(
     jinjatools.jinja("template", base_url, context)
 )
 
-docs.write((*static, *rendered_docs), output_path="public")
+write((*static, *rendered_docs), directory="public")
 
 print("Done!")

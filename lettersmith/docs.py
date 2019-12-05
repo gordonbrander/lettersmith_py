@@ -1,25 +1,15 @@
 """
 Tools for working with collections of docs
 """
-from pathlib import Path
-from itertools import islice
 from fnmatch import fnmatch
-from functools import wraps
-import shutil
 from lettersmith import path as pathtools
 from lettersmith import doc as Doc
 from lettersmith import query
 from lettersmith.func import composable, compose
-from lettersmith.lens import get, put
+from lettersmith.lens import get
 
 
-def load(file_paths):
-    """
-    Given an iterable of file paths, create an iterable of loaded docs.
-    Ignores special files.
-    """
-    for path in file_paths:
-        yield Doc.load(path)
+load = query.maps(Doc.load)
 
 
 def find(glob):
@@ -28,22 +18,9 @@ def find(glob):
 
     Example:
 
-        Docs.find("posts/*.md")
+        docs.find("posts/*.md")
     """
-    return load(Path(".").glob(glob))
-
-
-def write(docs, output_path="public"):
-    """
-    Consume an iterable of docs, writing them as files.
-    """
-    # Remove output path
-    shutil.rmtree(output_path, ignore_errors=True)
-    written = 0
-    for doc in docs:
-        written = written + 1
-        Doc.write(doc, output_path)
-    return {"written": written}
+    return load(pathtools.glob_files(".", glob))
 
 
 @composable
