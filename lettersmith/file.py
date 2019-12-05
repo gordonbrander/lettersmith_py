@@ -11,8 +11,8 @@ from lettersmith import doc as Doc
 
 
 File = namedtuple("File", (
-    "id_path", "output_path", "input_path", "created", "modified",
-    "blob", "meta"
+    "id_path", "output_path", "input_path",
+    "created", "modified", "blob"
 ))
 File.__doc__ = """
 Files are namedtuples that represent the raw bytes in a file to be
@@ -23,7 +23,7 @@ Files contain a `blob` field that contains the bytes of the file.
 
 
 def create(id_path, output_path, blob,
-    input_path=None, created=EPOCH, modified=EPOCH, meta=None):
+    input_path=None, created=EPOCH, modified=EPOCH):
     """
     Create a File tuple, populating it with sensible defaults
     """
@@ -33,8 +33,7 @@ def create(id_path, output_path, blob,
         input_path=str(input_path) if input_path is not None else None,
         created=to_datetime(created),
         modified=to_datetime(modified),
-        blob=bytes(blob),
-        meta=meta if meta is not None else {}
+        blob=bytes(blob)
     )
 
 
@@ -77,7 +76,7 @@ def to_doc(file):
         input_path=file.input_path,
         created=file.created,
         modified=file.modified,
-        blob=file.content.encode()
+        content=file.blob.decode()
     )
 
 
@@ -91,5 +90,5 @@ def from_doc(file):
         input_path=doc.input_path,
         created=doc.created,
         modified=doc.modified,
-        content=file.blob.decode()
+        blob=doc.content.encode()
     )
