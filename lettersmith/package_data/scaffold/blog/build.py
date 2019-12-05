@@ -13,8 +13,10 @@ site_author = "A very cool person"
 # Load data directory
 template_data = data.find("data")
 
+# Load static and binary files
 static = files.find("static/**/*")
 
+# Load post docs and pipe through plugins
 posts = pipe(
     docs.find("post/*.md"),
     blog.markdown_post(base_url),
@@ -22,6 +24,7 @@ posts = pipe(
     tuple
 )
 
+# Load page docs and pipe through plugins
 pages = pipe(
     docs.find("page/*.md"),
     blog.markdown_page(base_url, relative_to="page")
