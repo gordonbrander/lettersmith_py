@@ -2,85 +2,9 @@
 Utility functions.
 Mostly tools for working with dictionaries and iterables.
 """
-from functools import reduce, singledispatch, wraps, partial
+from functools import wraps
 from fnmatch import fnmatch
-
-
-def id(x):
-    """
-    The id function.
-    """
-    return x
-
-
-def compose2(b, a):
-    """Compose 2 functions"""
-    return lambda x: b(a(x))
-
-
-def compose(fz, *fn):
-    """Compose n functions"""
-    return reduce(compose2, fn, fz)
-
-
-@singledispatch
-def get(x, key, default=None):
-    """
-    A singledispatch getter function.
-    By default, gets attribute (e.g. dot notation).
-    """
-    raise TypeError("Cannot get entries on unknown type {}".format(x))
-
-
-@get.register(dict)
-def get_dict(d, key, default=None):
-    """
-    Getter for dictionaries. Does a get on dictionary items
-    instead of attributes.
-    """
-    return d.get(key, default)
-
-
-def get_deep(d, key, default=None):
-    """
-    Get a value in a dictionary, or get a deep value in
-    nested dictionaries.
-
-    If `keys` is a string, will split on ".".
-    If `keys` is an iterable of strings, will attempt to do a deep get.
-    If the get fails, will return `default` value.
-
-    Example:
-
-        get_deep(x, "some.deep.key")
-        get_deep(x, ("some", "deep", "key"))
-    """
-    keys = key.split(".") if type(key) is str else tuple(key)
-    for key in keys:
-        d = get(d, key)
-        if d == None:
-            return default
-    return d
-
-
-@singledispatch
-def replace(x, **kwargs):
-    """
-    Replace values by keyword argument on some datastructure.
-    This is a singledispatch function that can be extended to multiple
-    types. Default implementation is provided for dict.
-    """
-    raise TypeError("Cannot replace entries on unknown type {}".format(x))
-
-
-@replace.register(dict)
-def replace_dict(d, **kwargs):
-    """
-    Replace values by keyword on a dict, returning a new dict.
-    """
-    e = d.copy()
-    e.update(kwargs)
-    return e
+from collections import OrderedDict
 
 
 def chunk(iterable, n):
@@ -98,193 +22,26 @@ def chunk(iterable, n):
         yield chunk
 
 
-def is_id_path_match(doc, glob):
+def mix(d, e):
     """
-    Predicate function that tests whether the id_path of a thing
-    (as determined by `get`) matches a glob pattern.
+    Combine two dicts.
+    Just a function version of the spread operator for dicts.
     """
-    # We fast-path for "everything" matches.
-    return fnmatch(get(doc, "id_path"), glob) if glob != "*" else True
-
-
-def filter_id_path(docs, glob):
-    return filter(lambda doc: is_id_path_match(doc, glob), docs)
-
-
-def any_in(collection, values):
-    """
-    Check if any of a collection of values is in `collection`.
-    Returns boolean.
-    """
-    for value in values:
-        if value in collection:
-            return True
-    return False
-
-
-_EMPTY_TUPLE = tuple()
-
-
-def contains(x, key, value):
-    """
-    Check for the inclusion of a value in an indexable in a deep object.
-    `key` is a key path (can be a single key or an iterable of keys).
-    """
-    return value in get_deep(x, key, _EMPTY_TUPLE)
-
-
-def has_key(x, key):
-    """
-    Check for the presence of a key in a deep object.
-    `key` is a key path (can be a single key or an iterable of keys).
-    """
-    return get_deep(x, key) != None
-
-
-def select(dicts, *keys):
-    for d in dicts:
-        yield tuple(get_deep(d, key) for key in keys)
-
-
-def _compare_where(compare):
-    """
-    Query an iterable of dictionaries for keys matching value.
-    `key` may be an iterable of keys representing a key path.
-    """
-    @wraps(compare)
-    def where(dicts, key, value):
-        for x in dicts:
-            if compare(get_deep(x, key), value):
-                yield x
-    return where
-
-
-@_compare_where
-def where(a, b):
-    return a == b
-
-
-@_compare_where
-def where_not(a, b):
-    return a != b
-
-
-@_compare_where
-def where_gt(a, b):
-    return a > b
-
-
-@_compare_where
-def where_lt(a, b):
-    return a < b
-
-
-@_compare_where
-def where_len(a, b):
-    return len(a) == b
-
-
-@_compare_where
-def where_len_gt(a, b):
-    return len(a) > b
-
-
-@_compare_where
-def where_len_lt(a, b):
-    return len(a) < b
-
-
-@_compare_where
-def where_in(a, b):
-    try:
-        return b in a
-    except TypeError:
-        return False
-
-
-@_compare_where
-def where_not_in(a, b):
-    try:
-        return b not in a
-    except TypeError:
-        return True
-
-
-@_compare_where
-def where_any_in(a, b):
-    try:
-        return any_in(a, b)
-    except TypeError:
-        return False
-
-
-@_compare_where
-def where_matches(value, glob):
-    return fnmatch(value, glob)
-
-
-def mapping(f):
-    """
-    Lift a function to consume an iterator instead of a single value.
-    The first argument is assumed to be the "main" argument.
-    The transformed function will instead consume an iterator as the
-    first argument.
-    """
-    @wraps(f)
-    def mappingf(iter, *args, **kwargs):
-        for x in iter:
-            yield f(x, *args, **kwargs)
-    return mappingf
-
-
-def sort_by(dicts_iter, key, default=None, reverse=False):
-    """Sort an iterable of dicts via a key path"""
-    fkey = lambda x: get_deep(x, key, default=default)
-    return sorted(dicts_iter, key=fkey, reverse=reverse)
-
-
-def sort_by_len(dicts_iter, key, reverse=False):
-    """Sort an iterable of dicts via a key path"""
-    fkey = lambda x: len(get_deep(x, key, default=_EMPTY_TUPLE))
-    return sorted(dicts_iter, key=fkey, reverse=reverse)
-
-
-def sort_by_keys(dicts_iter, keys, defaults=_EMPTY_TUPLE, reverse=False):
-    """
-    Sort an iterable of dicts by multiple key values at once.
-    `keys` is an iterable of keys that describe, in order, which values
-    to sort by. Each key may be a key or a key path.
-    `defaults` is an iterable of values that are used as defaults when
-    a key is missing. It must be the same length as `keys`.
-
-    This can be used to sort dicts by multiple fields, for example, by
-    weight, as well as date.
-    """
-    dicts_tuple = tuple(dicts_iter)
-    keys_tuple = tuple(keys)
-    defaults_tuple = tuple(defaults)
-    if (len(defaults_tuple) is not len(keys_tuple)):
-        raise ValueError("defaults iterable must be same length as keys")
-    fkey = lambda d: tuple(
-        get_deep(d, key, default)
-        for key, default in zip(keys_tuple, defaults_tuple)
-    )
-    return sorted(dicts_tuple, key=fkey, reverse=reverse)
+    return {**d, **e}
 
 
 def _first(pair):
     return pair[0]
 
 
-def sort_items_by_key(dict, reverse=False):
+def order_dict_by_keys(d):
     """
-    Sort a dict's items by key, returning a sorted iterable of tuples.
+    Create an OrderedDict, ordered by key asc.
     """
-    return sorted(
-        dict.items(),
-        key=_first,
-        reverse=reverse
-    )
+    return OrderedDict(sorted(
+        d.items(),
+        key=_first
+    ))
 
 
 def join(words, sep="", template="{word}"):
@@ -306,7 +63,31 @@ def expand(f, iter, *args, **kwargs):
             yield y
 
 
+def index_sets(items):
+    """
+    Create a dictionary of sets from an iterable of `(key, value)` pairs.
+
+    Each item is stored in a set at `key`. More than one item with same key
+    means items get appended to same list.
+
+    This means items in indices are unique, but they must be hashable.
+    """
+    index = {}
+    for key, value in items:
+        try:
+            index[key].add(value)
+        except KeyError:
+            index[key] = set((value,))
+    return index
+
+
 def index_many(items):
+    """
+    Create a dictionary of lists from an iterable of `(key, value)` pairs.
+
+    Each item is stored in a list at `key`. More than one item with same key
+    means items get appended to same list.
+    """
     index = {}
     for key, value in items:
         try:

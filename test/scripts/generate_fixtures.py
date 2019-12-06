@@ -94,7 +94,7 @@ def gen_text():
 
 def gen_doc(i):
     id_path = "Test Doc {}.md".format(i)
-    return Doc.doc(
+    return Doc.create(
         id_path=id_path,
         output_path=id_path,
         title="Test Doc {}".format(i),

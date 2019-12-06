@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+
+{% block body %}
+  {% for stub in doc.meta.archive %}
+    <article>
+      <h1>{{stub.title}}</h1>
+      <div>{{stub.summary}}</div>
+    </article>
+  {% endfor %}
+{% endblock %}

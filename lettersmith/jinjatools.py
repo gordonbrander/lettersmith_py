@@ -1,16 +1,16 @@
 import random
 import itertools
-import json
+from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader
 
 from lettersmith import util
 from lettersmith import docs as Docs
 from lettersmith import doc as Doc
-from lettersmith import templatetools
+from lettersmith import query
+from lettersmith.lens import get, put
 from lettersmith import path as pathtools
-from lettersmith.markdowntools import house_markdown
-from lettersmith import taxonomy
+from lettersmith.markdowntools import markdown
 
 
 def _choice(iterable):
@@ -42,9 +42,9 @@ def _sample(iterable, k):
         return l
 
 
-def permalink(base_url):
+def _permalink(base_url):
     def permalink_bound(output_path):
-        return to_url(output_path, base_url)
+        return pathtools.to_url(output_path, base_url)
     return permalink_bound
 
 
@@ -57,43 +57,15 @@ class FileSystemEnvironment(Environment):
 
 
 TEMPLATE_FUNCTIONS = {
-    "markdown": house_markdown,
     "sorted": sorted,
-    "json_dumps": json.dumps,
-    "sum": sum,
     "len": len,
-    "filter": filter,
-    "filterfalse": itertools.filterfalse,
     "islice": itertools.islice,
     "choice": _choice,
     "sample": _sample,
     "shuffle": _shuffle,
     "to_url": pathtools.to_url,
-    "get": util.get,
-    "sorted": sorted,
-    "sort_by": util.sort_by,
-    "sort_by_len": util.sort_by_len,
-    "sort_by_keys": util.sort_by_keys,
-    "sort_items_by_key": util.sort_items_by_key,
-    "where": util.where,
-    "where_not": util.where_not,
-    "where_gt": util.where_gt,
-    "where_lt": util.where_lt,
-    "where_len": util.where_len,
-    "where_len_gt": util.where_len_gt,
-    "where_len_lt": util.where_len_lt,
-    "where_in": util.where_in,
-    "where_not_in": util.where_not_in,
-    "where_any_in": util.where_any_in,
-    "where_matches": util.where_matches,
     "join": util.join,
-    "remove_index": Docs.remove_index,
-    "remove_id_path": Docs.remove_id_path,
-    "filter_siblings": Docs.filter_siblings,
-    "to_slug": pathtools.to_slug,
-    "to_slugs": util.mapping(pathtools.to_slug),
-    "tuple": tuple,
-    "json_dumps": json.dumps
+    "tuple": tuple
 }
 
 
@@ -117,38 +89,31 @@ def should_template(doc):
     """
     Check if a doc should be templated. Returns a bool.
     """
-    return len(doc.templates) > 0
+    return get(Doc.template, doc) is not ""
 
 
-def doc_renderer(env):
-    """
-    Create a render function with a bound environment.
-    Returns a render function that can render docs.
-    """
-    def render_doc(doc):
-        """
-        Render a document with this Jinja environment.
-        """
-        if should_template(doc):
-            template = env.select_template(doc.templates)
-            rendered = template.render({"doc": doc})
-            return doc._replace(content=rendered)
-        else:
-            return doc
-    return render_doc
-
-
-def render(docs, templates_path="theme", context={}, filters={}):
+def jinja(templates_path, base_url, context={}, filters={}):
     """
     Wraps up the gory details of creating a Jinja renderer.
     Returns a render function that takes a doc and returns a rendered doc.
     Template comes preloaded with Jinja default filters, and
     Lettersmith default filters and globals.
     """
-    render = doc_renderer(LettersmithEnvironment(
+    now = datetime.now()
+    env = LettersmithEnvironment(
         templates_path,
-        filters=filters,
-        context=context
-    ))
-    for doc in docs:
-        yield render(doc)
+        filters={"permalink": _permalink(base_url), **filters},
+        context={"now": now, **context}
+    )
+
+    @query.maps
+    @Doc.annotate_exceptions
+    def render(doc):
+        if should_template(doc):
+            template = env.get_template(doc.template)
+            rendered = template.render({"doc": doc})
+            return put(Doc.content, doc, rendered)
+        else:
+            return doc
+
+    return render

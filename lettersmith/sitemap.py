@@ -4,6 +4,7 @@ from itertools import islice
 from lettersmith import doc as Doc
 from lettersmith.jinjatools import FileSystemEnvironment
 from lettersmith.path import to_url
+from lettersmith.func import composable
 
 MODULE_PATH = Path(__file__).parent
 TEMPLATE_PATH = Path(MODULE_PATH, "package_data", "template")
@@ -26,7 +27,8 @@ def render_sitemap(docs,
     return template.render({"docs": docs})
 
 
-def gen_sitemap(docs, base_url):
+@composable
+def sitemap(docs, base_url):
     """
     Returns a sitemap doc
     """
@@ -36,7 +38,7 @@ def gen_sitemap(docs, base_url):
     output_path = "sitemap.xml"
     now = datetime.now()
     content = render_sitemap(docs_50k, base_url=base_url)
-    return Doc.doc(
+    return Doc.create(
         id_path=output_path,
         output_path=output_path,
         created=now,

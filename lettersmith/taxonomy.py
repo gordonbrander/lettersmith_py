@@ -1,83 +1,118 @@
 """
 Tools for indexing docs by tag (taxonomy).
 """
-from lettersmith import util
 from datetime import datetime
-from voluptuous import Schema, Optional
+from lettersmith.func import composable, pipe
 from lettersmith import path as pathtools
-from lettersmith.doc import doc
+from lettersmith import stub as Stub
+from lettersmith import doc as Doc
+from lettersmith import docs as Docs
+from lettersmith.lens import lens_compose, key, get, put
 
 
-schema = Schema({
-    Optional("keys", default=["tags"]): [str],
-    Optional("templates", default=[]): [str],
-    Optional("output_path_template", default="{taxonomy}/{term}/all/index.html"): str
-})
+_empty = tuple()
 
 
-def items_with_keys(d, keys):
+meta_related = lens_compose(Doc.meta, key("related", _empty))
+
+
+def meta_taxonomy(tax):
     """
-    Yield item pairs with keys matching `keys`.
+    Create a lens for taxonomy `tax`.
     """
-    for key, value in d.items():
-        if key in keys:
-            yield key, value
+    return lens_compose(Doc.meta, key(tax, _empty))
 
 
-def gen_taxonomy_archives(docs, config):
-    """
-    Creates a full archive page for each taxonomy term. One page per term.
-    """
-    templates = tuple(config["templates"])
-    tax_index = index_by_taxonomy(docs, config["keys"])
-    for taxonomy, terms in tax_index.items():
-        for term, docs in terms.items():
-            output_path = config["output_path_template"].format(
-                taxonomy=pathtools.to_slug(taxonomy),
-                term=pathtools.to_slug(term)
-            )
-            tax_templates = (
-                "taxonomy/{}/all.html".format(taxonomy),
-                "taxonomy/{}/list.html".format(taxonomy),
-                "taxonomy/all.html",
-                "taxonomy/list.html",
-                "list.html"
-            )
-            meta = {"docs": docs}
-            yield doc(
-                id_path=output_path,
-                output_path=output_path,
-                created=datetime.now(),
-                modified=datetime.now(),
-                title=term,
-                section=taxonomy,
-                templates=templates + tax_templates,
-                meta=meta
-            )
+meta_tags = meta_taxonomy("tags")
 
 
-def index_by_taxonomy(docs, keys):
+@composable
+def taxonomy_archives(
+    docs,
+    key,
+    template="taxonomy.html",
+    output_path_template="{taxonomy}/{term}/index.html"
+):
     """
-    Create a new index by taxonomy.
-    `taxonomies` is an indexable whitelist of meta keys that should
-    be treated as taxonomies.
+    Creates an archive page for each taxonomy term. One page per term.
+    """
+    tax_index = index_taxonomy(docs, key)
+    for term, docs in tax_index.items():
+        output_path = output_path_template.format(
+            taxonomy=pathtools.to_slug(key),
+            term=pathtools.to_slug(term)
+        )
+        meta = {"docs": docs}
+        now = datetime.now()
+        yield Doc.create(
+            id_path=output_path,
+            output_path=output_path,
+            created=now,
+            modified=now,
+            title=term,
+            template=template,
+            meta=meta
+        )
+
+
+tag_archives = taxonomy_archives("tags")
+
+
+def _get_indexes(index, keys):
+    for key in keys:
+        for item in index[key]:
+            yield item
+
+
+@composable
+def index_taxonomy(docs, key):
+    """
+    Create a new index for a taxonomy.
+    `key` is a whitelisted meta keys that should
+    be treated as a taxonomy field.
 
     Returns a dict that looks like:
 
         {
-            "tags": {
-                "term_a": [doc, ...],
-                "term_b": [doc, ...]
-            }
+            "term_a": [stub, ...],
+            "term_b": [stub, ...]
         }
     """
     tax_index = {}
     for doc in docs:
-        for tax, terms in items_with_keys(doc.meta, keys):
-            if not tax_index.get(tax):
-                tax_index[tax] = {}
-            for term in terms:
-                if not tax_index[tax].get(term):
-                    tax_index[tax][term] = []
-                tax_index[tax][term].append(doc)
+        if key in doc.meta:
+            for term in doc.meta[key]:
+                if term not in tax_index:
+                    tax_index[term] = []
+                tax_index[term].append(Stub.from_doc(doc))
     return tax_index
+
+
+index_tags = index_taxonomy("tags")
+
+
+def related(tax):
+    """
+    Annotate doc meta with a list of related doc stubs.
+
+    A doc is related if it shares any of the same tags in the
+    same taxonomy.
+    """
+    taxonomy = meta_taxonomy(tax)
+    build_index = index_taxonomy(tax)
+    def add_related(docs):
+        docs = tuple(docs)
+        index = build_index(docs)
+        for doc in docs:
+            tags = get(taxonomy, doc)
+            related = pipe(
+                _get_indexes(index, tags),
+                Docs.dedupe,
+                Docs.remove_id_path(doc.id_path),
+                tuple
+            )
+            yield put(meta_related, doc, related)
+    return add_related
+
+
+related_by_tag = related("tags")

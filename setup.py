@@ -23,8 +23,7 @@ setup(
         "PyYAML>=3.13",
         "py-gfm>=0.1.3",
         "python-frontmatter>=0.3.1",
-        "Jinja2>=2.7",
-        "voluptuous>=0.11.5"
+        "Jinja2>=2.7"
         # TODO
         # "watchdog>=0.6.0"
     ],
@@ -32,8 +31,7 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "lettersmith_site=lettersmith.bin.site:main",
-            "lettersmith_scaffold=lettersmith.bin.scaffold:main",
+            "lettersmith_scaffold=lettersmith.cli.scaffold:main",
         ]
     }
 )

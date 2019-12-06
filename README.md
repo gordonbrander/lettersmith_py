@@ -14,25 +14,16 @@ cd lettersmith_py
 pip3 install -e .
 ```
 
-## lettersmith_site
-
-Lettersmith comes bundled with a static site generator `lettersmith_site` that can do most of what Jekyll, et al do.
-
-`lettersmith_site` takes a single argument — a path to a yaml config file.
-
-```bash
-lettersmith_site lettersmith.yaml
-```
-
 ## lettersmith_scaffold
 
 You can easily scaffold a site using `lettersmith_scaffold`.
 
 ```bash
-lettersmith_scaffold . --type wiki
+lettersmith_scaffold . --type blog
 ```
 
-This will plop a yaml config file and a theme directory you can customize into your project directory. Right now there is just one type: "wiki", though I hope to add more for common site types (e.g. blog, portfolio, etc).
+This will stub out a directory structure and a build script for a typical blogging setup. You can customize the build script from there.
+
 
 ## What it does
 
@@ -43,7 +34,7 @@ Lettersmith loads text files as Python namedtuples, so a markdown file like this
 ```markdown
 ---
 title: "My post"
-date: 2018-01-17
+created: 2018-01-17
 ---
 
 Some content
@@ -54,20 +45,20 @@ Becomes this:
 ```python
 Doc(
   id_path='path/to/post.md',
-  output_path='path/to/post/index.html',
-  input_path='content/path/to/post.md',
-  created=datetime.datetime(2018, 12, 31, 16, 0),
-  modified=datetime.datetime(2018, 12, 31, 16, 0),
+  output_path='path/to/post.md',
+  input_path='path/to/post.md',
+  created=datetime.datetime(2018, 1, 17, 0, 0),
+  modified=datetime.datetime(2018, 1, 17, 0, 0),
   title='My post',
   content='Some content',
-  section='path',
   meta={
     "title": "My post",
-    "date": "2018-12-31"
+    "date": "2018-01-17"
   },
-  templates=()
+  template=""
 )
 ```
+
 
 ## Plugins
 
@@ -76,10 +67,8 @@ Plugins are just functions that transform doc namedtuples.
 To transform many files, you can load them into an iterable, then use list comprehensions, generator expressions, and map, filter, reduce:
 
 ```python
-# Get all markdown paths under source/
-paths = Path("source").glob("*.md")
-# Load them as doc namedtuples
-docs = Docs.load(paths)
+# Get all markdown docs under source/
+docs = docs.find("source/*.md")
 # Transform them with your function.
 docs = my_plugin(docs)
 ```
@@ -92,12 +81,31 @@ def my_plugin(docs)
         yield do_something(doc)
 ```
 
-When you're done transforming things, you can pass the iterable to `Docs.write`, which takes care of writing out the files to an output directory.
+You can pipe docs through many transforming functions using `pipe`.
 
 ```python
-Docs.write(docs, output_path=output_path)
+docs = pipe(
+  docs.find("source/*.md"),
+  markdown.content,
+  my_plugin,
+  my_other_plugin
+)
+```
+
+Which is equivalent to:
+
+```python
+docs = my_other_plugin(my_plugin(markdown.content(docs.find("source/*.md"))))
+```
+
+When you're done transforming things, you can pass the iterable to `write`, which takes care of writing out the files to an output directory.
+
+```python
+write(docs, directory="public")
 ```
 
 That's it!
+
+Check out [blog/build.py](/lettersmith/package_data/scaffold/blog/build.py) for an example of a build script that uses some of the built-in plugins to create a typical blogging setup.
 
 Lettersmith comes with a swiss army knife of helpful tools for things like Markdown, templates, drafts, tags, wikilinks, and more — and if you see something missing it's easy to write your own functions.

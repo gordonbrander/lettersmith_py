@@ -1,67 +1,93 @@
 """
 Tools for working with collections of docs
 """
-from itertools import islice
-from lettersmith.path import is_draft, is_index, is_doc_file
+from fnmatch import fnmatch
+from lettersmith import path as pathtools
 from lettersmith import doc as Doc
-from lettersmith import util
+from lettersmith import query
+from lettersmith.func import composable, compose
+from lettersmith.lens import get
 
 
-def load(file_paths, relative_to=""):
+load = query.maps(Doc.load)
+
+
+def find(glob):
     """
-    Given an iterable of file paths, create an iterable of loaded docs.
-    Ignores special files.
+    Load all docs under input path that match a glob pattern.
+
+    Example:
+
+        docs.find("posts/*.md")
     """
-    for path in file_paths:
-        if is_doc_file(path):
-            yield Doc.load(path, relative_to=relative_to)
+    return load(pathtools.glob_files(".", glob))
 
 
-def write(docs, output_path="public"):
-    """
-    Consume an iterable of docs, writing them as files.
-    """
-    written = 0
-    for doc in docs:
-        written = written + 1
-        Doc.write(doc, output_path)
-    return {"written": written}
-
-
-def remove_drafts(docs):
-    return (doc for doc in docs if not is_draft(doc.id_path))
-
-
+@composable
 def remove_id_path(docs, id_path):
     """
     Remove docs with a given id_path.
     """
-    return (doc for doc in docs if doc.id_path != id_path)
+    for doc in docs:
+        if doc.id_path != id_path:
+            yield doc
 
 
-def remove_index(docs):
+@composable
+def matching(docs, glob):
     """
-    Filter index from docs
+    Filter an iterator of docs to only those docs whos id_path
+    matches a unix-style glob pattern.
     """
-    return (doc for doc in docs if not is_index(doc.id_path))
+    for doc in docs:
+        if fnmatch(doc.id_path, glob):
+            yield doc
 
 
+@composable
 def filter_siblings(docs, id_path):
     """
     Filter a list of dicts with `id_path`, returning a generator
     yielding only those dicts who's id_path is a sibling to
     `id_path`.
     """
-    return (
-        doc for doc in docs
-        if pathtools.is_sibling(id_path, doc.id_path))
+    for doc in docs:
+        if pathtools.is_sibling(id_path, doc.id_path):
+            yield doc
 
 
-def most_recent(docs, nitems, reverse=True):
-    return islice(util.sort_by(docs, "created", reverse), nitems)
+remove_drafts = query.rejects(compose(pathtools.is_draft, Doc.id_path.get))
+remove_index = query.rejects(compose(pathtools.is_index, Doc.id_path.get))
+dedupe = query.dedupes(Doc.id_path.get)
+uplift_frontmatter = query.maps(Doc.uplift_frontmatter)
+sort_by_created = query.sorts(Doc.created.get, reverse=True)
+sort_by_modified = query.sorts(Doc.modified.get, reverse=True)
+sort_by_title = query.sorts(Doc.title.get)
+autotemplate = query.maps(Doc.autotemplate)
+with_ext_html = query.maps(Doc.with_ext_html)
 
 
-# Mapping versions of single-doc functions.
-parse_yaml = util.mapping(Doc.parse_yaml)
-parse_json = util.mapping(Doc.parse_json)
-change_ext = util.mapping(Doc.change_ext)
+def most_recent(n):
+    """
+    Get most recent `n` docs, ordered by created.
+    """
+    return compose(
+        query.takes(n),
+        sort_by_created
+    )
+
+
+def with_template(template):
+    """
+    Set template, but only if doc doesn't have one already.
+    """
+    return query.maps(Doc.with_template(template))
+
+
+def renderer(render):
+    """
+    Create a renderer for docs using a string render function.
+
+    Can be used as a decorator.
+    """
+    return query.maps(Doc.renderer(render))

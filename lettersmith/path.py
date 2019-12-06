@@ -1,29 +1,40 @@
 from urllib.parse import urlparse, urljoin
 from pathlib import Path, PurePath
-from os import sep, listdir, path, walk
 import re
+from lettersmith.func import compose
+from lettersmith.lens import Lens, put
+from lettersmith import query
 
 
 _STRANGE_CHARS = "[](){}<>:^&%$#@!'\"|*~`,"
-STRANGE_CHAR_PATTERN = "[{}]".format(re.escape(_STRANGE_CHARS))
+_STRANGE_CHAR_PATTERN = "[{}]".format(re.escape(_STRANGE_CHARS))
 
 
-def space_to_dash(text):
+def _space_to_dash(text):
     """Replace spaces with dashes."""
     return re.sub(r"\s+", "-", text)
 
 
-def remove_strange_chars(text):
+def _remove_strange_chars(text):
     """Remove funky characters that don't belong in a URL."""
-    return re.sub(STRANGE_CHAR_PATTERN, "", text)
+    return re.sub(_STRANGE_CHAR_PATTERN, "", text)
 
 
-def to_slug(text):
-    """Given some text, return a nice URL"""
-    text = str(text).strip().lower()
-    text = remove_strange_chars(text)
-    text = space_to_dash(text)
-    return text
+def _lower(s):
+    return s.lower()
+
+
+def _strip(s):
+    return s.strip()
+
+
+to_slug = compose(
+    _space_to_dash,
+    _remove_strange_chars,
+    _lower,
+    _strip,
+    str
+)
 
 
 def to_title(pathlike):
@@ -83,6 +94,14 @@ def undraft(pathlike):
         return path
 
 
+def relative_to(tlds):
+    """
+    Create a mapping function that will transform pathlike so it is
+    relative to some top-level directories (tlds).
+    """
+    return lambda pathlike: str(PurePath(pathlike).relative_to(tlds))
+
+
 def to_nice_path(ugly_pathlike):
     """
     Makes an ugly path into a "nice path". Nice paths are paths that end with
@@ -107,6 +126,25 @@ def to_nice_path(ugly_pathlike):
     return nice_path
 
 
+def _get_ext(pathlike):
+    return PurePath(pathlike).suffix
+
+
+def _put_ext(pathlike, ext):
+    return str(PurePath(pathlike).with_suffix(ext))
+
+
+ext = Lens(_get_ext, _put_ext)
+
+
+def ext_html(pathlike):
+    """
+    Set suffix `.html` on a pathlike.
+    Return a path string.
+    """
+    return put(ext, pathlike, ".html")
+
+
 def to_url(pathlike, base="/"):
     """
     Makes a nice path into a url.
@@ -128,34 +166,6 @@ def to_url(pathlike, base="/"):
 
 def is_draft(pathlike):
     return PurePath(pathlike).name.startswith("_")
-
-
-def is_dotfile(pathlike):
-    return PurePath(pathlike).name.startswith(".")
-
-
-def is_doc_file(pathlike):
-    """
-    Is this path a valid doc-like path?
-
-    
-    """
-    return (
-        is_file_like(pathlike)
-        and not is_dotfile(pathlike)
-    )
-
-
-def should_pub(pathlike, build_drafts=False):
-    """
-    Should you publish this? This function is just an ergonomic shortcut
-    for filtering out drafts based on build_drafts setting, as well as
-    filtering out invalid file types.
-    """
-    return (
-        is_doc_file(pathlike) and
-        (build_drafts or not is_draft(pathlike))
-    )
 
 
 def is_index(pathlike):
@@ -195,12 +205,22 @@ def is_sibling(path_a, path_b):
         and not is_index(path_b))
 
 
-def has_ext(pathlike, *ext):
+def filter_files(paths):
     """
-    Check to see if the extension of the pathlike matches any of the
-    extensions in `extensions`.
+    Given an iterable of paths, filter paths to just those which are
+    file paths.
     """
-    return PurePath(pathlike).suffix in ext
+    for pathlike in paths:
+        path = Path(pathlike)
+        if path.is_file():
+            yield path
+
+
+def glob_files(directory, glob):
+    """
+    Return files matching glob
+    """
+    return filter_files(Path(directory).glob(glob))
 
 
 def glob_all(pathlike, globs):

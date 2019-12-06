@@ -1,3 +1,16 @@
+"""
+Tools for working with Doc type.
+
+Docs are namedtuples that represent a file to be transformed.
+The `content` field of a doc contains the file contents, read as a
+Python string with UTF-8 encoding.
+
+Most lettersmith plugins transform Docs or iterables of Docs.
+
+For working with non-text files, images, binary files, or text files
+with other encodings, see `lettersmith.file` which stores the raw bytes
+instead of reading them into a Python string.
+"""
 from pathlib import PurePath, Path
 import json
 from collections import namedtuple
@@ -6,16 +19,19 @@ from functools import wraps
 import frontmatter
 import yaml
 
+from lettersmith.util import mix
 from lettersmith.date import read_file_times, EPOCH, to_datetime
-from lettersmith.file import write_file_deep
 from lettersmith import path as pathtools
-from lettersmith.util import replace, get
-from lettersmith.stringtools import truncate, strip_html
+from lettersmith import lens
+from lettersmith.lens import (
+    Lens, lens_compose, get, put, key, over_with, update
+)
+from lettersmith.func import compose
 
 
 Doc = namedtuple("Doc", (
     "id_path", "output_path", "input_path", "created", "modified",
-    "title", "content", "section", "meta", "templates"
+    "title", "content", "meta", "template"
 ))
 Doc.__doc__ = """
 Docs are namedtuples that represent a document to be transformed,
@@ -26,9 +42,9 @@ contents of the file.
 """
 
 
-def doc(id_path, output_path,
+def create(id_path, output_path,
     input_path=None, created=EPOCH, modified=EPOCH,
-    title="", content="", section="", meta=None, templates=None):
+    title="", content="", meta=None, template=""):
     """
     Create a Doc tuple, populating it with sensible defaults
     """
@@ -40,36 +56,14 @@ def doc(id_path, output_path,
         modified=to_datetime(modified),
         title=str(title),
         content=str(content),
-        section=str(section),
         meta=meta if meta is not None else {},
-        templates=templates if templates is not None else tuple()
+        template=str(template)
     )
 
 
-@get.register(Doc)
-def get_doc(doc, key, default=None):
-    return getattr(doc, key, default)
-
-
-@replace.register(Doc)
-def replace_doc(doc, **kwargs):
+def load(pathlike):
     """
-    Replace items in a Doc, returning a new Doc.
-    """
-    return doc._replace(**kwargs)
-
-
-def replace_meta(doc, **kwargs):
-    """
-    Put a value into a doc's meta dictionary.
-    Returns a new doc.
-    """
-    return doc._replace(meta={**doc.meta, **kwargs})
-
-
-def load(pathlike, relative_to=""):
-    """
-    Loads a basic doc dictionary from a file path.
+    Loads a doc namedtuple from a file path.
     `content` field will contain contents of file.
     Typically, you decorate the doc later with meta and other fields.
 
@@ -78,22 +72,128 @@ def load(pathlike, relative_to=""):
     file_created, file_modified = read_file_times(pathlike)
     with open(pathlike, 'r') as f:
         content = f.read()
-    input_path = PurePath(pathlike)
-    id_path = input_path.relative_to(relative_to)
-    output_path = pathtools.to_nice_path(id_path)
-    section = pathtools.tld(id_path)
-    title = pathtools.to_title(input_path)
-    return doc(
-        id_path=id_path,
-        output_path=output_path,
-        input_path=input_path,
+    title = pathtools.to_title(pathlike)
+    return create(
+        id_path=pathlike,
+        output_path=pathlike,
+        input_path=pathlike,
         created=file_created,
         modified=file_modified,
         title=title,
-        section=section,
         meta={},
         content=content
     )
+
+
+def writeable(doc):
+    """
+    Return a writeable tuple for doc.
+
+    writeable tuple is any 2-tuple of `output_path`, `bytes`.
+    `lettersmith.write` knows how to write these tuples to disk.
+    """
+    return doc.output_path, doc.content.encode()
+
+
+id_path = Lens(
+    lambda doc: doc.id_path,
+    lambda doc, id_path: doc._replace(id_path=id_path)
+)
+
+
+output_path = Lens(
+    lambda doc: doc.output_path,
+    lambda doc, output_path: doc._replace(output_path=output_path)
+)
+
+ext = lens_compose(output_path, pathtools.ext)
+
+title = Lens(
+    lambda doc: doc.title,
+    lambda doc, title: doc._replace(title=title)
+)
+
+
+content = Lens(
+    lambda doc: doc.content,
+    lambda doc, content: doc._replace(content=content)
+)
+
+
+created = Lens(
+    lambda doc: doc.created,
+    lambda doc, created: doc._replace(created=created)
+)
+
+
+modified = Lens(
+    lambda doc: doc.modified,
+    lambda doc, modified: doc._replace(modified=modified)
+)
+
+
+meta = Lens(
+    lambda doc: doc.meta,
+    lambda doc, meta: doc._replace(meta=meta)
+)
+
+
+template = Lens(
+    lambda doc: doc.template,
+    lambda doc, template: doc._replace(template=template)
+)
+
+
+meta_summary = lens_compose(meta, key("summary", ""))
+
+
+def update_meta(doc, patch):
+    """
+    Mix keys from `patch` into `doc.meta`.
+    """
+    return update(meta, mix, doc, patch)
+
+
+def with_ext_html(doc):
+    """
+    Set doc extension to ".html"
+    """
+    return put(ext, doc, ".html")
+
+
+output_tld = compose(pathtools.tld, output_path.get)
+id_tld = compose(pathtools.tld, id_path.get)
+
+
+_infer_template = compose(
+    pathtools.ext_html,
+    pathtools.to_slug,
+    id_tld
+)
+
+
+def autotemplate(doc):
+    """
+    Set template based on top-level directory in doc's id_path.
+
+    E.g. if top-level-directory is "posts", template gets set to "posts.html".
+    """
+    if get(template, doc) != "":
+        return doc
+    else:
+        return put(template, doc, _infer_template(doc))
+
+
+def with_template(t):
+    """
+    Set template `t`, but only if doc doesn't have one already.
+    """
+    def with_template_on_doc(doc):
+        if get(template, doc) != "":
+            return doc
+        else:
+            return put(template, doc, t)
+    return with_template_on_doc
 
 
 def to_json(doc):
@@ -108,21 +208,10 @@ def to_json(doc):
         "created": doc.created.timestamp(),
         "modified": doc.modified.timestamp(),
         "title": doc.title,
-        "section": doc.section,
         "content": doc.content,
-        # TODO manually serialize meta?
         "meta": doc.meta,
-        "templates": doc.templates
+        "template": doc.template
     }
-
-
-def write(doc, output_dir):
-    """
-    Write a doc to the filesystem.
-
-    Uses `doc.output_path` and `output_dir` to construct the output path.
-    """
-    write_file_deep(PurePath(output_dir).joinpath(doc.output_path), doc.content)
 
 
 def uplift_meta(doc):
@@ -130,74 +219,38 @@ def uplift_meta(doc):
     Reads "magic" fields in the meta and uplifts their values to doc
     properties.
 
-    We use this to uplift title, created, modified fields in the
-    frontmatterm, overriding original or default values on doc.
+    We use this to uplift...
+
+    - title
+    - created
+    - modified
+    - permalink
+    - template
+
+    ...in the frontmatter, overriding original or default values on doc.
     """
     return doc._replace(
         title=doc.meta.get("title", doc.title),
         created=to_datetime(doc.meta.get("created", doc.created)),
-        modified=to_datetime(doc.meta.get("modified", doc.modified))
+        modified=to_datetime(doc.meta.get("modified", doc.modified)),
+        output_path=doc.meta.get("permalink", doc.output_path),
+        template=doc.meta.get("template", "")
     )
-
-
-def uplifts_meta(func):
-    """
-    Decorates a simpler doc parsing function so that it will uplift meta items
-    after running `func`.
-    """
-    @wraps(func)
-    def wrapped(doc, *args, **kwargs):
-        return uplift_meta(func(doc, *args, **kwargs))
-    return wrapped
-
-
-def has_ext(doc, *exts):
-    """
-    Check if a doc has an extension.
-    """
-    return pathtools.has_ext(doc.id_path, *exts)
-
-
-def ext(*exts):
-    """
-    Create an extension predicate function.
-    """
-    def has_ext(doc):
-        return pathtools.has_ext(doc.id_path, *exts)
-    return has_ext
-
-
-
-def change_ext(doc, ext):
-    """Change the extention on a doc's output_path, returning a new doc."""
-    updated_path = PurePath(doc.output_path).with_suffix(ext)
-    return doc._replace(output_path=str(updated_path))
-
-
-def summary(doc, max_len=250, suffix="..."):
-    """
-    Get summary for doc. Uses "summary" meta field if it exists.
-    Otherwise, generates a summary by truncating doc content.
-    """
-    try:
-        return strip_html(doc.meta["summary"])
-    except KeyError:
-        return truncate(strip_html(doc.content), max_len, suffix)
 
 
 class DocException(Exception):
     pass
 
 
-def annotates_exceptions(func):
+def annotate_exceptions(func):
     """
     Decorates a mapping function for docs, giving it a more useful
     exception message.
     """
     @wraps(func)
-    def map_doc(doc, *args, **kwargs):
+    def func_with_annotated_exceptions(doc):
         try:
-            return func(doc, *args, **kwargs)
+            return func(doc)
         except Exception as e:
             msg = (
                 'Error encountered while mapping doc '
@@ -208,11 +261,18 @@ def annotates_exceptions(func):
                 module=func.__module__
             )
             raise DocException(msg) from e
-    return map_doc
+    return func_with_annotated_exceptions
 
 
-@annotates_exceptions
+@annotate_exceptions
 def parse_frontmatter(doc):
+    """
+    Parse frontmatter as YAML. Set frontmatter on meta field, and
+    remaining content on content field.
+
+    If there is no frontmatter, will set an empty object on meta field,
+    and leave content as-is.
+    """
     meta, content = frontmatter.parse(doc.content)
     return doc._replace(
         meta=meta,
@@ -220,50 +280,17 @@ def parse_frontmatter(doc):
     )
 
 
-def uplifts_frontmatter(func):
+uplift_frontmatter = compose(uplift_meta, parse_frontmatter)
+
+
+def renderer(render):
     """
-    Decorate a doc mapping function so it will `parse_frontmatter` and
-    `uplift_meta` before passing the `doc` to `func`.
+    Create a renderer for doc content using a string rendering function.
 
-    You can decorate simpler markup rendering functions with
-    `uplifts_frontmatter` so that you don't have to deal with parsing
-    and uplifting frontmatter yourself.
+    Will also annotate any exceptions that happen during rendering,
+    transforming them into DocExceptions that will record the doc's
+    id_path and the render function where exception occurred.
 
-    Usage:
-
-        @uplifts_frontmatter
-        def set_title(doc, title=""):
-            return doc._replace(title=title)
+    Can be used as a decorator.
     """
-    @wraps(func)
-    def wrapped(doc, *args, **kwargs):
-        return func(uplift_meta(parse_frontmatter(doc)), *args, **kwargs)
-    return wrapped
-
-
-@uplifts_meta
-@annotates_exceptions
-def parse_yaml(doc):
-    """
-    Parse YAML in the doc's content property, placing it in meta
-    and replacing content property with an empty string.
-    """
-    meta = yaml.load(doc.content)
-    return doc._replace(
-        meta=meta,
-        content=""
-    )
-
-
-@uplifts_meta
-@annotates_exceptions
-def parse_json(doc):
-    """
-    Parse JSON in the doc's content property, placing it in meta
-    and replacing content property with an empty string.
-    """
-    meta = json.loads(doc.content)
-    return doc._replace(
-        meta=meta,
-        content=""
-    )
+    return annotate_exceptions(over_with(content, render))
