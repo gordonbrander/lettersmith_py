@@ -68,9 +68,9 @@ To transform many files, you can load them into an iterable, then use list compr
 
 ```python
 # Get all markdown docs under source/
-docs = docs.find("source/*.md")
+posts = docs.find("posts/*.md")
 # Transform them with your function.
-docs = my_plugin(docs)
+posts = my_plugin(posts)
 ```
 
 To write a plugin, all you need to do is define a generator function that takes an iterator of docs and yields transformed docs.
@@ -84,7 +84,7 @@ def my_plugin(docs)
 You can pipe docs through many transforming functions using `pipe`.
 
 ```python
-docs = pipe(
+posts = pipe(
   docs.find("source/*.md"),
   markdown.content,
   my_plugin,
@@ -95,13 +95,13 @@ docs = pipe(
 Which is equivalent to:
 
 ```python
-docs = my_other_plugin(my_plugin(markdown.content(docs.find("source/*.md"))))
+posts = my_other_plugin(my_plugin(markdown.content(docs.find("source/*.md"))))
 ```
 
 When you're done transforming things, you can pass the iterable to `write`, which takes care of writing out the files to an output directory.
 
 ```python
-write(docs, directory="public")
+write(posts, directory="public")
 ```
 
 That's it!
