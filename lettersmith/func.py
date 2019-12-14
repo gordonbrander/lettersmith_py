@@ -42,9 +42,9 @@ def thrush(*funcs):
     return reduce(compose2, reversed(funcs), id)
 
 
-def over(value, func):
+def _apply_to(value, func):
     """
-    Apply value to a singleargument function.
+    Apply value to a single argument function.
     """
     return func(value)
 
@@ -62,7 +62,7 @@ def pipe(value, *funcs):
 
     Returns transformed value.
     """
-    return reduce(over, funcs, value)
+    return reduce(_apply_to, funcs, value)
 
 
 def composable(func):
