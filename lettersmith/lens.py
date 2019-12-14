@@ -78,7 +78,12 @@ def over_with(lens, func):
     that will map over value in `big` using `func`, and returning
     a new instance of `big`.
     """
-    return lambda big: over(lens, func, big)
+    def over_bound(big):
+        """
+        Map value(s) in `big` using a bound mapping function.
+        """
+        return over(lens, func, big)
+    return over_bound
 
 
 def update(lens, up, big, msg):
