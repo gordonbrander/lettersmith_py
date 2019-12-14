@@ -14,6 +14,7 @@ def id(x):
 def compose2(b, a):
     """Compose 2 functions"""
     def composed(x):
+        """Composed function"""
         return b(a(x))
     return composed
 
@@ -73,7 +74,7 @@ def composable(func):
     """
     @wraps(func)
     def composable_func(*args, **kwargs):
-        return lambda first: func(first, *args, **kwargs)
+        return rest(func, *args, **kwargs)
     return composable_func
 
 
@@ -82,4 +83,7 @@ def rest(func, *args, **kwargs):
     Binds the "rest" of the arguments, then returns a bound
     function taking one argument (the first argument).
     """
-    return lambda first: func(first, *args, **kwargs)
+    @wraps(func)
+    def bound(first):
+        return func(first, *args, **kwargs)
+    return bound
