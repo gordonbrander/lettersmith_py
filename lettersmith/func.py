@@ -11,7 +11,7 @@ def id(x):
     return x
 
 
-def compose2(b, a):
+def _compose2(b, a):
     """Compose 2 functions"""
     def composed(x):
         """Composed function"""
@@ -21,7 +21,7 @@ def compose2(b, a):
 
 def compose(*funcs):
     """Compose n functions from right to left"""
-    return reduce(compose2, funcs, id)
+    return reduce(_compose2, funcs, id)
 
 
 def thrush(*funcs):
@@ -39,7 +39,7 @@ def thrush(*funcs):
     It's named after
     https://en.wikipedia.org/wiki/To_Mock_a_Mockingbird
     """
-    return reduce(compose2, reversed(funcs), id)
+    return reduce(_compose2, reversed(funcs), id)
 
 
 def _apply_to(value, func):
