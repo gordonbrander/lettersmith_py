@@ -25,13 +25,25 @@ def main():
     scaffold_path = Path(
         module_path, "..", "package_data", "scaffold", args.type)
 
-    shutil.copytree(scaffold_path, project_path)
+    try:
+        shutil.copytree(scaffold_path, project_path)
 
-    messages = (
-        "Hocus pocus — Your new site is ready!",
-        "Alakazam — Your new site is ready!",
-        "Tada — Your new site is ready!",
-        "A wild website appears!"
-    )
+        messages = (
+            "Hocus pocus — Your new site is ready!",
+            "Alakazam — Your new site is ready!",
+            "Tada — Your new site is ready!",
+            "A wild website appears!"
+        )
 
-    print(random.choice(messages))
+        print(random.choice(messages))
+    except FileExistsError:
+        message = (
+            f"Error: project_path \"{project_path}\" already exists.\n\n"
+            "Your project_path should be a path to a directory that "
+            "doesn't exist yet. Lettersmith will create the directory "
+            "and write all of the project files into it. "
+            "That way we won't accidentally overwrite anything important!"
+        )
+        print(message.format(
+            project_path=args.project_path
+        ))

@@ -6,7 +6,7 @@ I built it for myself, because I found other solutions to be pretty baroque and 
 
 ## Installing
 
-Lettersmith requires Python 3+, and a version of pip compatible with Python 3.
+Lettersmith requires Python 3.6+, and a version of pip compatible with Python 3.
 
 ```bash
 git clone https://github.com/gordonbrander/lettersmith_py
@@ -19,7 +19,7 @@ pip3 install -e .
 You can easily scaffold a site using `lettersmith_scaffold`.
 
 ```bash
-lettersmith_scaffold . --type blog
+lettersmith_scaffold ./blog --type blog
 ```
 
 This will stub out a directory structure and a build script for a typical blogging setup. You can customize the build script from there.
