@@ -44,6 +44,4 @@ def main():
             "and write all of the project files into it. "
             "That way we won't accidentally overwrite anything important!"
         )
-        print(message.format(
-            project_path=args.project_path
-        ))
+        print(message)
