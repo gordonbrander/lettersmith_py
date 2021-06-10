@@ -205,13 +205,13 @@ def content_markdown(
         If you put a wikilink on it's own line, as above, it will be rendered as a rich snippet (transclude).
     """
     return compose(
-        markdowntools.content,
         content_wikilinks(
             base_url,
             link_template,
             nolink_template,
             transclude_template
         ),
+        markdowntools.content,
         annotate_links,
         summary_markdown
     )
