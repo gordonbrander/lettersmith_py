@@ -21,7 +21,7 @@ setup(
     packages=find_packages(exclude=("tests", "tests.*")),
     install_requires=[
         "PyYAML>=3.13",
-        "py-gfm>=0.1.3",
+        "commonmark>=0.9.1",
         "python-frontmatter>=0.3.1",
         "Jinja2>=2.7"
         # TODO
